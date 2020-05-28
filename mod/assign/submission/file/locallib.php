@@ -632,6 +632,12 @@ class assign_submission_file extends assign_submission_plugin {
         return $sets;
     }
 
+    /**
+     * Display header with information about the expected file submission including the 
+     * number of allowed files and file types allowed.
+     * 
+     * @return string
+     */
     public function view_header() {
         global $OUTPUT;
         $pluginname = get_string('pluginname', 'assignsubmission_file');
@@ -649,7 +655,7 @@ class assign_submission_file extends assign_submission_plugin {
             $items[] = get_string('expectallfiletypes', 'assignsubmission_file');
         }
 
-        $o .= $OUTPUT->heading($pluginname, 5);
+        $o .= $OUTPUT->heading($pluginname, 3);
         $o .= html_writer::alist($items, null, "ol");
         return $o;
     }
