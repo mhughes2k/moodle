@@ -374,6 +374,7 @@ class post extends exporter {
         $cancontrolreadstatus = $capabilitymanager->can_manually_control_post_read_status($user);
         $canselfenrol = $capabilitymanager->can_self_enrol($user);
         $canreplyprivately = $capabilitymanager->can_reply_privately_to_post($user, $post);
+        $canseeauthors = $capabilitymanager->can_see_authors($user);
 
         $urlfactory = $this->related['urlfactory'];
         $viewurl = $canview ? $urlfactory->get_view_post_url_from_post($post) : null;
@@ -471,7 +472,7 @@ class post extends exporter {
             'html' => $includehtml ? [
                 'rating' => ($loadcontent && $hasrating) ? $output->render($rating) : null,
                 'taglist' => ($loadcontent && $hastags) ? $output->tag_list($tags) : null,
-                'authorsubheading' => ($loadcontent) ? $this->get_author_subheading_html($exportedauthor, $timecreated) : null
+                'authorsubheading' => ($loadcontent && $canseeauthors) ? $this->get_author_subheading_html($exportedauthor, $timecreated) : null
             ] : null
         ];
     }
