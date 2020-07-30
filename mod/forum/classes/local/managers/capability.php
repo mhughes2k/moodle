@@ -660,6 +660,12 @@ class capability {
         return has_capability('moodle/tag:manage', context_system::instance(), $user);
     }
 
+    public function can_see_authors(stdClass $user) : bool {
+        if (!has_capability('mod/forum:canseeauthors', $this->context)) {
+            return false;
+        }
+        return true;
+    }
     /**
      * Checks whether the user can self enrol into the course.
      * Mimics the checks on the add button in deprecatedlib/forum_print_latest_discussions
