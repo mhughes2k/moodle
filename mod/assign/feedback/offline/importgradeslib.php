@@ -132,8 +132,20 @@ class assignfeedback_offline_grade_importer {
             }
         }
 
-        if ($this->idindex < 0 || $this->gradeindex < 0 || $this->modifiedindex < 0) {
-            return false;
+        $errors = [];
+        if ($this->idindex < 0) {
+            $errors[] = get_string('columnnotfound', 'assignfeedback_offline', $strid);
+        }
+        if ($this->gradeindex < 0) {
+            $errors[] = get_string('columnnotfound', 'assignfeedback_offline', $strgrade);
+        }
+        if($this->modifiedindex < 0) {
+            $errors[] = get_string('columnnotfound', 'assignfeedback_offline', $strmodified);
+        }
+
+        //if ($this->idindex < 0 || $this->gradeindex < 0 || $this->modifiedindex < 0) {
+        if (!empty($errors)) {
+            return $errors;///false;
         }
 
         $groupmode = groups_get_activity_groupmode($this->assignment->get_course_module());

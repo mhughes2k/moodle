@@ -71,13 +71,16 @@ class assignfeedback_offline_import_grades_form extends moodleform implements re
                 $scaleoptions = make_menu_from_list($scale->scale);
             }
         }
-        if (!$gradeimporter->init()) {
+        $initerrors = $gradeimporter->init();
+        if ($initerrors !== true && !empty($initerrors)) {
+            $errors = html_writer::alist($initerrors);
+
             $thisurl = new moodle_url('/mod/assign/view.php', array('action'=>'viewpluginpage',
                                                                      'pluginsubtype'=>'assignfeedback',
                                                                      'plugin'=>'offline',
                                                                      'pluginaction'=>'uploadgrades',
                                                                      'id'=>$assignment->get_course_module()->id));
-            print_error('invalidgradeimport', 'assignfeedback_offline', $thisurl);
+            print_error('invalidgradeimport', 'assignfeedback_offline', $thisurl, $errors);
             return;
         }
 
