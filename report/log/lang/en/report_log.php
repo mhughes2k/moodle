@@ -25,6 +25,7 @@
  */
 
 $string['allsources'] = 'All sources';
+$string['anonymousevent'] = 'Anonymous Event';
 $string['cli'] = 'CLI';
 $string['eventcomponent'] = 'Component';
 $string['eventcontext'] = 'Event context';

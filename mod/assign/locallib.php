@@ -2805,6 +2805,12 @@ class assign {
 
         if ($this->gradebook_item_update(null, $grade)) {
             \mod_assign\event\submission_graded::create_from_grade($this, $grade)->trigger();
+        } else {
+            // Item has been graded, but we're not updating gradebook.
+            if ($this->is_blind_marking()) {
+                // Blind marking is in effect so we want to write an "audit" event that is not visible.
+                \mod_assign\event\submission_graded::create_hidden_from_grade($this, $grade)->trigger();
+            }
         }
 
         // If the conditions are met, allow another attempt.

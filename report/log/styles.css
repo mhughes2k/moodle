@@ -10,3 +10,7 @@
     margin: 10px;
     text-align: center;
 }
+
+#page-report-log-index table tr.anonymous {
+    background-color: #20232552;
+}

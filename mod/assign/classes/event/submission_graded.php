@@ -65,6 +65,22 @@ class submission_graded extends base {
         return $event;
     }
 
+    public static function create_hidden_from_grade(\assign $assign, \stdClass $grade) {
+        $data = [
+            'context' => $assign->get_context(),
+            'objectid' => $grade->id,
+            'relateduserid' => $grade->userid,
+            'anonymous' => true
+        ];
+        self::$preventcreatecall = false;
+        /** @var submission_graded $event */
+        $event = self::create($data);
+        self::$preventcreatecall = true;
+        $event->set_assign($assign);
+        $event->add_record_snapshot('assign_grades', $grade);
+        return $event;
+    }
+
     /**
      * Returns description of what happened.
      *

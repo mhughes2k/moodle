@@ -52,7 +52,16 @@ $capabilities = array(
         ),
 
         'clonepermissionsfrom' => 'coursereport/log:viewtoday',
-    )
+    ),
+
+    'report/log:viewanonymous' => array(
+        'riskbitmask' => RISK_PERSONAL,
+        'captype' => 'read',
+        'contextlevel' => CONTEXT_COURSE,
+        'archetypes' => array(
+            'manager' => CAP_ALLOW
+        )
+    ),
 );
 
 

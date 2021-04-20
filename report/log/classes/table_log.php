@@ -89,6 +89,17 @@ class report_log_table_log extends table_sql {
     }
 
     /**
+     * Add the "anonymous" class to the row if the event is anonymous.
+     * @param array $event
+     * @return string
+     */
+    public function get_row_class($event) {
+        if ($event->anonymous) {
+            return "anonymous";
+        }
+        return parent::get_row_class($event);
+    }
+    /**
      * Generate the course column.
      *
      * @deprecated since Moodle 2.9 MDL-48595 - please do not use this function any more.
@@ -149,7 +160,11 @@ class report_log_table_log extends table_sql {
         } else {
             $dateformat = get_string('strftimedatetimeshort', 'core_langconfig');
         }
-        return userdate($event->timecreated, $dateformat);
+        $time = userdate($event->timecreated, $dateformat);
+        if (!$this->is_downloading() && $event->anonymous) {
+            return "({$time})";
+        }
+        return $time;
     }
 
     /**
@@ -284,6 +299,13 @@ class report_log_table_log extends table_sql {
         // Only encode as an action link if we're not downloading.
         if (($url = $event->get_url()) && empty($this->download)) {
             $eventname = $this->action_link($url, $eventname, 'action');
+        }
+        if ($event->anonymous) {
+            $eventname = "({$eventname})";
+            if (!$this->is_downloading()) {
+                $anontip = get_string('anonymousevent', 'report_log');
+                $eventname = "<span title='{$anontip}'>{$eventname}</span>";
+            }
         }
         return $eventname;
     }

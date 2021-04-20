@@ -100,9 +100,10 @@ function report_log_print_graph($course, $user, $typeormode, $date=0, $logreader
  * @param int $courseid The id of the course as found in the 'course' table.
  * @param string $coursestart unix timestamp representing course start date and time.
  * @param string $logreader log reader to use.
+ * @param bool $includeanonymous Include log entries with anonymous = 1
  * @return array
  */
-function report_log_usercourse($userid, $courseid, $coursestart, $logreader = '') {
+function report_log_usercourse($userid, $courseid, $coursestart, $logreader = '', $includeanonymous = false) {
     global $DB;
 
     $logmanager = get_log_manager();
@@ -129,7 +130,7 @@ function report_log_usercourse($userid, $courseid, $coursestart, $logreader = ''
         $logtable = $reader->get_internal_log_table_name();
         $timefield = 'timecreated';
         $coursefield = 'courseid';
-        $nonanonymous = 'AND anonymous = 0';
+        $nonanonymous = $includeanonymous ? '' : 'AND anonymous = 0';
     }
 
     $params = array();
@@ -155,7 +156,7 @@ function report_log_usercourse($userid, $courseid, $coursestart, $logreader = ''
  * @param string $logreader log reader to use.
  * @return array
  */
-function report_log_userday($userid, $courseid, $daystart, $logreader = '') {
+function report_log_userday($userid, $courseid, $daystart, $logreader = '', $includeanonymous = false) {
     global $DB;
     $logmanager = get_log_manager();
     $readers = $logmanager->get_readers();
@@ -182,7 +183,7 @@ function report_log_userday($userid, $courseid, $daystart, $logreader = '') {
         $logtable = $reader->get_internal_log_table_name();
         $timefield = 'timecreated';
         $coursefield = 'courseid';
-        $nonanonymous = 'AND anonymous = 0';
+        $nonanonymous = $includeanonymous ? '' : 'AND anonymous = 0';
     }
     $params = array('userid' => $userid);
 
@@ -547,6 +548,9 @@ function report_log_print_mnet_selector_form($hostid, $course, $selecteduser=0, 
  */
 function report_log_userall_data($course, $user, $logreader) {
     global $CFG;
+    $context = context_course::instance($course->id);
+    $includeanonymous = has_capability('viewanonymous', $context, $user);
+
     $site = get_site();
     $timenow = time();
     $logs = [];
@@ -580,7 +584,7 @@ function report_log_userall_data($course, $user, $logreader) {
         $i++;
         $timestart = $timefinish;
     }
-    $rawlogs = report_log_usercourse($user->id, $courseselect, $coursestart, $logreader);
+    $rawlogs = report_log_usercourse($user->id, $courseselect, $coursestart, $logreader, $includeanonymous);
 
     foreach ($rawlogs as $rawlog) {
         if (isset($logs['labels'][$rawlog->day])) {
@@ -601,6 +605,10 @@ function report_log_userall_data($course, $user, $logreader) {
  * @return array $logs structured array to be sent to chart API, split in two indexes (series and labels).
  */
 function report_log_usertoday_data($course, $user, $date, $logreader) {
+
+    $context = context_course::instance($course->id);
+    $includeanonymous = has_capability('viewanonymous', $context, $user);
+
     $site = get_site();
     $logs = [];
 
@@ -622,7 +630,7 @@ function report_log_usertoday_data($course, $user, $date, $logreader) {
         $logs['labels'][$i] = userdate($hour, "%H:00");
     }
 
-    $rawlogs = report_log_userday($user->id, $courseselect, $daystart, $logreader);
+    $rawlogs = report_log_userday($user->id, $courseselect, $daystart, $logreader, $includeanonymous);
 
     foreach ($rawlogs as $rawlog) {
         if (isset($logs['labels'][$rawlog->hour])) {
