@@ -65,6 +65,12 @@ class submission_graded extends base {
         return $event;
     }
 
+    /**
+     * Creates an "anonymous" event (i.e. hidden from users) based on the grade that was awarded.
+     * @param \assign $assign
+     * @param \stdClass $grade
+     * @return submission_graded
+     */
     public static function create_hidden_from_grade(\assign $assign, \stdClass $grade) {
         $data = [
             'context' => $assign->get_context(),
