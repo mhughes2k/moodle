@@ -115,11 +115,10 @@ class assignfeedback_offline_grade_importer {
             }
         }
 
+        $errors = [];
+
         if ($columns) {
             foreach ($columns as $index => $column) {
-                if (isset($this->feedbackcolumnindexes[$column])) {
-                    $this->feedbackcolumnindexes[$column]['index'] = $index;
-                }
                 if ($column == $strgrade) {
                     $this->gradeindex = $index;
                 }
@@ -129,10 +128,15 @@ class assignfeedback_offline_grade_importer {
                 if ($column == $strmodified) {
                     $this->modifiedindex = $index;
                 }
+                if (isset($this->feedbackcolumnindexes[$column])) {
+                    $this->feedbackcolumnindexes[$column]['index'] = $index;
+                }
             }
+        } else {
+            // Has no columns!
+            $errors[] = "NO COLUMNS FOUND!";
         }
 
-        $errors = [];
         if ($this->idindex < 0) {
             $errors[] = get_string('columnnotfound', 'assignfeedback_offline', $strid);
         }
