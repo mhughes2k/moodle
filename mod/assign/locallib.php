@@ -7198,6 +7198,8 @@ class assign {
                 \core\notification::error("Failed to reveal identity for {$participantid}");
             }
         }
+
+        \mod_assign\event\some_identities_revealed::create_from_assign($this)->trigger();
     }
 
     protected function process_reveal_selected_identities($useridlist) {
