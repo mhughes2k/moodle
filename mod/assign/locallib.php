@@ -3889,6 +3889,7 @@ class assign {
             $flags->extensionduedate = 0;
             $flags->workflowstate = '';
             $flags->allocatedmarker = 0;
+            $flags->revealed = 0;
 
             // The mailed flag can be one of 3 values: 0 is unsent, 1 is sent and 2 is do not send yet.
             // This is because students only want to be notified about certain types of update (grades and feedback).
