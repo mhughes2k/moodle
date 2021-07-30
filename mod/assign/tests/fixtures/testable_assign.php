@@ -155,6 +155,7 @@ class mod_assign_testable_assign extends assign {
         $formparams['markingallocation'] = 1;
         $formparams['cm'] = $this->get_course_module()->id;
         $formparams['context'] = $this->get_context();
+        $formparams['blindmarking'] = $this->get_instance()->blindmarking;
         $mform = new mod_assign_grading_batch_operations_form(null, $formparams);
 
         return $mform;

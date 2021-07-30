@@ -5893,7 +5893,6 @@ class assign {
         // Do not push grade to gradebook if blind marking is active as
         // the gradebook would reveal the students.
         if ($this->is_blind_marking() && $revealselected == false) {
-            debugging("BM & not partial reveal");
             return false;
         }
 
@@ -5915,9 +5914,8 @@ class assign {
                     $membersubmission = clone $submission;
                     $membersubmission->groupid = 0;
                     $membersubmission->userid = $member->id;
-                    $this->gradebook_item_update($membersubmission, null);
+                    $this->gradebook_item_update($membersubmission, null, $revealselected);
                 }
-                debugging("Group update");
                 return;
             }
 
@@ -5928,7 +5926,6 @@ class assign {
         }
         // Grading is disabled, return.
         if ($this->grading_disabled($gradebookgrade['userid'])) {
-            debugging("Grading disabled");
             return false;
         }
         $assign = clone $this->get_instance();
