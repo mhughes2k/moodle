@@ -153,7 +153,8 @@ class assign_grading_table extends table_sql implements renderable {
         $fields .= 'uf.locked as locked, ';
         $fields .= 'uf.extensionduedate as extensionduedate, ';
         $fields .= 'uf.workflowstate as workflowstate, ';
-        $fields .= 'uf.allocatedmarker as allocatedmarker';
+        $fields .= 'uf.allocatedmarker as allocatedmarker, ';
+        $fields .= 'uf.revealed as revealed';
 
         $from = '{user} u
                          LEFT JOIN {assign_submission} s
@@ -605,6 +606,11 @@ class assign_grading_table extends table_sql implements renderable {
     public function col_recordid(stdClass $row) {
         if (empty($row->recordid)) {
             $row->recordid = $this->assignment->get_uniqueid_for_user($row->userid);
+        }
+        if ($row->revealed) {
+            $courseid = $this->assignment->get_course()->id;
+            $link = new moodle_url('/user/view.php', array('id' => $row->id, 'course' => $courseid));
+            return $this->output->action_link($link, $this->assignment->fullname($row));
         }
         return get_string('hiddenuser', 'assign') . $row->recordid;
     }

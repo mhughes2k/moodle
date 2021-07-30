@@ -4520,6 +4520,8 @@ class assign {
         // Get marking states to show in form.
         $markingworkflowoptions = $this->get_marking_workflow_filters();
 
+        $blindmarking = $this->get_instance()->blindmarking;
+
         // Print options for changing the filter and changing the number of results per page.
         $gradingoptionsformparams = array('cm'=>$cmid,
                                           'contextid'=>$this->context->id,
@@ -4547,7 +4549,9 @@ class assign {
                                  'feedbackplugins'=>$this->get_feedback_plugins(),
                                  'context'=>$this->get_context(),
                                  'markingworkflow'=>$markingworkflow,
-                                 'markingallocation'=>$markingallocation);
+                                 'markingallocation'=>$markingallocation,
+                                 'blindmarking'=>$blindmarking
+            );
         $classoptions = array('class'=>'gradingbatchoperationsform');
 
         $gradingbatchoperationsform = new mod_assign_grading_batch_operations_form(null,
@@ -4754,7 +4758,8 @@ class assign {
      */
     public function fullname($user) {
         if ($this->is_blind_marking()) {
-            $hasviewblind = has_capability('mod/assign:viewblinddetails', $this->get_context());
+            $flags = $this->get_user_flags($user->id, true);
+            $hasviewblind = ($flags->revealed >0) || has_capability('mod/assign:viewblinddetails', $this->get_context());
             if (empty($user->recordid)) {
                 $uniqueid = $this->get_uniqueid_for_user($user->id);
             } else {
@@ -4963,6 +4968,8 @@ class assign {
             $this->get_instance()->markingallocation &&
             has_capability('mod/assign:manageallocations', $this->context);
 
+        $blindmarking = $this->get_instance()->blindmarking;
+
         $batchformparams = array('cm'=>$this->get_course_module()->id,
                                  'submissiondrafts'=>$this->get_instance()->submissiondrafts,
                                  'duedate'=>$this->get_instance()->duedate,
@@ -4970,7 +4977,9 @@ class assign {
                                  'feedbackplugins'=>$this->get_feedback_plugins(),
                                  'context'=>$this->get_context(),
                                  'markingworkflow'=>$this->get_instance()->markingworkflow,
-                                 'markingallocation'=>$markingallocation);
+                                 'markingallocation'=>$markingallocation,
+                                 'blindmarking'=>$blindmarking
+        );
         $formclasses = array('class'=>'gradingbatchoperationsform');
         $mform = new mod_assign_grading_batch_operations_form(null,
                                                               $batchformparams,
@@ -5025,6 +5034,11 @@ class assign {
             if ($this->get_instance()->teamsubmission && $data->operation == 'addattempt') {
                 // This needs to be handled separately so that each team submission is only re-opened one time.
                 $this->process_add_attempt_group($userlist);
+            }
+
+            // MDL-72258 Partial reveal of student identities.
+            if ($data->operation == 'revealselectedidentities') {
+                $this->process_reveal_selected_identities($userlist);
             }
         }
 
@@ -5871,13 +5885,14 @@ class assign {
      * @param mixed $grade stdClass|null
      * @return bool
      */
-    protected function gradebook_item_update($submission=null, $grade=null) {
+    protected function gradebook_item_update($submission=null, $grade=null, $revealselected = false) {
         global $CFG;
 
         require_once($CFG->dirroot.'/mod/assign/lib.php');
         // Do not push grade to gradebook if blind marking is active as
         // the gradebook would reveal the students.
-        if ($this->is_blind_marking()) {
+        if ($this->is_blind_marking() && $revealselected == false) {
+            debugging("BM & not partial reveal");
             return false;
         }
 
@@ -5901,6 +5916,7 @@ class assign {
                     $membersubmission->userid = $member->id;
                     $this->gradebook_item_update($membersubmission, null);
                 }
+                debugging("Group update");
                 return;
             }
 
@@ -5911,6 +5927,7 @@ class assign {
         }
         // Grading is disabled, return.
         if ($this->grading_disabled($gradebookgrade['userid'])) {
+            debugging("Grading disabled");
             return false;
         }
         $assign = clone $this->get_instance();
@@ -7089,6 +7106,7 @@ class assign {
         }
 
         // Update the assignment record.
+        // MDL-72258 this needs to move so that revealidentities is only set once *all* students are done.
         $update = new stdClass();
         $update->id = $this->get_instance()->id;
         $update->revealidentities = 1;
@@ -7137,6 +7155,59 @@ class assign {
         return $this->reveal_identities();
     }
 
+    protected function reveal_selected_identities($useridlist) {
+        global $DB;
+
+        require_capability('mod/assign:revealidentities', $this->context);
+
+        if ($this->get_instance()->revealidentities || empty($this->get_instance()->blindmarking)) {
+            return false;
+        }
+
+        // Refresh the instance data.
+        $this->instance = null;
+
+        // Release the grades to the gradebook.
+        // First create the column in the gradebook.
+        $this->update_gradebook(false, $this->get_course_module()->id);
+        $adminconfig = $this->get_admin_config();
+        $gradebookplugin = $adminconfig->feedback_plugin_for_gradebook;
+        $gradebookplugin = str_replace('assignfeedback_', '', $gradebookplugin);
+        //$grades = $DB->get_records('assign_grades', array('assignment'=>$this->get_instance()->id));
+
+        $plugin = $this->get_feedback_plugin_by_type($gradebookplugin);
+
+        $failures = [];
+        $time = time();
+        foreach($useridlist as $userid) {
+            $grade = $this->get_user_grade($userid, true);
+            if ($plugin && $plugin->is_enabled() && $plugin->is_visible()) {
+                $grade->feedbacktext = $plugin->text_for_gradebook($grade);
+                $grade->feedbackformat = $plugin->format_for_gradebook($grade);
+                $grade->feedbackfiles = $plugin->files_for_gradebook($grade);
+            }
+            if ($this->gradebook_item_update(null, $grade, true) === false) {
+                $failures[] = $userid;
+            } else {
+                $flags = $this->get_user_flags($userid, true);
+                $flags->revealed = $time;
+                $this->update_user_flags($flags);
+            }
+        }
+        if (!empty($failures)) {
+            foreach($failures as $fail) {
+                $participantid = $this->get_uniqueid_for_user($userid);
+                \core\notification::error("Failed to reveal identity for {$participantid}");
+            }
+        }
+    }
+
+    protected function process_reveal_selected_identities($useridlist) {
+        if (!confirm_sesskey()) {
+            return false;
+        }
+        return $this->reveal_selected_identities($useridlist);
+    }
 
     /**
      * Save grading options.

@@ -106,6 +106,7 @@ $string['batchoperationconfirmaddattempt'] = 'Allow another attempt for selected
 $string['batchoperationconfirmsetmarkingworkflowstate'] = 'Set marking workflow state for all selected submissions?';
 $string['batchoperationconfirmsetmarkingallocation'] = 'Set marking allocation for all selected submissions?';
 $string['batchoperationconfirmdownloadselected'] = 'Download selected submissions?';
+$string['batchoperationconfirmrevealselectedidentities'] = 'Are you sure you want to reveal the selected student identities for this assignment? This operation cannot be undone. Once the student identities have been revealed, the marks will be released to the gradebook.';
 $string['batchoperationlock'] = 'lock submissions';
 $string['batchoperationunlock'] = 'unlock submissions';
 $string['batchoperationreverttodraft'] = 'revert submissions to draft';
@@ -463,6 +464,8 @@ $string['removesubmissionconfirm'] = 'Are you sure you want to remove the submis
 $string['removesubmissionconfirmforstudent'] = 'Are you sure you want to remove the submission data for student {$a}?';
 $string['revealidentities'] = 'Reveal student identities';
 $string['revealidentitiesconfirm'] = 'Are you sure you want to reveal student identities for this assignment? This operation cannot be undone. Once the student identities have been revealed, the marks will be released to the gradebook.';
+$string['revealselectedidentities'] = 'Reveal selected identities';
+$string['revealselectedidentitiesconfirm'] = 'Are you sure you want to reveal the selected student identities for this assignment? This operation cannot be undone. Once the student identities have been revealed, the marks will be released to the gradebook.';
 $string['reverttodefaults'] = 'Revert to assignment defaults';
 $string['reverttodraftforstudent'] = 'Revert submission to draft for student: (id={$a->id}, fullname={$a->fullname}).';
 $string['reverttodraft'] = 'Revert the submission to draft status';

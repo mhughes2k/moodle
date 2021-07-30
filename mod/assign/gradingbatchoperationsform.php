@@ -75,6 +75,11 @@ class mod_assign_grading_batch_operations_form extends moodleform {
             $options['setmarkingallocation'] = get_string('setmarkingallocation', 'assign');
         }
 
+        //MDL-72258 Partial Reveal identities.
+        if ($instance['blindmarking'] && has_capability('mod/assign:revealidentities', $instance['context'])) {
+            $options['revealselectedidentities'] = get_string('revealselectedidentities', 'assign');
+        }
+
         $mform->addElement('hidden', 'action', 'gradingbatchoperation');
         $mform->setType('action', PARAM_ALPHA);
         $mform->addElement('hidden', 'id', $instance['cm']);

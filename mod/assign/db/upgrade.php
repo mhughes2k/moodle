@@ -59,5 +59,20 @@ function xmldb_assign_upgrade($oldversion) {
     // Automatically generated Moodle v3.9.0 release upgrade line.
     // Put any upgrade step following this.
 
+    if ($oldversion < 2021052503) {
+
+        // Define field revealed to be added to assign_user_flags.
+        $table = new xmldb_table('assign_user_flags');
+        $field = new xmldb_field('revealed', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'allocatedmarker');
+
+        // Conditionally launch add field revealed.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Assign savepoint reached.
+        upgrade_mod_savepoint(true, 2021052503, 'assign');
+    }
+
     return true;
 }
