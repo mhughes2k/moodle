@@ -638,4 +638,14 @@ if ($hassiteconfig or has_any_capability($capabilities, $systemcontext)) {
 
     $ADMIN->add('backups', $temp);
 
+    // GroupNG
+    $temp = new admin_settingpage('groupngsettings', new lang_string('generalsettings', 'groupng'));
+    $temp->add(new admin_setting_configcheckbox('enablegroup', new lang_string("enablegroup", "groupng"),
+            new lang_string('enablegroup_help', 'groupng'), 1, 1, 0)
+    );
+    $temp->add(new admin_setting_configcheckbox('enablegroupng', new lang_string("enablegroupng", "groupng"),
+        new lang_string('enablegroupng_help', 'groupng'), 0, 1, 0)
+    );
+    $ADMIN->add('courses', new admin_category('ngsettings', new lang_string('groupngsettings','groupng')));
+    $ADMIN->add('ngsettings', $temp);
 }

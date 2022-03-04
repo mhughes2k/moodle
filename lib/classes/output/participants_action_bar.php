@@ -126,11 +126,22 @@ class participants_action_bar implements \renderable {
                     // Additional items to be added.
                     if ($key === 'groups') {
                         $params = ['id' => $this->course->id];
-                        $items += [
-                            (new moodle_url('/group/groupings.php', $params))->out() => get_string('groupings', 'group'),
-                            (new moodle_url('/group/overview.php', $params))->out() => get_string('overview', 'group')
-                        ];
+                        if (get_config('','enablegroup')) {
+                            $items += [
+                                (new moodle_url('/group/groupings.php', $params))->out() => get_string('groupings', 'group'),
+                                (new moodle_url('/group/overview.php', $params))->out() => get_string('overview', 'group')
+                            ];
+                        }
+                        if (get_config('','enablegroupng')) {
+                            // GroupsNg
+                            $items += [
+                                (new moodle_url('/groupng/index.php', $params))->out() => get_string('groups', 'groupng'),
+                                (new moodle_url('/groupng/groupings.php', $params))->out() => get_string('groupings', 'groupng'),
+                                (new moodle_url('/groupng/overview.php', $params))->out() => get_string('overview', 'groupng')
+                            ];
+                        }
                     }
+
                 }
             }
             if ($items) {

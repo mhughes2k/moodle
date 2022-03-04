@@ -465,8 +465,14 @@ function enrol_add_course_navigation(navigation_node $coursenode, $course) {
 
     // Manage groups in this course or even frontpage
     if (($course->groupmode || !$course->groupmodeforce) && has_capability('moodle/course:managegroups', $coursecontext)) {
-        $url = new moodle_url('/group/index.php', array('id'=>$course->id));
-        $usersnode->add(get_string('groups'), $url, navigation_node::TYPE_SETTING, null, 'groups', new pix_icon('i/group', ''));
+        if (get_config('', 'enablegroup')) {
+            $url = new moodle_url('/group/index.php', array('id' => $course->id));
+            $usersnode->add(get_string('groups'), $url, navigation_node::TYPE_SETTING, null, 'groups', new pix_icon('i/group', ''));
+        }
+//        if (get_config('', 'enablegroupng')) {
+//            $url = new moodle_url('/groupng/index.php', array('id' => $course->id));
+//            $usersnode->add(get_string('groups', 'groupng'), $url, navigation_node::TYPE_SETTING, null, 'groupngs', new pix_icon('i/group', ''));
+//        }
     }
 
      if (has_any_capability(array( 'moodle/role:assign', 'moodle/role:safeoverride','moodle/role:override', 'moodle/role:review'), $coursecontext)) {
