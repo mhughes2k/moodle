@@ -67,7 +67,8 @@ $forceblockdraweropen = $OUTPUT->firstview_fakeblocks();
 $secondarynavigation = false;
 $overflow = '';
 if ($PAGE->has_secondary_navigation()) {
-    $moremenu = new \core\navigation\output\more_menu($PAGE->secondarynav, 'nav-tabs');
+    $tablistnav = $PAGE->has_tablist_secondary_navigation();
+    $moremenu = new \core\navigation\output\more_menu($PAGE->secondarynav, 'nav-tabs', true, $tablistnav);
     $secondarynavigation = $moremenu->export_for_template($OUTPUT);
     $overflowdata = $PAGE->secondarynav->get_overflow_menu_data();
     if (!is_null($overflowdata)) {
@@ -106,8 +107,5 @@ $templatecontext = [
     'headercontent' => $headercontent,
     'addblockbutton' => $addblockbutton
 ];
-
-$nav = $PAGE->flatnav;
-$templatecontext['firstcollectionlabel'] = $nav->get_collectionlabel();
 
 echo $OUTPUT->render_from_template('theme_boost/drawers', $templatecontext);

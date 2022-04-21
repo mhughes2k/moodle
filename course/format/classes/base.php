@@ -217,6 +217,7 @@ abstract class base {
                     // In case somebody keeps the reference to course format object.
                     self::$instances[$courseid][$format]->course = false;
                     self::$instances[$courseid][$format]->formatoptions = array();
+                    self::$instances[$courseid][$format]->modinfo = null;
                 }
                 unset(self::$instances[$courseid]);
             }
@@ -1095,7 +1096,15 @@ abstract class base {
             }
         }
         if ($needrebuild) {
-            rebuild_course_cache($this->courseid, true);
+            if ($sectionid) {
+                // Invalidate the section cache by given section id.
+                course_modinfo::purge_course_section_cache_by_id($this->courseid, $sectionid);
+                // Partial rebuild sections that have been invalidated.
+                rebuild_course_cache($this->courseid, true, true);
+            } else {
+                // Full rebuild if sectionid is null.
+                rebuild_course_cache($this->courseid);
+            }
         }
         if ($changed) {
             // Reset internal caches.
@@ -1422,7 +1431,10 @@ abstract class base {
         // Delete section and it's format options.
         $DB->delete_records('course_format_options', array('sectionid' => $section->id));
         $DB->delete_records('course_sections', array('id' => $section->id));
-        rebuild_course_cache($course->id, true);
+        // Invalidate the section cache by given section id.
+        course_modinfo::purge_course_section_cache_by_id($course->id, $section->id);
+        // Partial rebuild section cache that has been purged.
+        rebuild_course_cache($course->id, true, true);
 
         // Delete section summary files.
         $context = \context_course::instance($course->id);
@@ -1628,9 +1640,30 @@ abstract class base {
                 throw new moodle_exception('sectionactionnotsupported', 'core', null, s($action));
         }
 
+        return ['modules' => $this->get_section_modules_updated($section)];
+    }
+
+    /**
+     * Return an array with all section modules content.
+     *
+     * This method is used in section_action method to generate the updated modules content
+     * after a modinfo change.
+     *
+     * @param section_info $section the section
+     * @return string[] the full modules content.
+     */
+    protected function get_section_modules_updated(section_info $section): array {
+        global $PAGE;
+
         $modules = [];
 
-        // Load the cmlist output.
+        if (!$this->uses_sections() || !$section->section) {
+            return $modules;
+        }
+
+        // Load the cmlist output from the updated modinfo.
+        $renderer = $this->get_renderer($PAGE);
+        $modinfo = $this->get_modinfo();
         $coursesections = $modinfo->sections;
         if (array_key_exists($section->section, $coursesections)) {
             foreach ($coursesections[$section->section] as $cmid) {
@@ -1638,8 +1671,7 @@ abstract class base {
                 $modules[] = $renderer->course_section_updated_cm_item($this, $section, $cm);
             }
         }
-
-        return ['modules' => $modules];
+        return $modules;
     }
 
     /**

@@ -239,8 +239,8 @@ class behat_mod_quiz extends behat_question_base {
             if (!array_key_exists('maxmark', $questiondata) || $questiondata['maxmark'] === '') {
                 $maxmark = null;
             } else {
-                $maxmark = clean_param($questiondata['maxmark'], PARAM_FLOAT);
-                if (!is_numeric($questiondata['maxmark']) || $maxmark < 0) {
+                $maxmark = clean_param($questiondata['maxmark'], PARAM_LOCALISEDFLOAT);
+                if (!is_numeric($maxmark) || $maxmark < 0) {
                     throw new ExpectationException('The max mark for question "' .
                             $questiondata['question'] . '" must be a positive number.',
                             $this->getSession());
@@ -435,7 +435,8 @@ class behat_mod_quiz extends behat_question_base {
      */
     public function i_should_see_on_quiz_page($questionname, $pagenumber) {
         $xpath = "//li[contains(., '" . $this->escape($questionname) .
-                "')][./preceding-sibling::li[contains(., 'Page " . $pagenumber . "')]]";
+            "')][./preceding-sibling::li[contains(@class, 'pagenumber')][1][contains(., 'Page " .
+            $pagenumber . "')]]";
 
         $this->execute('behat_general::should_exist', array($xpath, 'xpath_element'));
     }

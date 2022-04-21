@@ -684,6 +684,7 @@ class assign {
         } else if ($action == 'fixrescalednullgrades') {
             $o .= $this->view_fix_rescaled_null_grades();
         } else {
+            $PAGE->add_body_class('limitedwidth');
             $o .= $this->view_submission_page();
         }
 
@@ -1906,6 +1907,33 @@ class assign {
      */
     protected function has_visible_attachments() {
         return ($this->count_attachments() > 0);
+    }
+
+    /**
+     * Check if the intro attachments should be provided to the user.
+     *
+     * @param int $userid User id.
+     * @return bool
+     */
+    public function should_provide_intro_attachments(int $userid): bool {
+        $instance = $this->get_instance($userid);
+
+        // Check if user has permission to view attachments regardless of assignment settings.
+        if (has_capability('moodle/course:manageactivities', $this->get_context())) {
+            return true;
+        }
+
+        // If assignment does not show intro, we never provide intro attachments.
+        if (!$this->show_intro()) {
+            return false;
+        }
+
+        // If intro attachments should only be shown when submission is started, check if there is an open submission.
+        if (!empty($instance->submissionattachments) && !$this->submissions_open($userid, true)) {
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -4419,14 +4447,14 @@ class assign {
      * @return string
      */
     protected function view_remove_submission_confirm() {
-        global $USER, $DB;
+        global $USER;
 
         $userid = optional_param('userid', $USER->id, PARAM_INT);
 
         if (!$this->can_edit_submission($userid, $USER->id)) {
             print_error('nopermission');
         }
-        $user = $DB->get_record('user', array('id' => $userid), '*', MUST_EXIST);
+        $user = core_user::get_user($userid, '*', MUST_EXIST);
 
         $o = '';
         $header = new assign_header($this->get_instance(),
@@ -4446,10 +4474,17 @@ class assign {
         $cancelurl = new moodle_url('/mod/assign/view.php', $urlparams);
 
         if ($userid == $USER->id) {
-            $confirmstr = get_string('removesubmissionconfirm', 'assign');
+            if ($this->is_time_limit_enabled($userid)) {
+                $confirmstr = get_string('removesubmissionconfirmwithtimelimit', 'assign');
+            } else {
+                $confirmstr = get_string('removesubmissionconfirm', 'assign');
+            }
         } else {
-            $name = $this->fullname($user);
-            $confirmstr = get_string('removesubmissionconfirmforstudent', 'assign', $name);
+            if ($this->is_time_limit_enabled($userid)) {
+                $confirmstr = get_string('removesubmissionconfirmforstudentwithtimelimit', 'assign', $this->fullname($user));
+            } else {
+                $confirmstr = get_string('removesubmissionconfirmforstudent', 'assign', $this->fullname($user));
+            }
         }
         $o .= $this->get_renderer()->confirm($confirmstr,
                                              $confirmurl,
@@ -9686,6 +9721,41 @@ class assign {
 
         return $submissionstatement;
     }
+
+    /**
+     * Check if time limit for assignment enabled and set up.
+     *
+     * @param int|null $userid User ID. If null, use global user.
+     * @return bool
+     */
+    public function is_time_limit_enabled(?int $userid = null): bool {
+        $instance = $this->get_instance($userid);
+        return get_config('assign', 'enabletimelimit') && !empty($instance->timelimit);
+    }
+
+    /**
+     * Check if an assignment submission is already started and not yet submitted.
+     *
+     * @param int|null $userid User ID. If null, use global user.
+     * @param int $groupid Group ID. If 0, use user id to determine group.
+     * @param int $attemptnumber Attempt number. If -1, check latest submission.
+     * @return bool
+     */
+    public function is_attempt_in_progress(?int $userid = null, int $groupid = 0, int $attemptnumber = -1): bool {
+        if ($this->get_instance($userid)->teamsubmission) {
+            $submission = $this->get_group_submission($userid, $groupid, false, $attemptnumber);
+        } else {
+            $submission = $this->get_user_submission($userid, false, $attemptnumber);
+        }
+
+        // If time limit is enabled, we only assume it is in progress if there is a start time for submission.
+        $timedattemptstarted = true;
+        if ($this->is_time_limit_enabled($userid)) {
+            $timedattemptstarted = !empty($submission) && !empty($submission->timestarted);
+        }
+
+        return !empty($submission) && $submission->status !== ASSIGN_SUBMISSION_STATUS_SUBMITTED && $timedattemptstarted;
+    }
 }
 
 /**
@@ -10031,7 +10101,7 @@ function move_group_override($id, $move, $assignid) {
     global $DB;
 
     // Get the override object.
-    if (!$override = $DB->get_record('assign_overrides', ['id' => $id], 'id, sortorder, groupid')) {
+    if (!$override = $DB->get_record('assign_overrides', ['id' => $id, 'assignid' => $assignid], 'id, sortorder, groupid')) {
         return false;
     }
     // Count the number of group overrides.
@@ -10060,8 +10130,8 @@ function move_group_override($id, $move, $assignid) {
 
         // Delete cache for the 2 records we updated above.
         $cache = cache::make('mod_assign', 'overrides');
-        $cache->delete("{$override->assignid}_g_{$override->groupid}");
-        $cache->delete("{$swapoverride->assignid}_g_{$swapoverride->groupid}");
+        $cache->delete("{$assignid}_g_{$override->groupid}");
+        $cache->delete("{$assignid}_g_{$swapoverride->groupid}");
     }
 
     reorder_group_overrides($assignid);

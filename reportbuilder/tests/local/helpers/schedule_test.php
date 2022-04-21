@@ -189,13 +189,13 @@ class schedule_test extends advanced_testcase {
 
         // Create cohort, with some members.
         $cohort = $this->getDataGenerator()->create_cohort();
-        $cohortuserone = $this->getDataGenerator()->create_user();
+        $cohortuserone = $this->getDataGenerator()->create_user(['firstname' => 'Zoe', 'lastname' => 'Zebra']);
         cohort_add_member($cohort->id, $cohortuserone->id);
-        $cohortusertwo = $this->getDataGenerator()->create_user();
+        $cohortusertwo = $this->getDataGenerator()->create_user(['firstname' => 'Henrietta', 'lastname' => 'Hamster']);
         cohort_add_member($cohort->id, $cohortusertwo->id);
 
         // Create a third user, to be added manually.
-        $manualuserone = $this->getDataGenerator()->create_user();
+        $manualuserone = $this->getDataGenerator()->create_user(['firstname' => 'Bob', 'lastname' => 'Badger']);
 
         $audiencecohort = $generator->create_audience([
             'reportid' => $report->get('id'),
@@ -220,11 +220,11 @@ class schedule_test extends advanced_testcase {
         ]);
 
         $users = schedule::get_schedule_report_users($schedule);
-        $this->assertEqualsCanonicalizing([
-            $cohortuserone->id,
-            $cohortusertwo->id,
-            $manualuserone->id,
-        ], array_keys($users));
+        $this->assertEquals([
+            'Bob',
+            'Henrietta',
+            'Zoe',
+        ], array_column($users, 'firstname'));
     }
 
     /**
@@ -300,8 +300,23 @@ class schedule_test extends advanced_testcase {
                 'recurrence' => model::RECURRENCE_NONE,
                 'timescheduled' => $yesterday,
             ], true],
+            'Time scheduled in the past, already sent prior to schedule' => [[
+                'recurrence' => model::RECURRENCE_NONE,
+                'timescheduled' => $yesterday,
+                'timelastsent' => $yesterday - HOURSECS,
+            ], true],
+            'Time scheduled in the past, already sent on schedule' => [[
+                'recurrence' => model::RECURRENCE_NONE,
+                'timescheduled' => $yesterday,
+                'timelastsent' => $yesterday,
+            ], false],
             'Time scheduled in the future' => [[
                 'recurrence' => model::RECURRENCE_NONE,
+                'timescheduled' => $tomorrow,
+            ], false],
+            'Time scheduled in the future, already sent prior to schedule' => [[
+                'recurrence' => model::RECURRENCE_NONE,
+                'timelastsent' => $yesterday,
                 'timescheduled' => $tomorrow,
             ], false],
             'Next send in the past' => [[

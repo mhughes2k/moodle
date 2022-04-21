@@ -33,6 +33,13 @@ if (!($settingspage->check_access())) {
     die;
 }
 
+$hassiteconfig = has_capability('moodle/site:config', $PAGE->context);
+if ($hassiteconfig) {
+    $PAGE->add_header_action($OUTPUT->render_from_template('core_admin/header_search_input', [
+        'action' => new moodle_url('/admin/search.php'),
+    ]));
+}
+
 /// WRITING SUBMITTED DATA (IF ANY) -------------------------------------------------------------------------------
 
 $statusmsg = '';
@@ -118,6 +125,13 @@ if (empty($SITE->fullname)) {
 
     $PAGE->set_title("$SITE->shortname: " . implode(": ",$visiblepathtosection));
     $PAGE->set_heading($SITE->fullname);
+    if ($section === 'frontpagesettings') {
+        $frontpagenode = $PAGE->settingsnav->find('frontpage', navigation_node::TYPE_SETTING);
+        $frontpagenode->make_active();
+        $PAGE->navbar->add(get_string('frontpage', 'admin'),
+            new moodle_url('/admin/category.php', ['category' => 'frontpage']));
+        $PAGE->navbar->add(get_string('frontpagesettings', 'admin'), $PAGE->url);
+    }
     echo $OUTPUT->header();
 
     if ($errormsg !== '') {

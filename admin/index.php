@@ -53,6 +53,12 @@ if (!extension_loaded('xml')) {
     die();
 }
 
+// Make sure mbstring extension is available.
+if (!extension_loaded('mbstring')) {
+    echo 'Moodle requires the mbstring PHP extension. Please install or enable the mbstring extension.';
+    die();
+}
+
 define('NO_OUTPUT_BUFFERING', true);
 
 if (isset($_POST['upgradekey'])) {
@@ -825,6 +831,7 @@ $insecuredataroot = is_dataroot_insecure(true);
 $SESSION->admin_critical_warning = ($insecuredataroot==INSECURE_DATAROOT_ERROR);
 
 $adminroot = admin_get_root();
+$PAGE->set_primary_active_tab('siteadminnode');
 
 // Check if there are any new admin settings which have still yet to be set
 if (any_new_admin_settings($adminroot)) {

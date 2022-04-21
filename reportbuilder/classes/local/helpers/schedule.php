@@ -119,10 +119,12 @@ class schedule {
 
         // Now convert audiences to SQL for user retrieval.
         [$wheres, $params] = audience::user_audience_sql($audiences);
+        [$userorder] = users_order_by_sql('u');
 
         $sql = 'SELECT u.*
                   FROM {user} u
-                 WHERE ' . implode(' OR ', $wheres);
+                 WHERE ' . implode(' OR ', $wheres) . '
+              ORDER BY ' . $userorder;
 
         return $DB->get_records_sql($sql, $params);
     }
@@ -207,7 +209,13 @@ class schedule {
             return false;
         }
 
-         return $schedule->get('timenextsend') <= $timenow;
+        // If there's no recurrence, check whether it's been sent since initial scheduled start time. This ensures that even if
+        // the schedule was manually sent beforehand, it'll still be automatically sent once the start time is first reached.
+        if ($schedule->get('recurrence') === model::RECURRENCE_NONE) {
+            return $schedule->get('timelastsent') < $timescheduled;
+        }
+
+        return $schedule->get('timenextsend') <= $timenow;
     }
 
     /**

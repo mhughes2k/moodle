@@ -91,6 +91,38 @@ Feature: Configure access to reports based on intended audience
     # This audience type should be disabled because there are no cohorts available.
     And "Add audience 'Member of cohort'" "link" should not exist
 
+  Scenario: Search for and add audience to report
+    Given I am on the "My report" "reportbuilder > Editor" page logged in as "admin"
+    And I click on the "Audience" dynamic tab
+    When I set the field "Search" in the "[data-region=sidebar-menu]" "css_element" to "All users"
+    Then I should see "All users" in the "[data-region=sidebar-menu]" "css_element"
+    And I should not see "Member of cohort" in the "[data-region=sidebar-menu]" "css_element"
+    And I click on "Add audience 'All users'" "link"
+    And I should see "Added audience 'All users'"
+    And I press "Save changes"
+    And I should see "Audience saved"
+
+  Scenario: Rename report audience
+    Given I am on the "My report" "reportbuilder > Editor" page logged in as "admin"
+    And I click on the "Audience" dynamic tab
+    And I click on "Add audience 'All users'" "link"
+    And I press "Save changes"
+    When I set the field "Rename audience 'All users'" to "All my lovely users"
+    And I reload the page
+    Then I should see "All my lovely users" in the "[data-region='audience-card']" "css_element"
+
+  Scenario: Rename report audience using filters
+    Given the "multilang" filter is "on"
+    And the "multilang" filter applies to "content and headings"
+    And I am on the "My report" "reportbuilder > Editor" page logged in as "admin"
+    And I click on the "Audience" dynamic tab
+    And I click on "Add audience 'All users'" "link"
+    And I press "Save changes"
+    When I set the field "Rename audience 'All users'" to "<span class=\"multilang\" lang=\"en\">English</span><span class=\"multilang\" lang=\"es\">Spanish</span>"
+    And I reload the page
+    Then I should see "English" in the "[data-region='audience-card']" "css_element"
+    And I should not see "Spanish" in the "[data-region='audience-card']" "css_element"
+
   Scenario: Delete report audience
     Given I am on the "My report" "reportbuilder > Editor" page logged in as "admin"
     And I click on the "Audience" dynamic tab
@@ -137,9 +169,8 @@ Feature: Configure access to reports based on intended audience
       | moodle/reportbuilder:editall  | Prohibit   | viewreportsrole | System       |           |
       | moodle/reportbuilder:edit     | Prohibit   | viewreportsrole | System       |           |
       | moodle/reportbuilder:view     | Allow      | viewreportsrole | System       |           |
-      | moodle/site:configview        | Allow      | viewreportsrole | System       |           |
     When I log in as "user1"
-    And I navigate to "Reports > Report builder > Custom reports" in site administration
+    And I follow "Reports" in the user menu
     And I should see "Custom reports"
     And I should not see "My report"
     And I should not see "My second report"
@@ -154,7 +185,7 @@ Feature: Configure access to reports based on intended audience
     And I press "Save changes"
     And I log out
     And I log in as "user1"
-    And I navigate to "Reports > Report builder > Custom reports" in site administration
+    And I follow "Reports" in the user menu
     And I should not see "My second report"
     And I click on "My report" "link" in the "My report" "table_row"
 
@@ -173,9 +204,8 @@ Feature: Configure access to reports based on intended audience
       | moodle/reportbuilder:editall  | Prohibit    | viewreportsrole | System       |           |
       | moodle/reportbuilder:edit     | Allow       | viewreportsrole | System       |           |
       | moodle/reportbuilder:view     | Prohibit    | viewreportsrole | System       |           |
-      | moodle/site:configview        | Allow       | viewreportsrole | System       |           |
     When I log in as "user1"
-    And I navigate to "Reports > Report builder > Custom reports" in site administration
+    And I follow "Reports" in the user menu
     And I should see "Custom reports"
     And I should not see "My report"
     And I should not see "My second report"
@@ -198,7 +228,7 @@ Feature: Configure access to reports based on intended audience
     And I press "Save changes"
     And I log out
     And I log in as "user1"
-    And I navigate to "Reports > Report builder > Custom reports" in site administration
+    And I follow "Reports" in the user menu
     And I should not see "My second report"
     And I should see "My user1 report"
     And I click on "My report" "link" in the "My report" "table_row"
@@ -218,9 +248,8 @@ Feature: Configure access to reports based on intended audience
       | moodle/reportbuilder:editall  | Allow       | viewreportsrole | System       |           |
       | moodle/reportbuilder:edit     | Prohibit    | viewreportsrole | System       |           |
       | moodle/reportbuilder:view     | Prohibit    | viewreportsrole | System       |           |
-      | moodle/site:configview        | Allow       | viewreportsrole | System       |           |
     When I log in as "user1"
-    And I navigate to "Reports > Report builder > Custom reports" in site administration
+    And I follow "Reports" in the user menu
     And I should see "Custom reports"
     And I should see "My report"
     Then I click on "My second report" "link" in the "My second report" "table_row"
