@@ -22,6 +22,7 @@
         "gradeimport": "grade\/import",
         "gradereport": "grade\/report",
         "gradingform": "grade\/grading\/form",
+        "groupng": "groupng\/plugins",
         "mlbackend": "lib\/mlbackend",
         "mnetservice": "mnet\/service",
         "webservice": "webservice",

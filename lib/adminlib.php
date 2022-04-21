@@ -6476,6 +6476,187 @@ class admin_page_managemods extends admin_externalpage {
     }
 }
 
+class admin_setting_managegroupng extends admin_setting {
+    public function __construct() {
+        $this->nosave = true;
+        parent::__construct('groupngui', get_string('managegroupng', 'groupng'), '','');
+    }
+    public function get_setting() {
+        return true;
+    }
+    public function get_defaultsetting() {
+        return true;
+    }
+
+    /**
+     * Always returns '', does not write anything
+     *
+     * @return string Always returns ''
+     */
+    public function write_setting($data)
+    {
+        // do not write any setting
+        return '';
+    }
+
+
+        /**
+     * Builds the XHTML to display the control
+     *
+     * @param string $data Unused
+     * @param string $query
+     * @return string
+     */
+    public function output_html($data, $query='') {
+        global $CFG, $OUTPUT, $DB, $PAGE;
+
+        // Display strings.
+        $strup        = get_string('up');
+        $strdown      = get_string('down');
+        $strsettings  = get_string('settings');
+        $strenable    = get_string('enable');
+        $strdisable   = get_string('disable');
+        $struninstall = get_string('uninstallplugin', 'core_admin');
+        $strusage     = get_string('groupngusage', 'groupng');
+        $strversion   = get_string('version');
+        $strtest      = get_string('testsettings', 'core_enrol');
+
+        $pluginmanager = core_plugin_manager::instance();
+
+        $available = groupng_get_plugins(false); // enrol_get_plugins(false);
+        $active    = groupng_get_plugins(true); //enrol_get_plugins(true);
+
+        $all = array();
+        foreach ($active as $key=>$groupng) {
+            $all[$key] = true;
+        }
+        foreach ($available as $key=>$groupng) {
+            $all[$key] = true;
+        }
+        // Now find all borked plugins and at least allow then to uninstall.
+        $condidates = $DB->get_fieldset_sql("SELECT DISTINCT groupng FROM {groupng}");
+        foreach ($condidates as $candidate) {
+            if (empty($all[$candidate])) {
+                $all[$candidate] = true;
+            }
+        }
+
+        $return = $OUTPUT->heading(get_string('actgroupngshhdr', 'groupng'), 3, 'main', true);
+        $return .= $OUTPUT->box_start('generalbox groupngui');
+
+        $table = new html_table();
+        $table->head  = array(get_string('name'), $strusage, $strversion, $strenable, $strup.'/'.$strdown, $strsettings, $strtest, $struninstall);
+        $table->colclasses = array('leftalign', 'centeralign', 'centeralign', 'centeralign', 'centeralign', 'centeralign', 'centeralign', 'centeralign');
+        $table->id = 'groupngplugins';
+        $table->attributes['class'] = 'admintable generaltable';
+        $table->data  = array();
+
+        // Iterate through enrol plugins and add to the display table.
+        $updowncount = 1;
+        $enrolcount = count($active);
+        $url = new moodle_url('/admin/groupng.php', array('sesskey'=>sesskey()));
+        $printed = array();
+        foreach($all as $groupng => $unused) {
+            $plugininfo = $pluginmanager->get_plugin_info('groupng_'.$groupng);
+            $version = get_config('groupng_'.$groupng, 'version');
+            if ($version === false) {
+                $version = '';
+            }
+
+            if (get_string_manager()->string_exists('pluginname', 'groupng_'.$groupng)) {
+                $name = get_string('pluginname', 'groupng_'.$groupng);
+            } else {
+                $name = $groupng;
+            }
+            // Usage.
+            $ci = 'na';//$DB->count_records('enrol', array('enrol'=>$enrol));
+            $cp = 'na';//$DB->count_records_select('user_enrolments', "enrolid IN (SELECT id FROM {enrol} WHERE enrol = ?)", array($enrol));
+            $usage = 'na';//"$ci / $cp";
+
+            // Hide/show links.
+            $class = '';
+            if (isset($active[$groupng])) {
+                $aurl = new moodle_url($url, array('action'=>'disable', 'groupng'=>$groupng));
+                $hideshow = "<a href=\"$aurl\">";
+                $hideshow .= $OUTPUT->pix_icon('t/hide', $strdisable) . '</a>';
+                $enabled = true;
+                $displayname = $name;
+            } else if (isset($available[$groupng])) {
+                $aurl = new moodle_url($url, array('action'=>'enable', 'groupng'=>$groupng));
+                $hideshow = "<a href=\"$aurl\">";
+                $hideshow .= $OUTPUT->pix_icon('t/show', $strenable) . '</a>';
+                $enabled = false;
+                $displayname = $name;
+                $class = 'dimmed_text';
+            } else {
+                $hideshow = '';
+                $enabled = false;
+                $displayname = '<span class="notifyproblem">'.$name.'</span>';
+            }
+            if ($PAGE->theme->resolve_image_location('icon', 'groupng_' . $name, false)) {
+                $icon = $OUTPUT->pix_icon('icon', '', 'groupng_' . $name, array('class' => 'icon pluginicon'));
+            } else {
+                $icon = $OUTPUT->pix_icon('spacer', '', 'moodle', array('class' => 'icon pluginicon noicon'));
+            }
+
+            // Up/down link (only if enrol is enabled).
+            $updown = '';
+            if ($enabled) {
+                if ($updowncount > 1) {
+                    $aurl = new moodle_url($url, array('action'=>'up', 'groupng'=>$groupng));
+                    $updown .= "<a href=\"$aurl\">";
+                    $updown .= $OUTPUT->pix_icon('t/up', $strup) . '</a>&nbsp;';
+                } else {
+                    $updown .= $OUTPUT->spacer() . '&nbsp;';
+                }
+                if ($updowncount < $enrolcount) {
+                    $aurl = new moodle_url($url, array('action'=>'down', 'groupng'=>$groupng));
+                    $updown .= "<a href=\"$aurl\">";
+                    $updown .= $OUTPUT->pix_icon('t/down', $strdown) . '</a>&nbsp;';
+                } else {
+                    $updown .= $OUTPUT->spacer() . '&nbsp;';
+                }
+                ++$updowncount;
+            }
+
+            debugging("settings".$plugininfo->get_settings_url());
+            // Add settings link.
+            if (!$version) {
+                $settings = '';
+            } else if ($surl = $plugininfo->get_settings_url()) {
+                $settings = html_writer::link($surl, $strsettings);
+            } else {
+                $settings = '';
+            }
+
+            // Add uninstall info.
+            $uninstall = '';
+            if ($uninstallurl = core_plugin_manager::instance()->get_uninstall_url('groupng_'.$groupng, 'manage')) {
+                $uninstall = html_writer::link($uninstallurl, $struninstall);
+            }
+
+            $test = '';
+            if (!empty($available[$groupng]) and method_exists($available[$groupng], 'test_settings')) {
+                $testsettingsurl = new moodle_url('/groupng/test_settings.php', array('groupng'=>$groupng, 'sesskey'=>sesskey()));
+                $test = html_writer::link($testsettingsurl, $strtest);
+            }
+
+            // Add a row to the table.
+            $row = new html_table_row(array($icon.$displayname, $usage, $version, $hideshow, $updown, $settings, $test, $uninstall));
+            if ($class) {
+                $row->attributes['class'] = $class;
+            }
+            $table->data[] = $row;
+
+            $printed[$groupng] = true;
+        }
+
+        $return .= html_writer::table($table);
+        $return .= get_string('configgroupngplugins', 'groupng').'<br />'.get_string('tablenosave', 'admin');
+        $return .= $OUTPUT->box_end();
+        return highlight($query, $return);
+    }
+}
 
 /**
  * Special class for enrol plugins management.
@@ -11727,3 +11908,4 @@ class admin_settings_h5plib_handler_select extends admin_setting_configselect {
         return true;
     }
 }
+

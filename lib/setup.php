@@ -627,6 +627,7 @@ require_once($CFG->libdir .'/enrollib.php');        // Enrolment related functio
 require_once($CFG->libdir .'/pagelib.php');         // Library that defines the moodle_page class, used for $PAGE
 require_once($CFG->libdir .'/blocklib.php');        // Library for controlling blocks
 require_once($CFG->libdir .'/grouplib.php');        // Groups functions
+require_once($CFG->dirroot .'/groupng/groupnglib.php'); // GroupNG related functions
 require_once($CFG->libdir .'/sessionlib.php');      // All session and cookie related stuff
 require_once($CFG->libdir .'/editorlib.php');       // All text editor related functions and classes
 require_once($CFG->libdir .'/messagelib.php');      // Messagelib functions

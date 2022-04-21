@@ -531,11 +531,14 @@ abstract class base {
      */
     public function get_settings_url(): ?moodle_url {
         $section = $this->get_settings_section_name();
+debugging($section);
         if ($section === null) {
+            debugging("c");
             return null;
         }
 
         $settings = admin_get_root()->locate($section);
+        var_dump($settings);
         if ($settings && $settings instanceof \core_admin\local\settings\linkable_settings_page) {
             return $settings->get_settings_page_url();
         }

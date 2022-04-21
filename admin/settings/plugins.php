@@ -765,6 +765,15 @@ if ($hassiteconfig) {
     }
 }
 
+// Enrolment plugins
+if ($hassiteconfig) {
+    $ADMIN->add('modules', new admin_category('groupng', new lang_string('groupng', 'groupng')));
+    $temp = new admin_settingpage('managegroupng', new lang_string('managegroupng', 'groupng'));
+    $temp->add(new admin_setting_managegroupng());
+    $ADMIN->add('groupng', $temp);
+}
+
+
 /// Add all local plugins - must be always last!
 if ($hassiteconfig) {
     $ADMIN->add('modules', new admin_category('localplugins', new lang_string('localplugins')));
