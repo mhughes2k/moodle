@@ -830,13 +830,15 @@ function profile_get_custom_fields(bool $onlyinuserobject = false): array {
  * Load custom profile fields into user object
  *
  * @param stdClass $user user object
- * @param array|bool $asuserattributes false to load in the the ->profile attribute (default), list of extrauser fields will generate
- * "profile_field_XXX" attributes on the user, which is the same way that it would be loaded if done via an SQL select.
+ * @param array|bool $asuserattributes  false to load in the the ->profile attribute (default),
+ *                                      list of extrauser fields will generate "profile_field_XXX" attributes
+ *                                      on the user, which is the same way that it would be loaded if done
+ *                                      via an SQL select.
  */
 function profile_load_custom_fields($user, $extrauserfields = false) {
     $record = (array)profile_user_record($user->id);
     if ($extrauserfields) {
-        foreach($record as $name=>$value) {
+        foreach ($record as $name => $value) {
             $fieldname = "profile_field_" . $name;
             if (in_array($fieldname, $extrauserfields)) {
                 $user->$fieldname = $value;
