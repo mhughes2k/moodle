@@ -65,7 +65,7 @@ class mod_assign_extension_form extends moodleform {
                 break;
             }
             $user = \core_user::get_user($userid);
-            profile_load_custom_fields($user, true);
+            profile_load_custom_fields($user, $extrauserfields);
             $usershtml .= $assign->get_renderer()->render(new assign_user_summary($user,
                                                                     $assign->get_course()->id,
                                                                     has_capability('moodle/site:viewfullnames',
