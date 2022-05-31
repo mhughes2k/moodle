@@ -217,6 +217,12 @@ class assign_feedback_offline extends assign_feedback_plugin {
         }
         $gradeimporter->close(true);
 
+        // Record the upload.
+        /** @var \assignfeedback_offline\event\submissions_graded $gradedevent */
+        $gradedevent = \assignfeedback_offline\event\submissions_graded::create_from_assign(
+            $this->assignment,
+            $updategradecount
+        )->trigger();
         $renderer = $this->assignment->get_renderer();
         $o = '';
 

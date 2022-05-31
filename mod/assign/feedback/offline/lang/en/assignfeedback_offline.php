@@ -28,6 +28,7 @@ $string['default_help'] = 'If set, offline grading with worksheets will be enabl
 $string['downloadgrades'] = 'Download grading worksheet';
 $string['enabled'] = 'Offline grading worksheet';
 $string['enabled_help'] = 'If enabled, the teacher will be able to download and upload a worksheet with student grades when marking the assignments.';
+$string['eventofflinesubmissionsgraded'] = 'Submissions Graded';
 $string['feedbackupdate'] = 'Set field "{$a->field}" for "{$a->student}" to "{$a->text}"';
 $string['graderecentlymodified'] = 'The grade has been modified in Moodle more recently than in the grading worksheet for {$a}';
 $string['gradelockedingradebook'] = 'The grade has been locked in the gradebook for {$a}';
