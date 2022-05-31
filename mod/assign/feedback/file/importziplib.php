@@ -306,7 +306,10 @@ class assignfeedback_file_zip_importer {
                 }
             }
         }
-
+        /** @var \assignfeedback_file\event\files_uploaded $uploaded */
+        $uploaded = \assignfeedback_file\event\files_uploaded::create_from_assign(
+            $assignment
+        )->trigger();
         require_once($CFG->dirroot . '/mod/assign/feedback/file/renderable.php');
         $importsummary = new assignfeedback_file_import_summary($assignment->get_course_module()->id,
                                                             count($userswithnewfeedback),
