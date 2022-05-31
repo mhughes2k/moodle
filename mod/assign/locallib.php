@@ -9200,8 +9200,8 @@ class assign {
 
         foreach ($users as $user) {
             $record = $DB->get_record('assign_user_mapping',
-                                      array('assignment'=>$assignid, 'userid'=>$user->id),
-                                     'id');
+                array('assignment' => $assignid, 'userid' => $user->id),
+                'id');
             if (!$record) {
                 $record = new stdClass();
                 $record->assignment = $assignid;
@@ -9209,6 +9209,7 @@ class assign {
                 $DB->insert_record('assign_user_mapping', $record);
             }
         }
+
     }
 
     /**
@@ -9230,14 +9231,28 @@ class assign {
         // Be a little smart about this - there is no record for the current user.
         // We should ensure any unallocated ids for the current participant
         // list are distrubited randomly.
-        self::allocate_unique_ids($assignid);
 
-        // Retry the search for a record.
+        $timeout = 5;
+        $locktype = 'mod_assign_allocate_unique_ids';
+        $resource = 'assign:'. $assignid;
+        // We don't want to really do anything if something else is already generating unique ids for this assignment.
+        $lockfactory = \core\lock\lock_config::get_lock_factory($locktype);
+        if($lock = $lockfactory->get_lock($resource, $timeout)) {
+            self::allocate_unique_ids($assignid);
+            $lock->release();
+        } else {
+
+        }
+
+        // Retry the search for a record. This will have waited 5 seconds for another process to have
+        // completed the allocation of unique ids, so we should now get a value.
         if ($record = $DB->get_record('assign_user_mapping', $params, 'id')) {
             return $record->id;
         }
 
-        // The requested user must not be a participant. Add a record anyway.
+        // And finally, if we still don't have a record, then we need to create one or
+        // the requested user must not be a participant. Add a record anyway.
+        // This should probably get tidied up so that a user only ever has 1 unique ID in an assignment.
         $record = new stdClass();
         $record->assignment = $assignid;
         $record->userid = $userid;
