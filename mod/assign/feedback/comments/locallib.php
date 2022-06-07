@@ -402,18 +402,30 @@ class assign_feedback_comments extends assign_feedback_plugin {
         );
 
         $feedbackcomment = $this->get_feedback_comments($grade->id);
+        $result = null;
         if ($feedbackcomment) {
             $feedbackcomment->commenttext = $data->assignfeedbackcomments;
             $feedbackcomment->commentformat = $data->assignfeedbackcommentsformat;
-            return $DB->update_record('assignfeedback_comments', $feedbackcomment);
+            $result = $DB->update_record('assignfeedback_comments', $feedbackcomment);
         } else {
             $feedbackcomment = new stdClass();
             $feedbackcomment->commenttext = $data->assignfeedbackcomments;
             $feedbackcomment->commentformat = $data->assignfeedbackcommentsformat;
             $feedbackcomment->grade = $grade->id;
             $feedbackcomment->assignment = $this->assignment->get_instance()->id;
-            return $DB->insert_record('assignfeedback_comments', $feedbackcomment) > 0;
+            $result = $DB->insert_record('assignfeedback_comments', $feedbackcomment) > 0;
         }
+
+        if ($result) {
+            \assignfeedback_comments\event\feedbackcomment_saved::create_from_assign(
+                $this->assignment,
+                $grade->id,
+                $grade->userid
+            )->trigger();
+        }
+
+        return $result;
+
     }
 
     /**

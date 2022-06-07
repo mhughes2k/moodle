@@ -14,25 +14,37 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-namespace assignfeedback_file\event;
+namespace assignfeedback_comments\event;
 use \mod_assign\event\base;
 
 /**
  * Event indicates that a user performed an update of grades via offline worksheet.
  */
-class files_uploaded extends base {
+class feedbackcomment_saved extends base {
     /**
      * Flag for prevention of direct create() call.
      * @var bool
      */
     protected static $preventcreatecall = true;
-    public static function create_from_assign(\assign $assign) {
+
+    /**
+     * @param \assign $assign
+     * @param int $gradeid ID of the grade feedback comment was saved against.
+     * @param int $relateduserid ID of the user comment was saved against.
+     * @return feedbackcomment_saved
+     * @throws \coding_exception
+     */
+    public static function create_from_assign(\assign $assign, $gradeid, $relateduserid) {
         $data = [
             'context' => $assign->get_context(),
             'objectid' => $assign->get_instance()->id,
+            'relateduserid' => $relateduserid,
+            'other' => [
+                'gradeid' => $gradeid
+            ]
         ];
         self::$preventcreatecall = false;
-        /** @var files_uploaded $event */
+        /** @var feedbackcomment_saved $event */
         $event = self::create($data);
         self::$preventcreatecall = true;
         $event->set_assign($assign);
@@ -43,9 +55,8 @@ class files_uploaded extends base {
      * @return string
      */
     public function get_description() {
-        $updatedcount = $this->data['other']['updatedcount'] ?? "-";
-        return "The user with id '$this->userid' has uploaded multiple feedback files for the assignment with " .
-            "course module id '$this->contextinstanceid'.";
+        return "The user with id '$this->userid' has saved feedback comment for the user id '$this->relateduserid' " .
+        "for the assignment with course module id '$this->contextinstanceid'.";
     }
 
     /**
@@ -54,12 +65,12 @@ class files_uploaded extends base {
      * @throws \coding_exception
      */
     public static function get_name() {
-        return get_string('eventfilesuploaded', 'assignfeedback_file');
+        return get_string('eventfeedbackcommentsaved', 'assignfeedback_comments');
     }
 
     protected function init() {
         $this->data['crud'] = 'u';
         $this->data['edulevel'] = self::LEVEL_TEACHING;
-        $this->data['objecttable'] = 'assign_grades';
+        $this->data['objecttable'] = 'assign';
     }
 }

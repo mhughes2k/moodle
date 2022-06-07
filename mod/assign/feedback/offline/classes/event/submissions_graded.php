@@ -14,25 +14,28 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-namespace assignfeedback_file\event;
+namespace assignfeedback_offline\event;
 use \mod_assign\event\base;
 
 /**
  * Event indicates that a user performed an update of grades via offline worksheet.
  */
-class files_uploaded extends base {
+class submissions_graded extends base {
     /**
      * Flag for prevention of direct create() call.
      * @var bool
      */
     protected static $preventcreatecall = true;
-    public static function create_from_assign(\assign $assign) {
+    public static function create_from_assign(\assign $assign, $updatedcount) {
         $data = [
             'context' => $assign->get_context(),
             'objectid' => $assign->get_instance()->id,
+            'other' => [
+                'updatedcount' => $updatedcount
+            ]
         ];
         self::$preventcreatecall = false;
-        /** @var files_uploaded $event */
+        /** @var submissions_graded $event */
         $event = self::create($data);
         self::$preventcreatecall = true;
         $event->set_assign($assign);
@@ -44,8 +47,8 @@ class files_uploaded extends base {
      */
     public function get_description() {
         $updatedcount = $this->data['other']['updatedcount'] ?? "-";
-        return "The user with id '$this->userid' has uploaded multiple feedback files for the assignment with " .
-            "course module id '$this->contextinstanceid'.";
+        return "The user with id '$this->userid' has graded '$updatedcount' submissions the assignment with " .
+        "course module id '$this->contextinstanceid'.";
     }
 
     /**
@@ -54,7 +57,7 @@ class files_uploaded extends base {
      * @throws \coding_exception
      */
     public static function get_name() {
-        return get_string('eventfilesuploaded', 'assignfeedback_file');
+        return get_string('eventofflinesubmissionsgraded', 'assignfeedback_offline');
     }
 
     protected function init() {
