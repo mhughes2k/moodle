@@ -4515,5 +4515,55 @@ privatefiles,moodle|/user/files.php';
         upgrade_main_savepoint(true, 2022052500.00);
     }
 
+    if ($oldversion < 2022052700.01) {
+
+        // Define index timestarted_idx (not unique) to be added to task_adhoc.
+        $table = new xmldb_table('task_adhoc');
+        $index = new xmldb_index('timestarted_idx', XMLDB_INDEX_NOTUNIQUE, ['timestarted']);
+
+        // Conditionally launch add index timestarted_idx.
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+
+        // Main savepoint reached.
+        upgrade_main_savepoint(true, 2022052700.01);
+    }
+
+    if ($oldversion < 2022052700.02) {
+
+        // Define index filename (not unique) to be added to files.
+        $table = new xmldb_table('files');
+        $index = new xmldb_index('filename', XMLDB_INDEX_NOTUNIQUE, ['filename']);
+
+        // Conditionally launch add index filename.
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+
+        // Main savepoint reached.
+        upgrade_main_savepoint(true, 2022052700.02);
+    }
+
+    if ($oldversion < 2022060300.01) {
+
+        // Changing precision of field hidden on table grade_categories to (10).
+        $table = new xmldb_table('grade_categories');
+        $field = new xmldb_field('hidden', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'timemodified');
+
+        // Launch change of precision for field hidden.
+        $dbman->change_field_precision($table, $field);
+
+        // Changing precision of field hidden on table grade_categories_history to (10).
+        $table = new xmldb_table('grade_categories_history');
+        $field = new xmldb_field('hidden', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'aggregatesubcats');
+
+        // Launch change of precision for field hidden.
+        $dbman->change_field_precision($table, $field);
+
+        // Main savepoint reached.
+        upgrade_main_savepoint(true, 2022060300.01);
+    }
+
     return true;
 }
