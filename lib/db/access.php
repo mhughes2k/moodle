@@ -2662,4 +2662,12 @@ $capabilities = array(
         'contextlevel' => CONTEXT_SYSTEM,
         'archetypes' => [],
     ],
+
+    'moodle/completion:receivecompletionnotifications' => array(
+        'captype' => 'read',
+        'contextlevel' => CONTEXT_MODULE,
+        'archetypes' => [
+           'student' => CAP_ALLOW
+        ]
+    ),
 );
