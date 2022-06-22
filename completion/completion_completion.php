@@ -177,7 +177,7 @@ class completion_completion extends data_object {
         // Notify user.
         $course = get_course($data->course);
         $context = context_course::instance($course->id);
-        if (has_capability("moodle/completion:receivecompletionnotifications", $context, $data->userid)) {
+        if (has_capability("moodle/completion:receivecompletionnotifications", $context, $data->userid, false)) {
             $messagesubject = get_string('coursecompleted', 'completion');
             $a = [
                 'coursename' => get_course_display_name_for_list($course),
