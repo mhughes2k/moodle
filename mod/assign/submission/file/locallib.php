@@ -647,4 +647,36 @@ class assign_submission_file extends assign_submission_plugin {
     public function allow_image_conversion() {
         return true;
     }
+
+    /**
+     * Display header with information about the expected file submission including the
+     * number of allowed files and file types allowed.
+     *
+     * @return string
+     */
+    public function view_header() {
+        global $OUTPUT;
+        // If "truthy".
+        if (get_config('assignsubmission_file', 'displaysubmissioninfo')) {
+            $pluginname = get_string('pluginname', 'assignsubmission_file');
+            $config = $this->get_config();
+            $o = '';
+            $configuredfiletypes = $this->get_configured_typesets();
+
+            $items = [];
+            $maxsubmissions = get_string('expectedsubmissioncount', 'assignsubmission_file', $config->maxfilesubmissions);
+            $items[] = $maxsubmissions;
+            if (!empty($configuredfiletypes)) {
+                $filetypelist = html_writer::alist($configuredfiletypes);
+                $items[] = get_string('expectedfiletypes', 'assignsubmission_file', $filetypelist);
+            } else {
+                $items[] = get_string('expectallfiletypes', 'assignsubmission_file');
+            }
+
+            $o .= $OUTPUT->heading($pluginname, 3);
+            $o .= html_writer::alist($items, null, "ol");
+            return $o;
+        }
+        return '';
+    }
 }

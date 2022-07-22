@@ -36,6 +36,10 @@ $settings->add(new admin_setting_filetypes('assignsubmission_file/filetypes',
                    new lang_string('defaultacceptedfiletypes', 'assignsubmission_file'),
                    new lang_string('acceptedfiletypes_help', 'assignsubmission_file'), ''));
 
+$settings->add(new admin_setting_configcheckbox('assignsubmission_file/displaysubmissioninfo',
+    new lang_string('displaysubmissioninfo', 'assignsubmission_file'),
+    new lang_string('displaysubmissioninfo_help', 'assignsubmission_file'), 1));
+
 if (isset($CFG->maxbytes)) {
 
     $name = new lang_string('maximumsubmissionsize', 'assignsubmission_file');
