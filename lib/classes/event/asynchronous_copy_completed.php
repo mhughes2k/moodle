@@ -47,7 +47,7 @@ class asynchronous_copy_completed extends base {
         return $event;
     }
     public function get_description() {
-        return "Copy of course {$this->other[self::OTHER_KEY_SOURCECOURSEID]}. New course: {$this->objectid} created.";
+        return "Copy of course '{$this->other[self::OTHER_KEY_SOURCECOURSEID]}'. New course: '{$this->objectid}' created.";
     }
     /**
      * Return localised event name.
