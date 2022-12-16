@@ -26,6 +26,7 @@
 namespace core\task;
 
 use async_helper;
+use core\event\asynchronous_copy_completed;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -199,6 +200,7 @@ class asynchronous_copy_task extends adhoc_task {
             $messageid = $asynchelper->send_message();
             mtrace('Course copy: Sent message: ' . $messageid);
         }
+        asynchronous_copy_completed::create_from_copy_task($backuprecord->itemid, $course)->trigger();
 
         // Cleanup.
         $bc->destroy();
