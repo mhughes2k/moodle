@@ -31,6 +31,7 @@ $string['asyncbackuppending'] = 'The backup process is pending';
 $string['asyncbackupprocessing'] = 'The backup is in progress';
 $string['asyncbadexecution'] = 'Bad backup controller execution. It is {$a} and should be 2.';
 $string['asynccheckprogress'] = 'You can check the progress at any time on the <a href="{$a}">restore page</a>.';
+$string['asynccopycompleted'] = 'Asynchronous course copy completed';
 $string['asyncgeneralsettings'] = 'Asynchronous backup/restore';
 $string['asyncemailenable'] = 'Enable message notifications';
 $string['asyncemailenabledetail'] = 'If enabled, users will receive a message when an asynchronous backup or restore completes.';

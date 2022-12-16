@@ -55,7 +55,7 @@ class asynchronous_copy_completed extends base {
      * @return string
      */
     public static function get_name() {
-        return get_string('coursecopycompleted', 'backup');
+        return get_string('asynccopycompleted', 'backup', (object)$a);
     }
 
     public function get_url() {
