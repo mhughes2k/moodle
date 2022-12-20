@@ -27,7 +27,12 @@ $string['activitydate:submissionsdue'] = 'Due:';
 $string['activitydate:submissionsopen'] = 'Opens:';
 $string['activitydate:submissionsopened'] = 'Opened:';
 $string['activityeditor'] = 'Activity instructions';
-$string['activityeditor_help'] = 'The actions you would like the student to complete for this assignment. This is only shown on the submission page where a students edits and submits their assignment.';
+$string['activityeditor_help'] = 'The actions you would like the student to complete for this assignment.
+
+This is shown on:
+
+* activity\'s page once the "Allow Submissions From" date has elapsed (if enabled),
+* the submission page where a students edits and submits their assignment.';
 $string['activityoverview'] = 'You have assignments that need attention';
 $string['addattempt'] = 'Allow another attempt';
 $string['addnewattempt'] = 'Add a new attempt';
@@ -322,6 +327,15 @@ $string['indicator:socialbreadthdef'] = 'Assignment social';
 $string['indicator:socialbreadthdef_help'] = 'The participant has reached this percentage of the social engagement offered by the Assignment activities during this analysis interval (Levels = No participation, Participant alone, Participant with others)';
 $string['indicator:socialbreadthdef_link'] = 'Learning_analytics_indicators#Social_breadth';
 $string['instructionfiles'] = 'Instruction files';
+$string['introhelp'] = 'Assignment introduction';
+$string['introhelp_help'] = 'This is the description that is displayed to students.
+
+It may be displayed on the course page.
+
+If an "Allow Submissions From" date is enabled, this will only be displayed once that elapses <strong>or</strong> "Always show description" is enabled.
+
+Use "Activity Instructions" and "Always show description" if you want to allow see students to see the introduction all the time but  the instructions at a specific date &amp; time.
+';
 $string['introattachments'] = 'Additional files';
 $string['introattachments_help'] = 'Additional files for use in the assignment, such as answer templates, may be added.';
 $string['invalidgradeforscale'] = 'The grade supplied was not valid for the current scale';

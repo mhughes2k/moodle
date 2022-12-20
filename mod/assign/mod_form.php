@@ -47,7 +47,7 @@ class mod_assign_mod_form extends moodleform_mod {
 
         $mform->addElement('header', 'general', get_string('general', 'form'));
 
-        $mform->addElement('text', 'name', get_string('assignmentname', 'assign'), array('size'=>'64'));
+        $mform->addElement('text', 'name', get_string('assignmentname', 'assign'), array('size' => '64'));
         if (!empty($CFG->formatstringstriptags)) {
             $mform->setType('name', PARAM_TEXT);
         } else {
@@ -57,6 +57,16 @@ class mod_assign_mod_form extends moodleform_mod {
         $mform->addRule('name', get_string('maximumchars', '', 255), 'maxlength', 255, 'client');
 
         $this->standard_intro_elements(get_string('description', 'assign'));
+        $mform->addHelpButton('introeditor', 'introhelp', 'assign');
+        $name = get_string('alwaysshowdescription', 'assign');
+        if ($showdesc = $mform->getElement('showdescription')) {
+            $alwaysshow = $mform->createElement('checkbox', 'alwaysshowdescription', $name);
+            $mform->insertElementBefore($alwaysshow, 'showdescription');
+        } else {
+            $mform->addElement('checkbox', 'alwaysshowdescription', $name);
+        }
+        $mform->addHelpButton('alwaysshowdescription', 'alwaysshowdescription', 'assign');
+        $mform->disabledIf('alwaysshowdescription', 'allowsubmissionsfromdate[enabled]', 'notchecked');
 
         // Activity.
         $mform->addElement('editor', 'activityeditor',
@@ -114,11 +124,6 @@ class mod_assign_mod_form extends moodleform_mod {
                 array('optional' => true));
             $mform->addHelpButton('timelimit', 'timelimit', 'assign');
         }
-
-        $name = get_string('alwaysshowdescription', 'assign');
-        $mform->addElement('checkbox', 'alwaysshowdescription', $name);
-        $mform->addHelpButton('alwaysshowdescription', 'alwaysshowdescription', 'assign');
-        $mform->disabledIf('alwaysshowdescription', 'allowsubmissionsfromdate[enabled]', 'notchecked');
 
         $assignment->add_all_plugin_settings($mform);
 

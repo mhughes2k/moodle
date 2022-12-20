@@ -285,6 +285,25 @@ class assign {
     }
 
     /**
+     * Activity instructions.
+     * Should be shown if the allow submissions has elapsed & the user can make a submission.
+     * (this should deal with some override issues).
+     * @return bool
+     */
+    public function show_activity(): bool {
+        if (
+            $this->get_instance()->allowsubmissionsfromdate &&
+            time() > $this->get_instance()->allowsubmissionsfromdate
+        ) {
+            return true;
+        }
+        if (empty($this->get_instance()->allowsubmissionsfromdate)) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * Return a list of parameters that can be used to get back to the current page.
      *
      * @return array params
@@ -5895,7 +5914,9 @@ class assign {
                                                       $this->get_context(),
                                                       $this->show_intro(),
                                                       $this->get_course_module()->id,
-                                                      '', '', $postfix));
+                                                      '', '', $postfix, null,
+                                                      $this->show_activity()
+        ));
 
         // Display plugin specific headers.
         $plugins = array_merge($this->get_submission_plugins(), $this->get_feedback_plugins());
