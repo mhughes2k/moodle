@@ -65,6 +65,12 @@ class mod_assign_generator extends testing_module_generator {
             $record->teamsubmissiongroupingid = $this->get_grouping_id($record->teamsubmissiongroupingid);
         }
 
+        if (property_exists($record, 'activityinstructions')) {
+            // Behat generators use the 'activity' field so support an alternative name instead.
+            $record->activity = $record->activityinstructions;
+            unset($record->activityinstructions);
+        }
+
         foreach ($defaultsettings as $name => $value) {
             if (!isset($record->{$name})) {
                 $record->{$name} = $value;
