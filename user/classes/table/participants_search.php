@@ -199,6 +199,7 @@ class participants_search {
         // Get the fields for all contexts because there is a special case later where it allows
         // matches of fields you can't access if they are on your own account.
         $userfields = fields::for_identity(null)->with_userpic();
+        $userfields->including('suspended');
         ['selects' => $userfieldssql, 'joins' => $userfieldsjoin, 'params' => $userfieldsparams, 'mappings' => $mappings] =
                 (array)$userfields->get_sql('u', true);
         if ($userfieldsjoin) {

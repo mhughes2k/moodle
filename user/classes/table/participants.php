@@ -178,6 +178,7 @@ class participants extends \table_sql implements dynamic_table {
             $this->no_sorting('status');
         };
 
+        $extrafields[] = 'u.suspended';
         $this->define_columns($columns);
         $this->define_headers($headers);
 
@@ -340,6 +341,7 @@ class participants extends \table_sql implements dynamic_table {
             require_once($CFG->dirroot . '/enrol/locallib.php');
             $manager = new \course_enrolment_manager($PAGE, $this->course);
             $userenrolments = $manager->get_user_enrolments($data->id);
+            $alluesuspended = false;
             foreach ($userenrolments as $ue) {
                 $timestart = $ue->timestart;
                 $timeend = $ue->timeend;
@@ -361,19 +363,32 @@ class participants extends \table_sql implements dynamic_table {
                             $status = get_string('participationnotcurrent', 'enrol');
                             $statusval = status_field::STATUS_NOT_CURRENT;
                         }
+                        $alluesuspended = $alluesuspended && false;
                         break;
                     case ENROL_USER_SUSPENDED:
                         $status = get_string('participationsuspended', 'enrol');
                         $statusval = status_field::STATUS_SUSPENDED;
+                        $alluesuspended = $alluesuspended && true;
                         break;
                 }
-
                 $statusfield = new status_field($instancename, $coursename, $fullname, $status, $timestart, $timeend,
                     $actions, $timeenrolled);
                 $statusfielddata = $statusfield->set_status($statusval)->export_for_template($OUTPUT);
                 $enrolstatusoutput .= $OUTPUT->render_from_template('core_user/status_field', $statusfielddata);
             }
+            if($data->suspended) {
+                $statusfield = new status_field("Site", "Site", "Site", "Account Disabled");
+                $statusfielddata = $statusfield->set_status(status_field::STATUS_PROFILE_SUSPENDED)->export_for_template($OUTPUT);
+                $enrolstatusoutput .= $OUTPUT->render_from_template('core_user/status_field', $statusfielddata);
+            }
         }
+        if ($alluesuspended && $data->suspended) {
+            //$enrolstatusoutput .= print_r($data,true);
+            $statusfield = new status_field("Site", "Site", "Site", "Account Disabled");
+            $statusfielddata = $statusfield->set_status(status_field::STATUS_PROFILE_SUSPENDED)->export_for_template($OUTPUT);
+            $enrolstatusoutput = $OUTPUT->render_from_template('core_user/status_field', $statusfielddata);
+        }
+
         return $enrolstatusoutput;
     }
 

@@ -50,6 +50,9 @@ class status_field implements renderable, templatable {
     /** Not current user enrolment status constant. */
     const STATUS_NOT_CURRENT = 2;
 
+    /** Profile has been disabled */
+    const STATUS_PROFILE_SUSPENDED = 3;
+
     /** @var string $enrolinstancename The enrolment instance name. */
     protected $enrolinstancename;
 
@@ -124,6 +127,7 @@ class status_field implements renderable, templatable {
         $data->status = $this->status;
         $data->active = $this->statusactive;
         $data->suspended = $this->statussuspended;
+        $data->disabled = $this->statusdisabled;
         $data->notcurrent = $this->statusnotcurrent;
 
         if ($this->timestart) {
@@ -165,6 +169,7 @@ class status_field implements renderable, templatable {
         $this->statusactive = $status == static::STATUS_ACTIVE;
         $this->statussuspended = $status == static::STATUS_SUSPENDED;
         $this->statusnotcurrent = $status == static::STATUS_NOT_CURRENT;
+        $this->statusdisabled = $status == static::STATUS_PROFILE_SUSPENDED;
 
         return $this;
     }
