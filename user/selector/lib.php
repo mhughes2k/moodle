@@ -134,7 +134,7 @@ abstract class user_selector_base {
 
         // Populate the list of additional user identifiers to display.
         if ($this->includecustomfields) {
-            $userfieldsapi = \core_user\fields::for_identity($this->accesscontext)->with_name();
+            $userfieldsapi = \core_user\fields::for_identity($this->accesscontext)->with_name()->including('suspended');
             $this->extrafields = $userfieldsapi->get_required_fields([\core_user\fields::PURPOSE_IDENTITY]);
             [
                 'selects' => $this->userfieldsselects,
@@ -472,7 +472,8 @@ abstract class user_selector_base {
         }
 
         // Raw list of fields.
-        $fields = array('id');
+        $fields = array('id', 'suspended');
+        print_r($fields);
         // Add additional name fields.
         $fields = array_merge($fields, \core_user\fields::get_name_fields(), $this->extrafields);
 
@@ -619,12 +620,16 @@ abstract class user_selector_base {
      */
     public function output_user($user) {
         $out = fullname($user, $this->viewfullnames);
+
         if ($this->extrafields) {
             $displayfields = array();
             foreach ($this->extrafields as $field) {
                 $displayfields[] = s($user->{$field});
             }
             $out .= ' (' . implode(', ', $displayfields) . ')';
+        }
+        if ($user->suspended) {
+            $out = "({$out} Account Suspended)";
         }
         return $out;
     }
