@@ -37,6 +37,7 @@ class enrol_manual_potential_participant extends user_selector_base {
     public function __construct($name, $options) {
         $this->enrolid  = $options['enrolid'];
         $options['includecustomfields'] = true;
+        $this->userfieldsselects = 'suspended';
         parent::__construct($name, $options);
     }
 

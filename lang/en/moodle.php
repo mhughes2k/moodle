@@ -24,6 +24,7 @@
 
 $string['abouttobeinstalled'] = 'about to be installed';
 $string['accept'] = 'Accept';
+$string['accountdisabled'] = 'Account Disabled';
 $string['action'] = 'Action';
 $string['actionchoice'] = 'What do you want to do with the file \'{$a}\'?';
 $string['actions'] = 'Actions';
@@ -548,6 +549,7 @@ $string['digitalminor'] = 'Digital minor';
 $string['digitalminor_desc'] = 'Please ask your parent/guardian to contact:';
 $string['directory'] = 'Directory';
 $string['disable'] = 'Disable';
+
 $string['disabledcomments'] = 'Comments are disabled';
 $string['dismissnotification'] = 'Dismiss this notification';
 $string['displayingfirst'] = 'Only the first {$a->count} {$a->things} are displayed';

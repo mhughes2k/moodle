@@ -950,6 +950,7 @@ abstract class moodle_database {
             $a = new stdClass;
             $a->expected = $count;
             $a->actual = count($params);
+//            die($sql. print_r($params, 1));
             throw new dml_exception('invalidqueryparam', $a);
         }
 

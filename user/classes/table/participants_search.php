@@ -113,7 +113,7 @@ class participants_search {
                  {$outerjoins}
                  {$outerwhere}
                        {$sort}";
-
+//echo($sql);
         return $DB->get_recordset_sql($sql, $params, $limitfrom, $limitnum);
     }
 
@@ -199,9 +199,13 @@ class participants_search {
         // Get the fields for all contexts because there is a special case later where it allows
         // matches of fields you can't access if they are on your own account.
         $userfields = fields::for_identity(null)->with_userpic();
-        $userfields->including('suspended');
+        $userfields = $userfields->including('suspended');
         ['selects' => $userfieldssql, 'joins' => $userfieldsjoin, 'params' => $userfieldsparams, 'mappings' => $mappings] =
                 (array)$userfields->get_sql('u', true);
+        //die($userfieldssql);
+        //die(print_r($userfieldsjoin,1));
+        //die(print_r($userfieldsparams, 1));
+        //die(print_r($mappings,1));
         if ($userfieldsjoin) {
             $outerjoins[] = $userfieldsjoin;
             $params = array_merge($params, $userfieldsparams);
@@ -612,6 +616,7 @@ class participants_search {
                            OR (%1$sue.timeend > 0
                           AND %1$sue.timeend <= :%2$snow2))';
 
+            $whereprofilesuspended = '(eu_u.suspended = 1)';
             // Round 'now' time to help DB caching.
             $now = round(time(), -2);
 
@@ -621,7 +626,9 @@ class participants_search {
 
                     foreach ($statusids as $i => $statusid) {
                         $joinprefix = "{$prefix}{$i}";
-                        $joins[] = "JOIN {user_enrolments} {$joinprefix}ue ON {$joinprefix}ue.userid = {$useridcolumn}";
+                        if ($statusid !== ENROL_USER_DISABLED) {
+                            $joins[] = "JOIN {user_enrolments} {$joinprefix}ue ON {$joinprefix}ue.userid = {$useridcolumn}";
+                        }
 
                         if ($statusid === ENROL_USER_ACTIVE) {
                             // Conditions to be met if user filtering by active.
@@ -636,7 +643,10 @@ class participants_search {
                             ];
 
                             $params = array_merge($params, $activeparams);
-                        } else {
+                        } else if ($statusid === ENROL_USER_DISABLED) {
+                            debugging('User disabled');
+                            $joinwheres[] = $whereprofilesuspended;
+                        }else {
                             // Conditions to be met if filtering by suspended (currently the only other status).
                             $joinwheres[] = sprintf($wheresuspended, $joinprefix, $joinprefix);
 
@@ -650,8 +660,9 @@ class participants_search {
 
                             $params = array_merge($params, $suspendedparams);
                         }
-
-                        $joins[] = sprintf($enroljoin, $joinprefix);
+                        if ($statusid !== ENROL_USER_DISABLED) {
+                            $joins[] = sprintf($enroljoin, $joinprefix);
+                        }
                     }
 
                     $where = implode(' AND ', $joinwheres);
@@ -679,6 +690,9 @@ class participants_search {
                             ];
 
                             $params = array_merge($params, $activeparams);
+                        } else if ($statusid === ENROL_USER_DISABLED) {
+                            debugging('User disabled');
+                            $joinwheres[] = sprintf("NOT {$whereprofilesuspended}");
                         } else {
                             // Conditions to be met if filtering by suspended (currently the only other status).
                             $joinwheres[] = sprintf("NOT {$wheresuspended}", $prefix, $paramprefix);
@@ -720,6 +734,9 @@ class participants_search {
                             ];
 
                             $params = array_merge($params, $activeparams);
+                        } elseif ($statusid === ENROL_USER_DISABLED) {
+                            // Conditions to be met if the user->suspended == true.
+                            $joinwheres[] = $whereprofilesuspended;
                         } else {
                             // Conditions to be met if filtering by suspended (currently the only other status).
                             $joinwheres[] = sprintf($wheresuspended, $prefix, $paramprefix);

@@ -97,6 +97,10 @@ class participants_filter extends \core\output\datafilter {
                     'value' => ENROL_USER_SUSPENDED,
                     'title'  => get_string('inactive'),
                 ],
+                (object) [
+                    'value' => ENROL_USER_DISABLED,
+                    'title'  => get_string('accountdisabled'),
+                ],
             ]
         );
     }

@@ -39,6 +39,8 @@ define('ENROL_USER_ACTIVE', 0);
 /** User participation in course is suspended (used in user_enrolments->status) */
 define('ENROL_USER_SUSPENDED', 1);
 
+define('ENROL_USER_DISABLED', 2);
+
 /** @deprecated - enrol caching was reworked, use ENROL_MAX_TIMESTAMP instead */
 define('ENROL_REQUIRE_LOGIN_CACHE_PERIOD', 1800);
 
