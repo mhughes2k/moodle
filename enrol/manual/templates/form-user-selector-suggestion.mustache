@@ -38,6 +38,7 @@
     * phone2 user phone2 field
     * department user department field
     * institution user institution field
+    * suspended account suspended field
 
     Example context (json):
     { "id": "1",
@@ -51,6 +52,7 @@
 <span>
     <img height="12" src="{{profileimageurlsmall}}" alt="" role="presentation">
     <span>{{fullname}}</span>
+    {{#suspended}}(Account disabled){{/suspended}}
     {{#hasidentity}}
     <span><small>{{identity}}</small></span>
     {{/hasidentity}}

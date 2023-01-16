@@ -388,6 +388,7 @@ class course_enrolment_manager {
         // Get custom user field SQL used for querying all the fields we need (identity, name, and
         // user picture).
         $userfields = fields::for_identity($this->context)->with_name()->with_userpic()
+                ->including('suspended')
                 ->excluding('username', 'lastaccess', 'maildisplay');
         ['selects' => $fieldselects, 'joins' => $fieldjoins, 'params' => $params, 'mappings' => $mappings] =
                 (array)$userfields->get_sql('u', true, '', '', false);

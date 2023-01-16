@@ -571,7 +571,7 @@ class core_enrol_external extends external_api {
             $identityfields[] = 'customfields';
         }
         $requiredfields = array_merge(
-            ['id', 'fullname', 'profileimageurl', 'profileimageurlsmall'],
+            ['id', 'fullname', 'profileimageurl', 'profileimageurlsmall', 'suspended'],
             $identityfields
         );
         foreach ($users['users'] as $id => $user) {
