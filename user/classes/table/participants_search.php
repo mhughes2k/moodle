@@ -202,10 +202,6 @@ class participants_search {
         $userfields = $userfields->including('suspended');
         ['selects' => $userfieldssql, 'joins' => $userfieldsjoin, 'params' => $userfieldsparams, 'mappings' => $mappings] =
                 (array)$userfields->get_sql('u', true);
-        //die($userfieldssql);
-        //die(print_r($userfieldsjoin,1));
-        //die(print_r($userfieldsparams, 1));
-        //die(print_r($mappings,1));
         if ($userfieldsjoin) {
             $outerjoins[] = $userfieldsjoin;
             $params = array_merge($params, $userfieldsparams);
@@ -644,7 +640,6 @@ class participants_search {
 
                             $params = array_merge($params, $activeparams);
                         } else if ($statusid === ENROL_USER_DISABLED) {
-                            debugging('User disabled');
                             $joinwheres[] = $whereprofilesuspended;
                         }else {
                             // Conditions to be met if filtering by suspended (currently the only other status).
@@ -691,7 +686,6 @@ class participants_search {
 
                             $params = array_merge($params, $activeparams);
                         } else if ($statusid === ENROL_USER_DISABLED) {
-                            debugging('User disabled');
                             $joinwheres[] = sprintf("NOT {$whereprofilesuspended}");
                         } else {
                             // Conditions to be met if filtering by suspended (currently the only other status).
