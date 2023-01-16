@@ -99,7 +99,6 @@ define(['jquery', 'core/ajax', 'core/templates', 'core/str'], function($, Ajax, 
                             }
                         });
                         ctx.identity = identity.join(', ');
-                        window.console.log(ctx);
                         promises.push(Templates.render('enrol_manual/form-user-selector-suggestion', ctx));
                     });
 
