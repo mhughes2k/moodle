@@ -53,23 +53,23 @@ class xmldb_field extends xmldb_object {
      *  - MySQL: VARCHAR 65,535 chars
      *  - PostgreSQL: no limit
      *
-     * @const maximum length of text field
+     * @var maximum length of text field
      */
     const CHAR_MAX_LENGTH = 1333;
 
 
     /**
-     * @const maximum number of digits of integers
+     * @var maximum number of digits of integers
      */
     const INTEGER_MAX_LENGTH = 20;
 
     /**
-     * @const max length (precision, the total number of digits) of decimals
+     * @var max length (precision, the total number of digits) of decimals
      */
     const NUMBER_MAX_LENGTH = 38;
 
     /**
-     * @const max length of floats
+     * @var max length of floats
      */
     const FLOAT_MAX_LENGTH = 20;
 
@@ -77,7 +77,7 @@ class xmldb_field extends xmldb_object {
      * Note:
      *  - Oracle has 30 chars limit for all names
      *
-     * @const maximumn length of field names
+     * @var maximumn length of field names
      */
     const NAME_MAX_LENGTH = 30;
 
@@ -90,7 +90,7 @@ class xmldb_field extends xmldb_object {
      * @param bool $notnull XMLDB_NOTNULL or null (or false)
      * @param bool $sequence XMLDB_SEQUENCE or null (or false)
      * @param mixed $default meaningful default o null (or false)
-     * @param xmldb_object $previous
+     * @param string $previous
      */
     public function __construct($name, $type=null, $precision=null, $unsigned=null, $notnull=null, $sequence=null, $default=null, $previous=null) {
         $this->type = null;
@@ -112,7 +112,7 @@ class xmldb_field extends xmldb_object {
      * @param bool $notnull XMLDB_NOTNULL or null (or false)
      * @param bool $sequence XMLDB_SEQUENCE or null (or false)
      * @param mixed $default meaningful default o null (or false)
-     * @param xmldb_object $previous
+     * @param string $previous
      */
     public function set_attributes($type, $precision=null, $unsigned=null, $notnull=null, $sequence=null, $default=null, $previous=null) {
         $this->type = $type;
@@ -535,7 +535,7 @@ class xmldb_field extends xmldb_object {
     /**
      * This function will set all the attributes of the xmldb_field object
      * based on information passed in one ADOField
-     * @param string $adofield
+     * @param database_column_info $adofield
      * @return void, sets $this->type
      */
     public function setFromADOField($adofield) {

@@ -73,7 +73,7 @@ $string['pathssubdataroot'] = '<p>Um diretório em que Moodle armazenará todo o
 <p>Este diretório deve ser legível e gravável pelo usuário do servidor web (geralmente "www-data \',\' nobody \', ou\' apache\'). </p>
 <p>Não deve ser diretamente acessível através da web. </p>
 <p>Se o diretório não existir atualmente, o processo de instalação tentará criá-lo. </p>';
-$string['pathssubdirroot'] = '<p>Caminho completo do diretório para instalação do Moddle.</p>';
+$string['pathssubdirroot'] = '<p>Caminho completo do diretório para instalação do Moodle.</p>';
 $string['pathssubwwwroot'] = '<p>O endereço completo em que Moodle pode ser acessado ou seja, o endereço que os usuários vão digitar na barra de endereços do seu navegador para acessar Moodle. </p>
 <p>Não é possível acessar Moodle usando múltiplos endereços. Se o seu site é acessível através de múltiplos endereços, em seguida, escolher o mais fácil e configurar um redirecionamento permanente para cada um dos outros endereços. </p>
 <p>Se o seu site é acessível tanto a partir da Internet e, a partir de uma rede interna (às vezes chamado de Intranet), em seguida, use o endereço público aqui. </p>
@@ -89,7 +89,7 @@ $string['welcomep10'] = '{$a->installername} ({$a->installerversion})';
 $string['welcomep20'] = 'Você está vendo esa página pois instalou com sucesso o pacote<strong>{$a->packname} {$a->packversion}</strong>. Parabéns!';
 $string['welcomep30'] = 'Esta versão do <strong>{$a->installername}</strong> inclui as aplicações para a criação de um ambiente em que o <strong>Moodle</strong> possa operar:';
 $string['welcomep40'] = 'O pacote inclui também o <strong>Moodle {$a->moodlerelease} ({$a->moodleversion})</strong>.';
-$string['welcomep50'] = 'O uso das aplicações incluídas neste pacote é regulamentado pelas respectivas licenças. O instalador completo <strong>{$a->installername}</strong> é <a href="http://www.opensource.org/docs/definition_plain.html">open source</a> e é distribuído com uma licença <a href="http://www.gnu.org/copyleft/gpl.html">GPL</a>.';
-$string['welcomep60'] = 'As seguinte páginas guiam passo a passo a configuração de <strong>Moodle</strong> no seu computador. Você pode usar a configuração padrão ou alterá-las de acordo com as suas necessidades.';
+$string['welcomep50'] = 'O uso de todos os aplicativos deste pacote é regulamentado por suas respectivas licenças. O pacote completo <strong>{$a->installername}</strong> é <a href="https://www.opensource.org/docs/definition_plain.html">código aberto</a> e é distribuído sob a licença <a href="https://www.gnu.org/copyleft/gpl.html">GPL</a>.';
+$string['welcomep60'] = 'As páginas a seguir conduzirão você por algumas etapas para configurar e instalar o <strong>Moodle</strong> facilmente em seu computador. Você pode aceitar as configurações padrão ou, opcionalmente, alterá-las para atender às suas próprias necessidades.';
 $string['welcomep70'] = 'Clique no botão "Próximo" abaixo para continuar a configuração do <strong>Moodle</strong>.';
 $string['wwwroot'] = 'Endereço web';

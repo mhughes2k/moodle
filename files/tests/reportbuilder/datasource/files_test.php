@@ -46,13 +46,13 @@ class files_test extends core_reportbuilder_testcase {
     public function test_datasource_default(): void {
         $this->resetAfterTest();
 
+        $course = $this->getDataGenerator()->create_course();
+        $coursecontext = context_course::instance($course->id);
+
         $user = $this->getDataGenerator()->create_user();
         $usercontext = context_user::instance($user->id);
 
         $this->setUser($user);
-
-        $course = $this->getDataGenerator()->create_course();
-        $coursecontext = context_course::instance($course->id);
 
         $this->generate_test_files($coursecontext);
 
@@ -62,10 +62,14 @@ class files_test extends core_reportbuilder_testcase {
 
         $content = $this->get_custom_report_content($report->get('id'));
         $content = $this->filter_custom_report_content($content, static function(array $row): bool {
-            return $row['c0_contextid'] !== 'System';
-        }, 'c0_contextid');
+            return $row['c0_ctxid'] !== 'System';
+        });
 
         $this->assertCount(2, $content);
+
+        // Consistent order (course, user), just in case.
+        core_collator::asort_array_of_arrays_by_key($content, 'c0_ctxid');
+        $content = array_values($content);
 
         // First row (course summary file).
         [$contextname, $userfullname, $filename, $mimetype, $filesize, $timecreated] = array_values($content[0]);
@@ -95,13 +99,13 @@ class files_test extends core_reportbuilder_testcase {
         $this->resetAfterTest();
         $this->setAdminUser();
 
+        $course = $this->getDataGenerator()->create_course();
+        $coursecontext = context_course::instance($course->id);
+
         $user = $this->getDataGenerator()->create_user();
         $usercontext = context_user::instance($user->id);
 
         $this->setUser($user);
-
-        $course = $this->getDataGenerator()->create_course();
-        $coursecontext = context_course::instance($course->id);
 
         $draftitemid = $this->generate_test_files($coursecontext);
 
@@ -109,53 +113,71 @@ class files_test extends core_reportbuilder_testcase {
         $generator = $this->getDataGenerator()->get_plugin_generator('core_reportbuilder');
         $report = $generator->create_report(['name' => 'Files', 'source' => files::class, 'default' => 0]);
 
-        $generator->create_column(['reportid' => $report->get('id'), 'uniqueidentifier' => 'file:contexturl']);
+        // Consistent order, sorted by context and content hash.
+        $generator->create_column(['reportid' => $report->get('id'), 'uniqueidentifier' => 'context:link',
+            'sortenabled' => 1, 'sortorder' => 1]);
+        $generator->create_column(['reportid' => $report->get('id'), 'uniqueidentifier' => 'context:name']);
+        $generator->create_column(['reportid' => $report->get('id'), 'uniqueidentifier' => 'context:level']);
         $generator->create_column(['reportid' => $report->get('id'), 'uniqueidentifier' => 'file:path']);
         $generator->create_column(['reportid' => $report->get('id'), 'uniqueidentifier' => 'file:author']);
         $generator->create_column(['reportid' => $report->get('id'), 'uniqueidentifier' => 'file:license']);
+        $generator->create_column(['reportid' => $report->get('id'), 'uniqueidentifier' => 'file:contenthash',
+            'sortenabled' => 1, 'sortorder' => 2]);
         $generator->create_column(['reportid' => $report->get('id'), 'uniqueidentifier' => 'file:component']);
         $generator->create_column(['reportid' => $report->get('id'), 'uniqueidentifier' => 'file:area']);
         $generator->create_column(['reportid' => $report->get('id'), 'uniqueidentifier' => 'file:itemid']);
 
         $content = $this->get_custom_report_content($report->get('id'));
         $content = $this->filter_custom_report_content($content, static function(array $row): bool {
-            return stripos($row['c0_contextid'], 'System') === false;
-        }, 'c0_contextid');
+            return stripos($row['c0_ctxid'], 'System') === false;
+        });
 
         // There should be two entries (directory & file) for each context.
         $this->assertEquals([
             [
                 "<a href=\"{$coursecontext->get_url()}\">{$coursecontext->get_context_name()}</a>",
+                $coursecontext->get_context_name(),
+                'Course',
                 '/',
                 null,
                 '',
+                'da39a3ee5e6b4b0d3255bfef95601890afd80709',
                 'course',
                 'summary',
                 0,
             ],
             [
                 "<a href=\"{$coursecontext->get_url()}\">{$coursecontext->get_context_name()}</a>",
+                $coursecontext->get_context_name(),
+                'Course',
                 '/',
                 null,
                 '',
+                'f7ff9e8b7bb2e09b70935a5d785e0cc5d9d0abf0',
                 'course',
                 'summary',
                 0,
             ],
             [
                 "<a href=\"{$usercontext->get_url()}\">{$usercontext->get_context_name()}</a>",
+                $usercontext->get_context_name(),
+                'User',
                 '/',
                 null,
                 '',
+                'da39a3ee5e6b4b0d3255bfef95601890afd80709',
                 'user',
                 'draft',
                 $draftitemid,
             ],
             [
                 "<a href=\"{$usercontext->get_url()}\">{$usercontext->get_context_name()}</a>",
+                $usercontext->get_context_name(),
+                'User',
                 '/',
                 null,
                 '',
+                'f7ff9e8b7bb2e09b70935a5d785e0cc5d9d0abf0',
                 'user',
                 'draft',
                 $draftitemid,
@@ -193,6 +215,14 @@ class files_test extends core_reportbuilder_testcase {
                 'file:license_operator' => select::EQUAL_TO,
                 'file:license_value' => 'public',
             ], 0],
+            'Filter content hash' => ['file:contenthash', [
+                'file:contenthash_operator' => text::IS_EQUAL_TO,
+                'file:contenthash_value' => 'f7ff9e8b7bb2e09b70935a5d785e0cc5d9d0abf0',
+            ], 2],
+            'Filter content hash (no match)' => ['file:contenthash', [
+                'file:contenthash_operator' => text::IS_EQUAL_TO,
+                'file:contenthash_value' => 'f00f',
+            ], 0],
             'Filter time created' => ['file:timecreated', [
                 'file:timecreated_operator' => date::DATE_RANGE,
                 'file:timecreated_from' => 1622502000,
@@ -202,7 +232,17 @@ class files_test extends core_reportbuilder_testcase {
                 'file:timecreated_to' => 1622502000,
             ], 0],
 
-            // User (just to check the join).
+            // Context.
+            'Context level' => ['context:level', [
+                'context:level_operator' => select::EQUAL_TO,
+                'context:level_value' => CONTEXT_COURSE,
+            ], 2],
+            'Context level (no match)' => ['context:level', [
+                'context:level_operator' => select::EQUAL_TO,
+                'context:level_value' => CONTEXT_BLOCK,
+            ], 0],
+
+            // User.
             'Filter user' => ['user:username', [
                 'user:username_operator' => text::IS_EQUAL_TO,
                 'user:username_value' => 'alfie',
@@ -244,14 +284,14 @@ class files_test extends core_reportbuilder_testcase {
 
         // Create report containing single column, and given filter.
         $report = $generator->create_report(['name' => 'Files', 'source' => files::class, 'default' => 0]);
-        $generator->create_column(['reportid' => $report->get('id'), 'uniqueidentifier' => 'file:context']);
+        $generator->create_column(['reportid' => $report->get('id'), 'uniqueidentifier' => 'context:name']);
 
         // Add filter, set it's values.
         $generator->create_filter(['reportid' => $report->get('id'), 'uniqueidentifier' => $filtername]);
         $content = $this->get_custom_report_content($report->get('id'), 0, $filtervalues);
         $content = $this->filter_custom_report_content($content, static function(array $row): bool {
-            return stripos($row['c0_contextid'], 'System') === false;
-        }, 'c0_contextid');
+            return stripos($row['c0_ctxid'], 'System') === false;
+        });
 
         $this->assertCount($expectmatchcount, $content);
     }
@@ -280,16 +320,14 @@ class files_test extends core_reportbuilder_testcase {
     }
 
     /**
-     * Ensuring report content only includes files we have explicitly created within the test, and ordering them
+     * Ensuring report content only includes files we have explicitly created within the test
      *
      * @param array $content
      * @param callable $callback
-     * @param string $sortfield
      * @return array
      */
-    protected function filter_custom_report_content(array $content, callable $callback, string $sortfield): array {
+    protected function filter_custom_report_content(array $content, callable $callback): array {
         $content = array_filter($content, $callback);
-        core_collator::asort_array_of_arrays_by_key($content, $sortfield);
         return array_values($content);
     }
 

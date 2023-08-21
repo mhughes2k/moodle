@@ -71,8 +71,8 @@ $string['privacy:metadata:lastaccess'] = 'The time that the user last accessed t
 $string['privacy:metadata:lastaccesstablesummary'] = 'Information about the last time a user accessed a course.';
 $string['privacy:metadata:lastip'] = 'The last IP address for the user.';
 $string['privacy:metadata:lastlogin'] = 'The last login of this user.';
-$string['privacy:metadata:lastname'] = 'The surname of the user.';
-$string['privacy:metadata:lastnamephonetic'] = 'The phonetic details about the user\'s surname.';
+$string['privacy:metadata:lastname'] = 'The last name of the user.';
+$string['privacy:metadata:lastnamephonetic'] = 'The phonetic details of the user\'s last name.';
 $string['privacy:metadata:maildigest'] = 'A setting for the mail digest for this user.';
 $string['privacy:metadata:maildisplay'] = 'A preference for the user about displaying their email address to other users.';
 $string['privacy:metadata:middlename'] = 'The middle name of the user';
@@ -139,6 +139,8 @@ $string['supportmessagealternative'] = 'Instead you can email {$a}.';
 $string['target:upcomingactivitiesdue'] = 'Upcoming activities due';
 $string['target:upcomingactivitiesdue_help'] = 'This target generates reminders for upcoming activities due.';
 $string['target:upcomingactivitiesdueinfo'] = 'All upcoming activities due insights are listed here. These students have received these insights directly.';
+$string['usergroupselectorcount'] = '{$a->fullname} ({$a->groupcount})';
+$string['userprofile'] = 'User profile';
 
 // Deprecated since Moodle 4.1.
 $string['addcondition'] = 'Add condition';

@@ -186,7 +186,9 @@ function file_prepare_standard_editor($data, $field, array $options, $context=nu
             $data->{$field.'format'} = editors_get_preferred_format();
         }
         if (!$options['noclean']) {
-            $data->{$field} = clean_text($data->{$field}, $data->{$field.'format'});
+            if ($data->{$field.'format'} != FORMAT_MARKDOWN) {
+                $data->{$field} = clean_text($data->{$field}, $data->{$field . 'format'});
+            }
         }
 
     } else {
@@ -198,7 +200,11 @@ function file_prepare_standard_editor($data, $field, array $options, $context=nu
             $data = trusttext_pre_edit($data, $field, $context);
         } else {
             if (!$options['noclean']) {
-                $data->{$field} = clean_text($data->{$field}, $data->{$field.'format'});
+                // We do not have a way to sanitise Markdown texts,
+                // luckily editors for this format should not have XSS problems.
+                if ($data->{$field.'format'} != FORMAT_MARKDOWN) {
+                    $data->{$field} = clean_text($data->{$field}, $data->{$field.'format'});
+                }
             }
         }
         $contextid = $context->id;
@@ -518,9 +524,9 @@ function file_rewrite_pluginfile_urls($text, $file, $contextid, $component, $fil
     }
 
     if (!empty($options['reverse'])) {
-        return str_replace($baseurl, '@@PLUGINFILE@@/', $text);
+        return str_replace($baseurl, '@@PLUGINFILE@@/', $text ?? '');
     } else {
-        return str_replace('@@PLUGINFILE@@/', $baseurl, $text);
+        return str_replace('@@PLUGINFILE@@/', $baseurl, $text ?? '');
     }
 }
 
@@ -785,7 +791,7 @@ function file_get_drafarea_files($draftitemid, $filepath = '/') {
             }
             // find the file this draft file was created from and count all references in local
             // system pointing to that file
-            $source = @unserialize($file->get_source());
+            $source = @unserialize($file->get_source() ?? '');
             if (isset($source->original)) {
                 $item->refcount = $fs->search_references_count($source->original);
             }
@@ -905,7 +911,7 @@ function file_get_submitted_draft_itemid($elname) {
  * @return stored_file
  */
 function file_restore_source_field_from_draft_file($storedfile) {
-    $source = @unserialize($storedfile->get_source());
+    $source = @unserialize($storedfile->get_source() ?? '');
     if (!empty($source)) {
         if (is_object($source)) {
             $restoredsource = $source->source;
@@ -928,7 +934,7 @@ function file_remove_editor_orphaned_files($editor) {
     // Find those draft files included in the text, and generate their hashes.
     $context = context_user::instance($USER->id);
     $baseurl = $CFG->wwwroot . '/draftfile.php/' . $context->id . '/user/draft/' . $editor['itemid'] . '/';
-    $pattern = "/" . preg_quote($baseurl, '/') . "(.+?)[\?\"']/";
+    $pattern = "/" . preg_quote($baseurl, '/') . "(.+?)[\?\"'<>\s:\\\\]/";
     preg_match_all($pattern, $editor['text'], $matches);
     $usedfilehashes = [];
     foreach ($matches[1] as $matchedfilename) {
@@ -1199,7 +1205,7 @@ function file_save_draft_area_files($draftitemid, $contextid, $component, $filea
             // Let's check if we can update this file or we need to delete and create.
             if ($newfile->is_directory()) {
                 // Directories are always ok to just update.
-            } else if (($source = @unserialize($newfile->get_source())) && isset($source->original)) {
+            } else if (($source = @unserialize($newfile->get_source() ?? '')) && isset($source->original)) {
                 // File has the 'original' - we need to update the file (it may even have not been changed at all).
                 $original = file_storage::unpack_reference($source->original);
                 if ($original['filename'] !== $oldfile->get_filename() || $original['filepath'] !== $oldfile->get_filepath()) {
@@ -1235,7 +1241,7 @@ function file_save_draft_area_files($draftitemid, $contextid, $component, $filea
             // Field files.source for draftarea files contains serialised object with source and original information.
             // We only store the source part of it for non-draft file area.
             $newsource = $newfile->get_source();
-            if ($source = @unserialize($newfile->get_source())) {
+            if ($source = @unserialize($newfile->get_source() ?? '')) {
                 $newsource = $source->source;
             }
             if ($oldfile->get_source() !== $newsource) {
@@ -1269,7 +1275,7 @@ function file_save_draft_area_files($draftitemid, $contextid, $component, $filea
         // the size and subdirectory tests are extra safety only, the UI should prevent it
         foreach ($newhashes as $file) {
             $file_record = array('contextid'=>$contextid, 'component'=>$component, 'filearea'=>$filearea, 'itemid'=>$itemid, 'timemodified'=>time());
-            if ($source = @unserialize($file->get_source())) {
+            if ($source = @unserialize($file->get_source() ?? '')) {
                 // Field files.source for draftarea files contains serialised object with source and original information.
                 // We only store the source part of it for non-draft file area.
                 $file_record['source'] = $source->source;
@@ -1478,7 +1484,7 @@ function format_postdata_for_curlcall($postdata) {
                 $currentdata = urlencode($k);
                 format_array_postdata_for_curlcall($v, $currentdata, $data);
             }  else {
-                $data[] = urlencode($k).'='.urlencode($v);
+                $data[] = urlencode($k).'='.urlencode($v ?? '');
             }
         }
         $convertedpostdata = implode('&', $data);
@@ -1771,7 +1777,7 @@ function mimeinfo($element, $filename) {
     $mimeinfo = & get_mimetypes_array();
     static $iconpostfixes = array(256=>'-256', 128=>'-128', 96=>'-96', 80=>'-80', 72=>'-72', 64=>'-64', 48=>'-48', 32=>'-32', 24=>'-24', 16=>'');
 
-    $filetype = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+    $filetype = strtolower(pathinfo($filename ?? '', PATHINFO_EXTENSION));
     if (empty($filetype)) {
         $filetype = 'xxx'; // file without extension
     }
@@ -2028,8 +2034,8 @@ function get_mimetype_description($obj, $capitalise=false) {
     }
 
     // MIME types may include + symbol but this is not permitted in string ids.
-    $safemimetype = str_replace('+', '_', $mimetype);
-    $safemimetypestr = str_replace('+', '_', $mimetypestr);
+    $safemimetype = str_replace('+', '_', $mimetype ?? '');
+    $safemimetypestr = str_replace('+', '_', $mimetypestr ?? '');
     $customdescription = mimeinfo('customdescription', $filename);
     if ($customdescription) {
         // Call format_string on the custom description so that multilang
@@ -2919,7 +2925,7 @@ function file_overwrite_existing_draftfile(stored_file $newfile, stored_file $ex
 
     $fs = get_file_storage();
     // Remember original file source field.
-    $source = @unserialize($existingfile->get_source());
+    $source = @unserialize($existingfile->get_source() ?? '');
     // Remember the original sortorder.
     $sortorder = $existingfile->get_sortorder();
     if ($newfile->is_external_file()) {
@@ -2943,7 +2949,7 @@ function file_overwrite_existing_draftfile(stored_file $newfile, stored_file $ex
     $newfile = $fs->create_file_from_storedfile($newfilerecord, $newfile);
     // Preserve original file location (stored in source field) for handling references.
     if (isset($source->original)) {
-        if (!($newfilesource = @unserialize($newfile->get_source()))) {
+        if (!($newfilesource = @unserialize($newfile->get_source() ?? ''))) {
             $newfilesource = new stdClass();
         }
         $newfilesource->original = $source->original;
@@ -3112,7 +3118,7 @@ function get_moodle_proxy_url() {
  * @license   http://www.gnu.org/copyleft/gpl.html GNU Public License
  */
 class curl {
-    /** @var bool Caches http request contents */
+    /** @var curl_cache|false Caches http request contents */
     public  $cache    = false;
     /** @var bool Uses proxy, null means automatic based on URL */
     public  $proxy    = null;
@@ -3154,6 +3160,8 @@ class curl {
     private $ignoresecurity;
     /** @var array $mockresponses For unit testing only - return the head of this list instead of making the next request. */
     private static $mockresponses = [];
+    /** @var array temporary params value if the value is not belongs to class stored_file. */
+    public $_tmp_file_post_params = [];
 
     /**
      * Curl constructor.
@@ -3215,7 +3223,14 @@ class curl {
                     $this->proxy_type = CURLPROXY_SOCKS5;
                 } else {
                     $this->proxy_type = CURLPROXY_HTTP;
-                    $this->setopt(array('httpproxytunnel'=>false));
+                    $this->setopt([
+                        'httpproxytunnel' => false,
+                    ]);
+                    if (defined('CURLOPT_SUPPRESS_CONNECT_HEADERS')) {
+                        $this->setopt([
+                            'suppress_connect_headers' => true,
+                        ]);
+                    }
                 }
                 $this->setopt(array('proxytype'=>$this->proxy_type));
             }
@@ -3451,7 +3466,7 @@ class curl {
     /**
      * Set options for individual curl instance
      *
-     * @param resource $curl A curl handle
+     * @param resource|CurlHandle $curl A curl handle
      * @param array $options
      * @return resource The curl handle
      */
@@ -3772,6 +3787,7 @@ class curl {
 
         $urlisblocked = $this->check_securityhelper_blocklist($url);
         if (!is_null($urlisblocked)) {
+            $this->trigger_url_blocked_event($url, $urlisblocked);
             return $urlisblocked;
         }
 
@@ -3872,6 +3888,7 @@ class curl {
                 if (!is_null($urlisblocked)) {
                     $this->reset_request_state_vars();
                     curl_close($curl);
+                    $this->trigger_url_blocked_event($redirecturl, $urlisblocked, true);
                     return $urlisblocked;
                 }
 
@@ -3934,6 +3951,23 @@ class curl {
     }
 
     /**
+     * Trigger url_blocked event
+     *
+     * @param string $url      The URL to request
+     * @param string $reason   Reason for blocking
+     * @param bool   $redirect true if it was a redirect
+     */
+    private function trigger_url_blocked_event($url, $reason, $redirect = false): void {
+        $params = [
+            'url' => $url,
+            'reason' => $reason,
+            'redirect' => $redirect,
+        ];
+        $event = core\event\url_blocked::create(['other' => $params]);
+        $event->trigger();
+    }
+
+     /**
      * HTTP HEAD method
      *
      * @see request()
@@ -4235,6 +4269,9 @@ class curl_cache {
     /** @var string Path to cache directory */
     public $dir = '';
 
+    /** @var int the repositorycacheexpire config value. */
+    private $ttl;
+
     /**
      * Constructor
      *
@@ -4357,7 +4394,7 @@ class curl_cache {
  * @todo MDL-31088 file serving improments
  */
 function file_pluginfile($relativepath, $forcedownload, $preview = null, $offline = false, $embed = false) {
-    global $DB, $CFG, $USER;
+    global $DB, $CFG, $USER, $OUTPUT;
     // relative path must start with '/'
     if (!$relativepath) {
         throw new \moodle_exception('invalidargorconf');
@@ -4910,6 +4947,18 @@ function file_pluginfile($relativepath, $forcedownload, $preview = null, $offlin
             \core\session\manager::write_close(); // Unlock session during file serving.
             send_stored_file($file, 60*60, 0, $forcedownload, $sendfileoptions);
 
+        } else if ($filearea === 'generated') {
+            if ($CFG->forcelogin) {
+                require_login($course);
+            } else if ($course->id != SITEID) {
+                require_login($course);
+            }
+
+            $svg = $OUTPUT->get_generated_svg_for_id($course->id);
+
+            \core\session\manager::write_close(); // Unlock session during file serving.
+            send_file($svg, 'course.svg', 60 * 60, 0, true, $forcedownload);
+
         } else {
             send_file_not_found();
         }
@@ -4985,6 +5034,18 @@ function file_pluginfile($relativepath, $forcedownload, $preview = null, $offlin
 
             \core\session\manager::write_close(); // Unlock session during file serving.
             send_stored_file($file, 60*60, 0, false, $sendfileoptions);
+
+        } else if ($filearea === 'generated') {
+            if ($CFG->forcelogin) {
+                require_login($course);
+            } else if ($course->id != SITEID) {
+                require_login($course);
+            }
+
+            $svg = $OUTPUT->get_generated_svg_for_id($group->id);
+
+            \core\session\manager::write_close(); // Unlock session during file serving.
+            send_file($svg, 'group.svg', 60 * 60, 0, true, $forcedownload);
 
         } else {
             send_file_not_found();

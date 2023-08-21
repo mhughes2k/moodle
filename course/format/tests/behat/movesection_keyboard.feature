@@ -14,7 +14,7 @@ Feature: Move a section using keyboard
     And the following "activities" exist:
       | activity | name              | intro                       | course | idnumber | section |
       | assign   | Activity sample 1 | Test assignment description | C1     | sample1  | 1       |
-      | book     | Activity sample 2 | Test book description       | C1     | sample2  | 2       |
+      | book     | Activity sample 2 |                             | C1     | sample2  | 2       |
       | choice   | Activity sample 3 | Test choice description     | C1     | sample3  | 3       |
       | choice   | Other sample 3    | Test choice description     | C1     | sample31 | 3       |
     And I log in as "admin"
@@ -27,8 +27,7 @@ Feature: Move a section using keyboard
     # Focus on the modal content tree.
     When I press the tab key
     And I press the tab key
-    # Select the section 2.
-    And I press the down key
+    # Select the section 1.
     And I press the down key
     And I press enter
     Then I should see "Activity sample 3" in the "Topic 2" "section"
@@ -59,7 +58,5 @@ Feature: Move a section using keyboard
     And I press the down key
     # Go to the first section.
     And I press the home key
-    # Move down to Topic 1
-    And I press the down key
     And I press enter
     Then I should see "Activity sample 3" in the "Topic 1" "section"

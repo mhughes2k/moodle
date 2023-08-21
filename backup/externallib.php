@@ -14,7 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-
 /**
  * External backup API.
  *
@@ -24,9 +23,14 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+use core_external\external_api;
+use core_external\external_function_parameters;
+use core_external\external_multiple_structure;
+use core_external\external_single_structure;
+use core_external\external_value;
+
 defined('MOODLE_INTERNAL') || die;
 
-require_once("$CFG->libdir/externallib.php");
 require_once($CFG->dirroot . '/backup/util/includes/backup_includes.php');
 require_once($CFG->dirroot . '/backup/util/includes/restore_includes.php');
 
@@ -101,7 +105,7 @@ class core_backup_external extends external_api {
     /**
      * Returns description of method result value
      *
-     * @return external_description
+     * @return \core_external\external_description
      * @since Moodle 3.7
      */
     public static function get_async_backup_progress_returns() {
@@ -128,6 +132,7 @@ class core_backup_external extends external_api {
                 array(
                     'filename' => new external_value(PARAM_FILE, 'Backup filename', VALUE_REQUIRED, null, NULL_NOT_ALLOWED),
                     'contextid' => new external_value(PARAM_INT, 'Context id', VALUE_REQUIRED, null, NULL_NOT_ALLOWED),
+                    'backupid' => new external_value(PARAM_ALPHANUMEXT, 'Backup id', VALUE_REQUIRED, null, NULL_NOT_ALLOWED),
                 )
          );
     }
@@ -138,9 +143,10 @@ class core_backup_external extends external_api {
      *
      * @param string $filename The file name of the backup file.
      * @param int $contextid The context the backup relates to.
+     * @param string $backupid The backup ID to get the backup settings.
      * @since Moodle 3.7
      */
-    public static function get_async_backup_links_backup($filename, $contextid) {
+    public static function get_async_backup_links_backup($filename, $contextid, $backupid) {
         // Release session lock.
         \core\session\manager::write_close();
 
@@ -149,7 +155,8 @@ class core_backup_external extends external_api {
                 self::get_async_backup_links_backup_parameters(),
                     array(
                         'filename' => $filename,
-                        'contextid' => $contextid
+                        'contextid' => $contextid,
+                        'backupid' => $backupid,
                     )
                 );
 
@@ -158,10 +165,18 @@ class core_backup_external extends external_api {
         self::validate_context($context);
         require_capability('moodle/backup:backupcourse', $context);
 
-        if ($cm) {
-            $filearea = 'activity';
-        } else {
-            $filearea = 'course';
+        // Backups without user info or with the anonymise functionality enabled are sent
+        // to user's "user_backup" file area.
+        $filearea = 'backup';
+        // Get useful info to render async status in correct area.
+        $bc = \backup_controller::load_controller($backupid);
+        list($hasusers, $isannon) = \async_helper::get_userdata_backup_settings($bc);
+        if ($hasusers && !$isannon) {
+            if ($cm) {
+                $filearea = 'activity';
+            } else {
+                $filearea = 'course';
+            }
         }
 
         $results = \async_helper::get_backup_file_info($filename, $filearea, $contextid);
@@ -172,7 +187,7 @@ class core_backup_external extends external_api {
     /**
      * Returns description of method result value.
      *
-     * @return external_description
+     * @return \core_external\external_description
      * @since Moodle 3.7
      */
     public static function get_async_backup_links_backup_returns() {
@@ -238,7 +253,7 @@ class core_backup_external extends external_api {
     /**
      * Returns description of method result value.
      *
-     * @return external_description
+     * @return \core_external\external_description
      * @since Moodle 3.7
      */
     public static function get_async_backup_links_restore_returns() {
@@ -321,7 +336,7 @@ class core_backup_external extends external_api {
     /**
      * Returns description of method result value.
      *
-     * @return external_description
+     * @return \core_external\external_description
      * @since Moodle 3.9
      */
     public static function get_copy_progress_returns() {
@@ -400,7 +415,7 @@ class core_backup_external extends external_api {
     /**
      * Returns description of method result value.
      *
-     * @return external_description
+     * @return \core_external\external_description
      * @since Moodle 3.9
      */
     public static function submit_copy_form_returns() {

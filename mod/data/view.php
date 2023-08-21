@@ -285,7 +285,11 @@ if ($delete && confirm_sesskey() && (data_user_can_manage_entry($delete, $data, 
                                                   WHERE dr.id = ?", $dbparams, MUST_EXIST)) { // Need to check this is valid.
             if ($deleterecord->dataid == $data->id) {                       // Must be from this database
                 echo $OUTPUT->heading(get_string('deleteentry', 'mod_data'), 2, 'mb-4');
-                $deletebutton = new single_button(new moodle_url('/mod/data/view.php?d='.$data->id.'&delete='.$delete.'&confirm=1'), get_string('delete'), 'post');
+                $deletebutton = new single_button(
+                    new moodle_url('/mod/data/view.php?d=' . $data->id . '&delete=' . $delete . '&confirm=1'),
+                    get_string('delete'), 'post',
+                    single_button::BUTTON_DANGER
+                );
                 echo $OUTPUT->confirm(get_string('confirmdeleterecord','data'),
                         $deletebutton, 'view.php?d='.$data->id);
 
@@ -332,7 +336,7 @@ if ($multidelete && confirm_sesskey() && $canmanageentries) {
         $submitactions = array('d' => $data->id, 'sesskey' => sesskey(), 'confirm' => '1', 'serialdelete' => $serialiseddata);
         $action = new moodle_url('/mod/data/view.php', $submitactions);
         $cancelurl = new moodle_url('/mod/data/view.php', array('d' => $data->id));
-        $deletebutton = new single_button($action, get_string('delete'));
+        $deletebutton = new single_button($action, get_string('delete'), 'post', single_button::BUTTON_DANGER);
         echo $OUTPUT->confirm(get_string('confirmdeleterecords', 'data'), $deletebutton, $cancelurl);
         $parser = $manager->get_template('listtemplate');
         echo $parser->parse_entries($validrecords);
@@ -382,6 +386,12 @@ if ($showactivity) {
             $requiredentries_allowed = false;
         }
 
+        if ($groupmode != NOGROUPS) {
+            $returnurl = new moodle_url('/mod/data/view.php', ['d' => $data->id, 'mode' => $mode, 'search' => s($search),
+                'sort' => s($sort), 'order' => s($order)]);
+            echo html_writer::div(groups_print_activity_menu($cm, $returnurl, true), 'mb-3');
+        }
+
         // Search for entries.
         list($records, $maxcount, $totalcount, $page, $nowperpage, $sort, $mode) =
             data_search_entries($data, $cm, $context, $mode, $currentgroup, $search, $sort, $order, $page, $perpage, $advanced, $search_array, $record);
@@ -397,12 +407,6 @@ if ($showactivity) {
 
         $actionbar = new \mod_data\output\action_bar($data->id, $pageurl);
         echo $actionbar->get_view_action_bar($hasrecords, $mode);
-
-        if ($groupmode) {
-            $returnurl = new moodle_url('/mod/data/view.php', ['d' => $data->id, 'mode' => $mode, 'search' => s($search),
-                'sort' => s($sort), 'order' => s($order)]);
-            echo html_writer::div(groups_print_activity_menu($cm, $returnurl, true), 'mb-3');
-        }
 
         // Advanced search form doesn't make sense for single (redirects list view).
         if ($maxcount && $mode != 'single') {

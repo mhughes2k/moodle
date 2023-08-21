@@ -33,7 +33,7 @@ use core_reportbuilder\local\report\filter;
 abstract class base {
 
     /** @var string $entityname Internal reference to name of entity */
-    private $entityname = '';
+    private $entityname = null;
 
     /** @var lang_string $entitytitle Used as a title for the entity in reports */
     private $entitytitle = null;
@@ -87,7 +87,7 @@ abstract class base {
      *
      * @return string
      */
-    protected function get_default_entity_name(): string {
+    private function get_default_entity_name(): string {
         $namespace = explode('\\', get_called_class());
 
         return end($namespace);
@@ -98,13 +98,8 @@ abstract class base {
      *
      * @param string $entityname
      * @return self
-     * @throws coding_exception
      */
     final public function set_entity_name(string $entityname): self {
-        if ($entityname === '' || $entityname !== clean_param($entityname, PARAM_ALPHANUMEXT)) {
-            throw new coding_exception('Entity name must be comprised of alphanumeric character, underscore or dash');
-        }
-
         $this->entityname = $entityname;
         return $this;
     }
@@ -115,7 +110,7 @@ abstract class base {
      * @return string
      */
     final public function get_entity_name(): string {
-        return $this->entityname ?: $this->get_default_entity_name();
+        return $this->entityname ?? $this->get_default_entity_name();
     }
 
     /**
@@ -218,6 +213,30 @@ abstract class base {
      */
     final public function get_joins(): array {
         return array_values($this->joins);
+    }
+
+    /**
+     * Helper method for returning joins necessary for retrieving tags related to the current entity
+     *
+     * Both 'tag' and 'tag_instance' aliases must be returned by the entity {@see get_default_table_aliases} method
+     *
+     * @param string $component
+     * @param string $itemtype
+     * @param string $itemidfield
+     * @return string[]
+     */
+    final protected function get_tag_joins_for_entity(string $component, string $itemtype, string $itemidfield): array {
+        $taginstancealias = $this->get_table_alias('tag_instance');
+        $tagalias = $this->get_table_alias('tag');
+
+        return [
+            "LEFT JOIN {tag_instance} {$taginstancealias}
+                    ON {$taginstancealias}.component = '{$component}'
+                   AND {$taginstancealias}.itemtype = '{$itemtype}'
+                   AND {$taginstancealias}.itemid = {$itemidfield}",
+            "LEFT JOIN {tag} {$tagalias}
+                    ON {$tagalias}.id = {$taginstancealias}.tagid",
+        ];
     }
 
     /**

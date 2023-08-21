@@ -59,20 +59,20 @@ Feature: Set availability dates for an assignment
     And the activity date in "Assignment name" should contain "##tomorrow noon##%A, %d %B %Y, %I:%M##"
 
   Scenario: Student can see the assignment's due date in the course calendar
-    Given I am on the "Assignment name" Activity page logged in as teacher1
-    And I navigate to "Settings" in current page administration
-    And I follow "Expand all"
-    # Set 'Allow submissions from' to the first day of this month at noon.
-    And I set the field "Allow submissions from" to "##first day of this month noon##"
-    # Set 'Due date' to the second day of this month at noon.
-    And I set the field "Due date" to "##first day of this month noon +24 hours##"
-    And I press "Save and return to course"
-    And I turn editing mode on
-    And I add the "Calendar" block
-    And I log out
-
-    And I am on the "C1" Course page logged in as student1
-    When I hover over day "2" of this month in the mini-calendar block
+    Given the following "activity" exists:
+      | activity                            | assign                                     |
+      | course                              | C1                                         |
+      | name                                | Assignment name                            |
+      | assignsubmission_onlinetext_enabled | 1                                          |
+      | assignsubmission_file_enabled       | 0                                          |
+      | submissiondrafts                    | 0                                          |
+      | allowsubmissionsfromdate            | ##first day of this month noon##           |
+      | duedate                             | ##first day of this month noon +24 hours## |
+    And the following "blocks" exist:
+      | blockname      | contextlevel | reference | pagetypepattern | defaultregion |
+      | calendar_month | Course       | C1        | course-view-*   | site-post     |
+    When I am on the "C1" Course page logged in as student1
+    And I hover over day "2" of this month in the mini-calendar block
     Then I should see "Assignment name is due"
 
   @_file_upload

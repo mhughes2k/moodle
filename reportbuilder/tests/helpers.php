@@ -61,7 +61,8 @@ abstract class core_reportbuilder_testcase extends advanced_testcase {
     }
 
     /**
-     * Stress test a report source by iterating over all it's columns and asserting we can create a report for each
+     * Stress test a report source by iterating over all it's columns, enabling sorting where possible and asserting we can
+     * create a report for each
      *
      * @param string $source
      */
@@ -74,14 +75,23 @@ abstract class core_reportbuilder_testcase extends advanced_testcase {
         $instance = manager::get_report_from_persistent($report);
 
         // Iterate over each available column, ensure each works correctly independent of any others.
-        $columnidentifiers = array_keys($instance->get_columns());
-        foreach ($columnidentifiers as $columnidentifier) {
+        foreach ($instance->get_columns() as $columnidentifier => $columninstance) {
             $column = report::add_report_column($report->get('id'), $columnidentifier);
+
+            // Enable sorting of the column where possible.
+            if ($columninstance->get_is_sortable()) {
+                report::toggle_report_column_sorting($report->get('id'), $column->get('id'), true, SORT_DESC);
+            }
 
             // We are only asserting the report returns content without errors, not the content itself.
             try {
                 $content = $this->get_custom_report_content($report->get('id'));
                 $this->assertNotEmpty($content);
+
+                // Ensure appropriate debugging was triggered for deprecated column.
+                if ($columninstance->get_is_deprecated()) {
+                    $this->assertDebuggingCalled(null, DEBUG_DEVELOPER);
+                }
             } catch (Throwable $exception) {
                 $this->fail("Error for column '{$columnidentifier}': " . $exception->getMessage());
             }
@@ -104,13 +114,17 @@ abstract class core_reportbuilder_testcase extends advanced_testcase {
         $instance = manager::get_report_from_persistent($report);
 
         // Add every column.
-        $columnidentifiers = array_keys($instance->get_columns());
-        foreach ($columnidentifiers as $columnidentifier) {
+        $columndeprecatedcount = 0;
+        foreach ($instance->get_columns() as $columnidentifier => $column) {
+            $columndeprecatedcount += (int) $column->get_is_deprecated();
             report::add_report_column($report->get('id'), $columnidentifier);
         }
 
         // Now iterate over each column, and apply all suitable aggregation types.
-        foreach ($instance->get_active_columns() as $column) {
+        $columns = $instance->get_active_columns();
+        $this->assertDebuggingCalledCount($columndeprecatedcount, null,
+            array_fill(0, $columndeprecatedcount, DEBUG_DEVELOPER));
+        foreach ($columns as $column) {
             $aggregations = aggregation::get_column_aggregations($column->get_type(), $column->get_disabled_aggregation());
             foreach (array_keys($aggregations) as $aggregation) {
                 $column->get_persistent()->set('aggregation', $aggregation)->update();
@@ -119,6 +133,10 @@ abstract class core_reportbuilder_testcase extends advanced_testcase {
                 try {
                     $content = $this->get_custom_report_content($report->get('id'));
                     $this->assertNotEmpty($content);
+
+                    // Ensure appropriate debugging was triggered for deprecated columns.
+                    $this->assertDebuggingCalledCount($columndeprecatedcount, null,
+                        array_fill(0, $columndeprecatedcount, DEBUG_DEVELOPER));
                 } catch (Throwable $exception) {
                     $this->fail("Error for column '{$column->get_unique_identifier()}' with aggregation '{$aggregation}': " .
                         $exception->getMessage());
@@ -168,6 +186,11 @@ abstract class core_reportbuilder_testcase extends advanced_testcase {
             try {
                 $content = $this->get_custom_report_content($report->get('id'));
                 $this->assertIsArray($content);
+
+                // Ensure appropriate debugging was triggered for deprecated condition.
+                if ($conditioninstance->get_is_deprecated()) {
+                    $this->assertDebuggingCalled(null, DEBUG_DEVELOPER);
+                }
             } catch (Throwable $exception) {
                 $this->fail("Error for condition '{$conditionidentifier}': " . $exception->getMessage());
             }

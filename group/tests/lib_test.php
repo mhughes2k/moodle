@@ -52,13 +52,6 @@ class lib_test extends \advanced_testcase {
         $this->assertCount(1, $events);
         $event = reset($events);
 
-        $expected = new \stdClass();
-        $expected->groupid = $group->id;
-        $expected->userid  = $user->id;
-        $expected->component = 'mod_workshop';
-        $expected->itemid = '123';
-        $this->assertEventLegacyData($expected, $event);
-        $this->assertSame('groups_member_added', $event->get_legacy_eventname());
         $this->assertInstanceOf('\core\event\group_member_added', $event);
         $this->assertEquals($user->id, $event->relateduserid);
         $this->assertEquals(\context_course::instance($course->id), $event->get_context());
@@ -83,11 +76,6 @@ class lib_test extends \advanced_testcase {
         $this->assertCount(1, $events);
         $event = reset($events);
 
-        $expected = new \stdClass();
-        $expected->groupid = $group->id;
-        $expected->userid  = $user->id;
-        $this->assertEventLegacyData($expected, $event);
-        $this->assertSame('groups_member_removed', $event->get_legacy_eventname());
         $this->assertInstanceOf('\core\event\group_member_removed', $event);
         $this->assertEquals($user->id, $event->relateduserid);
         $this->assertEquals(\context_course::instance($course->id), $event->get_context());
@@ -109,8 +97,6 @@ class lib_test extends \advanced_testcase {
         $event = reset($events);
 
         $this->assertInstanceOf('\core\event\group_created', $event);
-        $this->assertEventLegacyData($group, $event);
-        $this->assertSame('groups_group_created', $event->get_legacy_eventname());
         $this->assertEquals(\context_course::instance($course->id), $event->get_context());
         $this->assertEquals($group->id, $event->objectid);
         $url = new \moodle_url('/group/index.php', array('id' => $event->courseid));
@@ -130,9 +116,6 @@ class lib_test extends \advanced_testcase {
         $event = reset($events);
 
         $this->assertInstanceOf('\core\event\grouping_created', $event);
-
-        $this->assertEventLegacyData($group, $event);
-        $this->assertSame('groups_grouping_created', $event->get_legacy_eventname());
 
         $this->assertEquals(\context_course::instance($course->id), $event->get_context());
         $this->assertEquals($group->id, $event->objectid);
@@ -163,8 +146,6 @@ class lib_test extends \advanced_testcase {
 
         $this->assertInstanceOf('\core\event\group_updated', $event);
         $group->name = $data->name;
-        $this->assertEventLegacyData($group, $event);
-        $this->assertSame('groups_group_updated', $event->get_legacy_eventname());
         $this->assertEquals(\context_course::instance($course->id), $event->get_context());
         $this->assertEquals($group->id, $event->objectid);
         $url = new \moodle_url('/group/group.php', array('id' => $event->objectid));
@@ -192,8 +173,6 @@ class lib_test extends \advanced_testcase {
         $this->assertTimeCurrent($group->timemodified);
 
         $this->assertInstanceOf('\core\event\group_updated', $event);
-        $this->assertEventLegacyData($group, $event);
-        $this->assertSame('groups_group_updated', $event->get_legacy_eventname());
         $this->assertEquals(\context_course::instance($course->id), $event->get_context());
         $this->assertEquals($group->id, $event->objectid);
         $url = new \moodle_url('/group/group.php', array('id' => $event->objectid));
@@ -224,15 +203,6 @@ class lib_test extends \advanced_testcase {
         // Get the timemodified from DB for comparison with snapshot.
         $data->timemodified = $DB->get_field('groupings', 'timemodified', array('id'=>$grouping->id));
         $this->assertTimeCurrent($data->timemodified);
-        // Following fields were not updated so the snapshot should have them the same as in original group.
-        $data->description = $grouping->description;
-        $data->descriptionformat = $grouping->descriptionformat;
-        $data->configdata = $grouping->configdata;
-        $data->idnumber = $grouping->idnumber;
-        $data->timecreated = $grouping->timecreated;
-        // Assert legacy event data.
-        $this->assertEventLegacyData($data, $event);
-        $this->assertSame('groups_grouping_updated', $event->get_legacy_eventname());
 
         $this->assertEquals(\context_course::instance($course->id), $event->get_context());
         $this->assertEquals($grouping->id, $event->objectid);
@@ -270,9 +240,6 @@ class lib_test extends \advanced_testcase {
         $data->idnumber = $grouping->idnumber;
         $data->name = $grouping->name;
         $data->timecreated = $grouping->timecreated;
-        // Assert legacy event data.
-        $this->assertEventLegacyData($data, $event);
-        $this->assertSame('groups_grouping_updated', $event->get_legacy_eventname());
 
         $this->assertEquals(\context_course::instance($course->id), $event->get_context());
         $this->assertEquals($grouping->id, $event->objectid);
@@ -292,9 +259,6 @@ class lib_test extends \advanced_testcase {
         $this->assertCount(1, $events);
         $event = reset($events);
 
-        $this->assertInstanceOf('\core\event\group_deleted', $event);
-        $this->assertEventLegacyData($group, $event);
-        $this->assertSame('groups_group_deleted', $event->get_legacy_eventname());
         $this->assertEquals(\context_course::instance($course->id), $event->get_context());
         $this->assertEquals($group->id, $event->objectid);
         $url = new \moodle_url('/group/index.php', array('id' => $event->courseid));
@@ -314,8 +278,6 @@ class lib_test extends \advanced_testcase {
         $event = reset($events);
 
         $this->assertInstanceOf('\core\event\grouping_deleted', $event);
-        $this->assertEventLegacyData($group, $event);
-        $this->assertSame('groups_grouping_deleted', $event->get_legacy_eventname());
         $this->assertEquals(\context_course::instance($course->id), $event->get_context());
         $this->assertEquals($group->id, $event->objectid);
         $url = new \moodle_url('/group/groupings.php', array('id' => $event->courseid));
@@ -826,5 +788,94 @@ class lib_test extends \advanced_testcase {
         $result = groups_get_members_by_role($group1->id, $course1->id, 'u.username, up.value', null, 'up.name = :prefname',
                 ['prefname' => 'reptile'], 'JOIN {user_preferences} up ON up.userid = u.id');
         $this->assertEquals('snake', reset($result[0]->users)->value);
+    }
+
+    /**
+     * Tests set_groups_messaging
+     *
+     * @covers \core_group::set_groups_messaging
+     */
+    public function test_set_groups_messaging() {
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        $dg = $this->getDataGenerator();
+        $course = $dg->create_course();
+
+        // Create some groups in the course.
+        $groupids = [];
+        for ($i = 0; $i < 5; $i++) {
+            $group = new \stdClass();
+            $group->courseid = $course->id;
+            $group->name = 'group-'.$i;
+            $group->enablemessaging = 0;
+            $groupids[] = groups_create_group($group);
+        }
+
+        // They should all initially be disabled.
+        $alldisabledinitially = $this->check_groups_messaging_status_is($groupids, $course->id, false);
+        $this->assertTrue($alldisabledinitially);
+
+        // Enable messaging for all the groups.
+        set_groups_messaging($groupids, true);
+
+        // Check they were all enabled.
+        $allenabled = $this->check_groups_messaging_status_is($groupids, $course->id, true);
+        $this->assertTrue($allenabled);
+
+        // Disable messaging for all the groups.
+        set_groups_messaging($groupids, false);
+
+        // Check they were all disabled.
+        $alldisabled = $this->check_groups_messaging_status_is($groupids, $course->id, false);
+        $this->assertTrue($alldisabled);
+    }
+
+    /**
+     * Tests set group messaging where it doesn't exist
+     *
+     * @covers \core_group::set_groups_messaging
+     */
+    public function test_set_groups_messaging_doesnt_exist() {
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        $groupids = [-1];
+
+        $this->expectException('dml_exception');
+        set_groups_messaging($groupids, false);
+    }
+
+    /**
+     * Checks the given list of groups to verify their messaging settings.
+     *
+     * @param array $groupids array of group ids
+     * @param int $courseid the course the groups are in
+     * @param bool $desired the desired setting value
+     * @return bool true if all groups $enablemessaging setting matches the given $desired value, else false
+     */
+    private function check_groups_messaging_status_is(array $groupids, int $courseid, bool $desired) {
+        $context = \context_course::instance($courseid);
+
+        foreach ($groupids as $groupid) {
+            $conversation = \core_message\api::get_conversation_by_area(
+                'core_group',
+                'groups',
+                $groupid,
+                $context->id
+            );
+
+            // An empty conversation means it has not been enabled yet.
+            if (empty($conversation)) {
+                $conversation = (object) [
+                    'enabled' => 0
+                ];
+            }
+
+            if ($desired !== boolval($conversation->enabled)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

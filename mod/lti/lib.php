@@ -318,7 +318,7 @@ function mod_lti_get_all_content_items(\core_course\local\entity\content_item $d
         $type->name     = 'lti_type_' . $ltitype->id;
         // Clean the name. We don't want tags here.
         $type->title    = clean_param($ltitype->name, PARAM_NOTAGS);
-        $trimmeddescription = trim($ltitype->description);
+        $trimmeddescription = trim($ltitype->description ?? '');
         $type->help = '';
         if ($trimmeddescription != '') {
             // Clean the description. We don't want tags here.
@@ -764,4 +764,21 @@ function mod_lti_core_calendar_provide_event_action(calendar_event $event,
         1,
         true
     );
+}
+
+/**
+ * Extend the course navigation with an "LTI External tools" link which redirects to a list of all tools available for course use.
+ *
+ * @param settings_navigation $navigation The settings navigation object
+ * @param stdClass $course The course
+ * @param stdclass $context Course context
+ * @return void
+ */
+function mod_lti_extend_navigation_course($navigation, $course, $context): void {
+    if (has_capability('mod/lti:addpreconfiguredinstance', $context)) {
+        $url = new moodle_url('/mod/lti/coursetools.php', ['id' => $course->id]);
+        $settingsnode = navigation_node::create(get_string('courseexternaltools', 'mod_lti'), $url, navigation_node::TYPE_SETTING,
+            null, 'coursetools', new pix_icon('i/settings', ''));
+        $navigation->add_node($settingsnode);
+    }
 }

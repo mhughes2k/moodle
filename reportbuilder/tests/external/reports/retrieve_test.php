@@ -19,7 +19,7 @@ declare(strict_types=1);
 namespace core_reportbuilder\external\reports;
 
 use core_reportbuilder_generator;
-use external_api;
+use core_external\external_api;
 use externallib_advanced_testcase;
 use core_reportbuilder\report_access_exception;
 use core_user\reportbuilder\datasource\users;
@@ -53,8 +53,7 @@ class retrieve_test extends externallib_advanced_testcase {
         $generator = $this->getDataGenerator()->get_plugin_generator('core_reportbuilder');
 
         $report = $generator->create_report(['name' => 'My report', 'source' => users::class, 'default' => false]);
-        $generator->create_column(['reportid' => $report->get('id'), 'uniqueidentifier' => 'user:fullname'])
-            ->set('sortenabled', true)->update();
+        $generator->create_column(['reportid' => $report->get('id'), 'uniqueidentifier' => 'user:fullname', 'sortenabled' => 1]);
         $generator->create_column(['reportid' => $report->get('id'), 'uniqueidentifier' => 'user:email']);
 
         // There are three users (admin plus the two previouly created), but we're paging the first two only.

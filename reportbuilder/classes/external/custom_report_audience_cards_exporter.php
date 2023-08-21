@@ -20,7 +20,6 @@ namespace core_reportbuilder\external;
 
 use core_collator;
 use core_component;
-use core_plugin_manager;
 use renderer_base;
 use core_reportbuilder\local\audiences\base;
 
@@ -44,6 +43,7 @@ class custom_report_audience_cards_exporter extends custom_report_menu_cards_exp
 
         // Iterate over all audience types.
         $audiences = core_component::get_component_classes_in_namespace(null, 'reportbuilder\\audience');
+        $audiencekeyindex = 0;
         foreach ($audiences as $class => $path) {
             if (is_subclass_of($class, base::class)) {
                 $audience = $class::instance();
@@ -51,16 +51,8 @@ class custom_report_audience_cards_exporter extends custom_report_menu_cards_exp
                     continue;
                 }
 
-                // The name of each card will be the component the audience belongs to.
-                [$component] = explode('\\', $class);
-                if ($plugininfo = core_plugin_manager::instance()->get_plugin_info($component)) {
-                    $componentname = $plugininfo->displayname;
-                } else {
-                    $componentname = get_string('site');
-                }
-
                 // New menu card per component.
-                $audiencekeyindex = 0;
+                $componentname = $audience->get_component_displayname();
                 if (!array_key_exists($componentname, $menucards)) {
                     $menucards[$componentname] = [
                         'name' => $componentname,

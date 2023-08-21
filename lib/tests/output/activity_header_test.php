@@ -30,7 +30,7 @@ class activity_header_test extends \advanced_testcase {
     /**
      * Test the title setter
      *
-     * @dataProvider test_set_title_provider
+     * @dataProvider set_title_provider
      * @param string $value
      * @param string $expected
      * @covers ::set_title
@@ -60,7 +60,7 @@ class activity_header_test extends \advanced_testcase {
      * Provider for the test_set_title unit test.
      * @return array
      */
-    public function test_set_title_provider(): array {
+    public function set_title_provider(): array {
         return [
             "Set the title with a plain text" => [
                 "Activity title", "Activity title"
@@ -122,5 +122,38 @@ class activity_header_test extends \advanced_testcase {
 
         $PAGE->activityheader->set_attrs(['unknown' => true]);
         $this->assertDebuggingCalledCount(1, ['Invalid class member variable: unknown']);
+    }
+
+    /**
+     * Data provider for {@see test_get_heading_level()}.
+     *
+     * @return array[]
+     */
+    public function get_heading_level_provider(): array {
+        return [
+            'Title not allowed' => [false, '', 2],
+            'Title allowed, no title' => [true, '', 2],
+            'Title allowed, empty string title' => [true, ' ', 2],
+            'Title allowed, non-empty string title' => [true, 'Cool', 3],
+        ];
+    }
+
+    /**
+     * Test the heading level getter
+     *
+     * @dataProvider get_heading_level_provider
+     * @covers ::get_heading_level
+     * @param bool $allowtitle Whether the title is allowed.
+     * @param string $title The activity heading.
+     * @param int $expectedheadinglevel The expected heading level.
+     */
+    public function test_get_heading_level(bool $allowtitle, string $title, int $expectedheadinglevel): void {
+        $activityheaderstub = $this->getMockBuilder(activity_header::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['is_title_allowed'])
+            ->getMock();
+        $activityheaderstub->method('is_title_allowed')->willReturn($allowtitle);
+        $activityheaderstub->set_title($title);
+        $this->assertEquals($expectedheadinglevel, $activityheaderstub->get_heading_level());
     }
 }

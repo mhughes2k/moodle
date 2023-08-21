@@ -25,6 +25,7 @@ import Templates from 'core/templates';
 import * as Aria from 'core/aria';
 import {dispatchEvent} from 'core/event_dispatcher';
 import {debounce} from 'core/utils';
+import {isSmall, isLarge} from 'core/pagehelpers';
 import Pending from 'core/pending';
 // The jQuery module is only used for interacting with Boostrap 4. It can we removed when MDL-71979 is integrated.
 import jQuery from 'jquery';
@@ -39,8 +40,8 @@ const SELECTORS = {
     OPENBTN: '[data-toggler="drawers"][data-action="opendrawer"]',
     TOGGLEBTN: '[data-toggler="drawers"][data-action="toggle"]',
     DRAWERS: '[data-region="fixed-drawer"]',
-    CONTAINER: '#page.drawers',
     DRAWERCONTENT: '.drawercontent',
+    PAGECONTENT: '#page-content',
 };
 
 const CLASSES = {
@@ -50,47 +51,24 @@ const CLASSES = {
 };
 
 /**
- * Maximum sizes for breakpoints. This needs to correspond with Bootstrap
- * Breakpoints
+ * Pixel thresshold to auto-hide drawers.
  *
- * @private
+ * @type {Number}
  */
-const sizes = {
-    medium: 991,
-    large: 1400
-};
+const THRESHOLD = 20;
 
 /**
- * Get the current body width.
+ * Try to get the drawer z-index from the page content.
  *
- * @returns {number} the current body width.
+ * @returns {Number|null} the z-index of the drawer.
  * @private
  */
-const getCurrentWidth = () => {
-    const DomRect = document.body.getBoundingClientRect();
-    return DomRect.x + DomRect.width;
-};
-
-/**
- * Check if the user uses a small size browser.
- *
- * @returns {boolean} true if the body is smaller than sizes.medium max size.
- * @private
- */
-const isSmall = () => {
-    const browserWidth = getCurrentWidth();
-    return browserWidth < sizes.medium;
-};
-
-/**
- * Check if the user uses a large size browser.
- *
- * @returns {boolean} true if the body is smaller than sizes.large max size.
- * @private
- */
-const isLarge = () => {
-    const browserWidth = getCurrentWidth();
-    return browserWidth >= sizes.large;
+const getDrawerZIndex = () => {
+    const drawer = document.querySelector(SELECTORS.DRAWERS);
+    if (!drawer) {
+        return null;
+    }
+    return parseInt(window.getComputedStyle(drawer).zIndex, 10);
 };
 
 /**
@@ -104,6 +82,10 @@ const getBackdrop = () => {
         backdropPromise = Templates.render('core/modal_backdrop', {})
         .then(html => new ModalBackdrop(html))
         .then(modalBackdrop => {
+            const drawerZindex = getDrawerZIndex();
+            if (drawerZindex) {
+                modalBackdrop.setZIndex(getDrawerZIndex() - 1);
+            }
             modalBackdrop.getAttachmentPoint().get(0).addEventListener('click', e => {
                 e.preventDefault();
                 Drawers.closeAllDrawers();
@@ -281,7 +263,18 @@ export default class Drawers {
      */
     drawerNode = null;
 
+    /**
+     * The drawer page bounding box dimensions.
+     * @var {DOMRect} boundingRect
+     */
+    boundingRect = null;
+
     constructor(drawerNode) {
+        // Some behat tests may use fake drawer divs to test components in drawers.
+        if (drawerNode.dataset.behatFakeDrawer !== undefined) {
+            return;
+        }
+
         this.drawerNode = drawerNode;
 
         if (isSmall()) {
@@ -452,6 +445,8 @@ export default class Drawers {
             page.classList.add(state);
         }
 
+        this.boundingRect = this.drawerNode.getBoundingClientRect();
+
         if (isSmall()) {
             getBackdrop().then(backdrop => {
                 backdrop.show();
@@ -523,7 +518,7 @@ export default class Drawers {
 
             if (isSmall()) {
                 const pageWrapper = document.getElementById('page');
-                pageWrapper.style.overflow = 'auto';
+                pageWrapper.style.overflow = 'visible';
             }
             return backdrop;
         })
@@ -556,6 +551,65 @@ export default class Drawers {
     }
 
     /**
+     * Displaces the drawer outsite the page.
+     *
+     * @param {Number} scrollPosition the page current scroll position
+     */
+    displace(scrollPosition) {
+        let displace = scrollPosition;
+        let openButton = getDrawerOpenButton(this.drawerNode.id);
+        if (scrollPosition === 0) {
+            this.drawerNode.style.transform = '';
+            if (openButton) {
+                openButton.style.transform = '';
+            }
+            return;
+        }
+        const state = this.drawerNode.dataset?.state;
+        const drawrWidth = this.drawerNode.offsetWidth;
+        let scrollThreshold = drawrWidth;
+        let direction = -1;
+        if (state === 'show-drawer-right') {
+            direction = 1;
+            scrollThreshold = THRESHOLD;
+        }
+        if (scrollPosition > scrollThreshold) {
+            displace = drawrWidth + THRESHOLD;
+        }
+        displace *= direction;
+        const transform = `translateX(${displace}px)`;
+        if (openButton) {
+            openButton.style.transform = transform;
+        }
+        this.drawerNode.style.transform = transform;
+    }
+
+    /**
+     * Prevent drawer from overlapping an element.
+     *
+     * @param {HTMLElement} currentFocus
+     */
+    preventOverlap(currentFocus) {
+        if (!this.isOpen) {
+            return;
+        }
+        const drawrWidth = this.drawerNode.offsetWidth;
+        const element = currentFocus.getBoundingClientRect();
+        const drawer = this.boundingRect;
+        const overlapping = (
+            (element.right + THRESHOLD) > drawer.left &&
+            (element.left - THRESHOLD) < drawer.right
+        );
+        if (overlapping) {
+            // Force drawer to displace out of the page.
+            this.displace(drawrWidth + 1);
+        } else {
+            // Reset drawer displacement.
+            this.displace(window.scrollX);
+        }
+    }
+
+    /**
      * Close all drawers.
      */
     static closeAllDrawers() {
@@ -578,26 +632,34 @@ export default class Drawers {
             drawerInstance.closeDrawer();
         });
     }
-}
 
-/**
- * Activate the scroller helper for the drawer layout.
- *
- * @private
- */
-const scroller = () => {
-    const body = document.querySelector('body');
-    const drawerLayout = document.querySelector(SELECTORS.CONTAINER);
-    if (drawerLayout) {
-        drawerLayout.addEventListener("scroll", () => {
-            if (drawerLayout.scrollTop >= window.innerHeight) {
-                body.classList.add(CLASSES.SCROLLED);
-            } else {
-                body.classList.remove(CLASSES.SCROLLED);
-            }
+    /**
+     * Prevent drawers from covering the focused element.
+     */
+    static preventCoveringFocusedElement() {
+        const currentFocus = document.activeElement;
+        // Focus on page layout elements should be ignored.
+        const pagecontent = document.querySelector(SELECTORS.PAGECONTENT);
+        if (!currentFocus || !pagecontent?.contains(currentFocus)) {
+            Drawers.displaceDrawers(window.scrollX);
+            return;
+        }
+        drawerMap.forEach(drawerInstance => {
+            drawerInstance.preventOverlap(currentFocus);
         });
     }
-};
+
+    /**
+     * Prevent drawer from covering the content when the page content covers the full page.
+     *
+     * @param {Number} displace
+     */
+    static displaceDrawers(displace) {
+        drawerMap.forEach(drawerInstance => {
+            drawerInstance.displace(displace);
+        });
+    }
+}
 
 /**
  * Set the last used attribute for the last used toggle button for a drawer.
@@ -706,10 +768,25 @@ const registerListeners = () => {
         }
     };
 
+    document.addEventListener('scroll', () => {
+        const body = document.querySelector('body');
+        if (window.scrollY >= window.innerHeight) {
+            body.classList.add(CLASSES.SCROLLED);
+        } else {
+            body.classList.remove(CLASSES.SCROLLED);
+        }
+        // Horizontal scroll listener to displace the drawers to prevent covering
+        // any possible sticky content.
+        Drawers.displaceDrawers(window.scrollX);
+    });
+
+    const preventOverlap = debounce(Drawers.preventCoveringFocusedElement, 100);
+    document.addEventListener('focusin', preventOverlap);
+    document.addEventListener('focusout', preventOverlap);
+
     window.addEventListener('resize', debounce(closeOnResizeListener, 400));
 };
 
-scroller();
 registerListeners();
 
 const drawers = document.querySelectorAll(SELECTORS.DRAWERS);

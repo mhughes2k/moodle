@@ -58,6 +58,9 @@ class cmname implements named_templatable, renderable {
     /** @var string the activity title output class name */
     protected $titleclass;
 
+    /** @var string the activity icon output class name */
+    protected $iconclass;
+
     /**
      * Constructor.
      *
@@ -85,6 +88,7 @@ class cmname implements named_templatable, renderable {
 
         // Get the necessary classes.
         $this->titleclass = $format->get_output_classname('content\\cm\\title');
+        $this->iconclass = $format->get_output_classname('content\\cm\\cmicon');
     }
 
     /**
@@ -104,11 +108,9 @@ class cmname implements named_templatable, renderable {
 
         $data = [
             'url' => $mod->url,
-            'icon' => $mod->get_icon_url(),
             'modname' => $mod->modname,
-            'pluginname' => get_string('pluginname', 'mod_' . $mod->modname),
             'textclasses' => $displayoptions['textclasses'] ?? '',
-            'purpose' => plugin_supports('mod', $mod->modname, FEATURE_MOD_PURPOSE, MOD_PURPOSE_OTHER),
+            'activityicon' => $this->get_icon_data($output),
             'activityname' => $this->get_title_data($output),
         ];
 
@@ -129,6 +131,20 @@ class cmname implements named_templatable, renderable {
             $this->displayoptions
         );
         return (array) $title->export_for_template($output);
+    }
+
+    /**
+     * Get the icon data.
+     *
+     * @param \renderer_base $output typically, the renderer that's calling this function
+     * @return array data context for a mustache template
+     */
+    protected function get_icon_data(\renderer_base $output): array {
+        $icon = new $this->iconclass(
+            $this->format,
+            $this->mod,
+        );
+        return (array) $icon->export_for_template($output);
     }
 
     /**

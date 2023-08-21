@@ -435,9 +435,7 @@ class address_manager {
         $this->process($recipient);
 
         // Validate the retrieved data against the e-mail address of the originator.
-        $this->status = $this->validate($sender);
-
-        return $this->status;
+        return $this->validate($sender);
     }
 
     /**
@@ -459,10 +457,8 @@ class address_manager {
      */
     protected function pack_int($int) {
         if (PHP_INT_SIZE === 8) {
-            $left = 0xffffffff00000000;
-            $right = 0x00000000ffffffff;
-            $l = ($int & $left) >>32;
-            $r = $int & $right;
+            $l = intdiv($int, pow(2, 32)); // 32-bit integer quotient.
+            $r = $int % pow(2, 32); // 32-bit integer remaining.
 
             return pack('NN', $l, $r);
         } else {

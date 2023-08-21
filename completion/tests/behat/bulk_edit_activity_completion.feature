@@ -37,14 +37,14 @@ Feature: Allow teachers to bulk edit activity completion rules in a course.
     Given I log in as "teacher1"
     And I am on "Course 1" course homepage with editing mode on
     When I navigate to "Course completion" in current page administration
-    And I select "Bulk edit activity completion" from the "Course completion tertiary navigation" singleselect
+    And I set the field "Course completion tertiary navigation" to "Bulk edit activity completion"
     And I click on "Test assignment one" "checkbox"
     And I click on "Test assignment two" "checkbox"
     And I click on "Edit" "button"
     And I should see "Completion tracking"
     And I should see "The changes will affect the following 2 activities or resources:"
-    And I should see "Student must make a submission"
     And I select "Show activity as complete when conditions are met" from the "completion" singleselect
+    And I should see "Student must make a submission"
     And I click on "completionview" "checkbox"
     And I click on "completionusegrade" "checkbox"
     And I click on "completionsubmit" "checkbox"
@@ -68,14 +68,14 @@ Feature: Allow teachers to bulk edit activity completion rules in a course.
     Given I log in as "teacher1"
     And I am on "Course 1" course homepage with editing mode on
     When I navigate to "Course completion" in current page administration
-    And I select "Bulk edit activity completion" from the "Course completion tertiary navigation" singleselect
+    And I set the field "Course completion tertiary navigation" to "Bulk edit activity completion"
     And I click on "Test assignment one" "checkbox"
     And I click on "Test assignment two" "checkbox"
     And I click on "Edit" "button"
     And I should see "Completion tracking"
     And I should see "The changes will affect the following 2 activities or resources:"
-    And I should see "Student must make a submission"
     And I select "Show activity as complete when conditions are met" from the "completion" singleselect
+    And I should see "Student must make a submission"
     And I click on "completionusegrade" "checkbox"
     And I click on "completionpassgrade" "checkbox"
     And I click on "Save changes" "button"

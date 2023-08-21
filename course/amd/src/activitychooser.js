@@ -34,12 +34,17 @@ import Pending from 'core/pending';
 
 // Tab config options.
 const ALLACTIVITIESRESOURCES = 0;
-const ONLYALL = 1;
 const ACTIVITIESRESOURCES = 2;
+const ALLACTIVITIESRESOURCESREC = 3;
+const ONLYALLREC = 4;
+const ACTIVITIESRESOURCESREC = 5;
+
 
 // Module types.
 const ACTIVITY = 0;
 const RESOURCE = 1;
+
+let initialized = false;
 
 /**
  * Set up the activity chooser.
@@ -64,6 +69,12 @@ export const init = (courseId, chooserConfig) => {
  * @param {Object} chooserConfig Any PHP config settings that we may need to reference
  */
 const registerListenerEvents = (courseId, chooserConfig) => {
+
+    // Ensure we only add our listeners once.
+    if (initialized) {
+        return;
+    }
+
     const events = [
         'click',
         CustomEvents.events.activate,
@@ -146,7 +157,12 @@ const registerListenerEvents = (courseId, chooserConfig) => {
                 }
 
                 // Apply the section id to all the module instance links.
-                const builtModuleData = sectionIdMapper(data, caller.dataset.sectionid, caller.dataset.sectionreturnid);
+                const builtModuleData = sectionIdMapper(
+                    data,
+                    caller.dataset.sectionid,
+                    caller.dataset.sectionreturnid,
+                    caller.dataset.beforemod
+                );
 
                 ChooserDialogue.displayChooser(
                     sectionModal,
@@ -162,6 +178,8 @@ const registerListenerEvents = (courseId, chooserConfig) => {
             }
         });
     });
+
+    initialized = true;
 };
 
 /**
@@ -172,13 +190,14 @@ const registerListenerEvents = (courseId, chooserConfig) => {
  * @param {Object} webServiceData Our original data from the Web service call
  * @param {Number} id The ID of the section we need to append to the links
  * @param {Number|null} sectionreturnid The ID of the section return we need to append to the links
+ * @param {Number|null} beforemod The ID of the cm we need to append to the links
  * @return {Array} [modules] with URL's built
  */
-const sectionIdMapper = (webServiceData, id, sectionreturnid) => {
+const sectionIdMapper = (webServiceData, id, sectionreturnid, beforemod) => {
     // We need to take a fresh deep copy of the original data as an object is a reference type.
     const newData = JSON.parse(JSON.stringify(webServiceData));
     newData.content_items.forEach((module) => {
-        module.link += '&section=' + id + '&sr=' + (sectionreturnid ?? 0);
+        module.link += '&section=' + id + '&sr=' + (sectionreturnid ?? 0) + '&beforemod=' + (beforemod ?? 0);
     });
     return newData.content_items;
 };
@@ -206,8 +225,20 @@ const templateDataBuilder = (data, chooserConfig) => {
     const favourites = data.filter(mod => mod.favourite === true);
     const recommended = data.filter(mod => mod.recommended === true);
 
-    // Both of these modes need Activity & Resource tabs.
-    if ((tabMode === ALLACTIVITIESRESOURCES || tabMode === ACTIVITIESRESOURCES) && tabMode !== ONLYALL) {
+    // Whether the activities and resources tabs should be displayed or not.
+    const showActivitiesAndResources = (tabMode) => {
+        const acceptableModes = [
+            ALLACTIVITIESRESOURCES,
+            ALLACTIVITIESRESOURCESREC,
+            ACTIVITIESRESOURCES,
+            ACTIVITIESRESOURCESREC,
+        ];
+
+        return acceptableModes.indexOf(tabMode) !== -1;
+    };
+
+    // These modes need Activity & Resource tabs.
+    if (showActivitiesAndResources(tabMode)) {
         // Filter the incoming data to find activities then resources.
         activities = data.filter(mod => mod.archetype === ACTIVITY);
         resources = data.filter(mod => mod.archetype === RESOURCE);
@@ -215,18 +246,27 @@ const templateDataBuilder = (data, chooserConfig) => {
         showResources = true;
 
         // We want all of the previous information but no 'All' tab.
-        if (tabMode === ACTIVITIESRESOURCES) {
+        if (tabMode === ACTIVITIESRESOURCES || tabMode === ACTIVITIESRESOURCESREC) {
             showAll = false;
         }
     }
 
+    const recommendedBeforeTabs = [
+        ALLACTIVITIESRESOURCESREC,
+        ONLYALLREC,
+        ACTIVITIESRESOURCESREC,
+    ];
+    // Whether the recommended tab should be displayed before the All/Activities/Resources tabs.
+    const recommendedBeginning = recommendedBeforeTabs.indexOf(tabMode) !== -1;
+
     // Given the results of the above filters lets figure out what tab to set active.
     // We have some favourites.
     const favouritesFirst = !!favourites.length;
+    const recommendedFirst = favouritesFirst === false && recommendedBeginning === true && !!recommended.length;
     // We are in tabMode 2 without any favourites.
-    const activitiesFirst = showAll === false && favouritesFirst === false;
+    const activitiesFirst = showAll === false && favouritesFirst === false && recommendedFirst === false;
     // We have nothing fallback to show all modules.
-    const fallback = showAll === true && favouritesFirst === false;
+    const fallback = showAll === true && favouritesFirst === false && recommendedFirst === false;
 
     return {
         'default': data,
@@ -238,6 +278,8 @@ const templateDataBuilder = (data, chooserConfig) => {
         showResources: showResources,
         favourites: favourites,
         recommended: recommended,
+        recommendedFirst: recommendedFirst,
+        recommendedBeginning: recommendedBeginning,
         favouritesFirst: favouritesFirst,
         fallback: fallback,
     };

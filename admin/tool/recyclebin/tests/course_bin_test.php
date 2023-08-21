@@ -16,6 +16,9 @@
 
 namespace tool_recyclebin;
 
+use mod_quiz\quiz_attempt;
+use stdClass;
+
 /**
  * Recycle bin course tests.
  *
@@ -237,9 +240,32 @@ class course_bin_test extends \advanced_testcase {
         $attempts = quiz_get_user_attempts($cm->instance, $student->id);
         $this->assertEquals(1, count($attempts));
         $attempt = array_pop($attempts);
-        $attemptobj = \quiz_attempt::create($attempt->id);
+        $attemptobj = quiz_attempt::create($attempt->id);
         $this->assertEquals($student->id, $attemptobj->get_userid());
         $this->assertEquals(true, $attemptobj->is_finished());
+    }
+
+    /**
+     * Test that the activity is NOT stored in bin when
+     * in Automated backup setup settings "backup_auto_activities" is disabled.
+     *
+     * @dataProvider recycle_bin_settings_provider
+     * @covers ::store_item
+     */
+    public function test_coursemodule_restore_with_activity_setting_disabled() {
+
+        // Set the configuration to not include activities in the automated backup.
+        set_config('backup_auto_activities', false, 'backup');
+
+        // Delete the course module.
+        course_delete_module($this->quiz->cmid);
+
+        // Now, run the course module deletion adhoc task.
+        \phpunit_util::run_all_adhoc_tasks();
+
+        // Check there is no items in the recycle bin.
+        $recyclebin = new \tool_recyclebin\course_bin($this->course->id);
+        $this->assertEquals(0, count($recyclebin->get_items()));
     }
 
     /**
@@ -300,17 +326,17 @@ class course_bin_test extends \advanced_testcase {
         quiz_add_quiz_question($numq->id, $quiz);
 
         // Create quiz attempt.
-        $quizobj = \quiz::create($quiz->id, $student->id);
+        $quizobj = \mod_quiz\quiz_settings::create($quiz->id, $student->id);
         $quba = \question_engine::make_questions_usage_by_activity('mod_quiz', $quizobj->get_context());
         $quba->set_preferred_behaviour($quizobj->get_quiz()->preferredbehaviour);
         $timenow = time();
         $attempt = quiz_create_attempt($quizobj, 1, false, $timenow, false, $student->id);
         quiz_start_new_attempt($quizobj, $quba, $attempt, 1, $timenow);
         quiz_attempt_save_started($quizobj, $quba, $attempt);
-        $attemptobj = \quiz_attempt::create($attempt->id);
+        $attemptobj = quiz_attempt::create($attempt->id);
         $tosubmit = array(1 => array('answer' => '0'));
         $attemptobj->process_submitted_actions($timenow, false, $tosubmit);
-        $attemptobj = \quiz_attempt::create($attempt->id);
+        $attemptobj = quiz_attempt::create($attempt->id);
         $attemptobj->process_finish($timenow, false);
     }
 }

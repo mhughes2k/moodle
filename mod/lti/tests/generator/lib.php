@@ -45,6 +45,9 @@ class mod_lti_generator extends testing_module_generator {
 
         if (!isset($record->toolurl)) {
             $record->toolurl = '';
+        } else {
+            $toolurl = new moodle_url($record->toolurl);
+            $record->toolurl = $toolurl->out(false);
         }
         if (!isset($record->resourcekey)) {
             $record->resourcekey = '12345';
@@ -95,6 +98,27 @@ class mod_lti_generator extends testing_module_generator {
         if (!isset($type['baseurl'])) {
             throw new coding_exception('Must specify baseurl when creating a LTI tool type.');
         }
+        lti_add_type((object) $type, (object) $config);
+    }
+
+    /**
+     * Create a course tool type.
+     *
+     * @param array $type the type info.
+     * @param array|null $config the type configuration.
+     * @return void
+     * @throws coding_exception if any required fields are missing.
+     */
+    public function create_course_tool_types(array $type, ?array $config = null): void {
+        global $SITE;
+
+        if (!isset($type['baseurl'])) {
+            throw new coding_exception('Must specify baseurl when creating a course tool type.');
+        }
+        if (!isset($type['course']) || $type['course'] == $SITE->id) {
+            throw new coding_exception('Must specify a non-site course when creating a course tool type.');
+        }
+        $type['coursevisible'] = LTI_COURSEVISIBLE_PRECONFIGURED; // The default for course tools.
         lti_add_type((object) $type, (object) $config);
     }
 }

@@ -180,23 +180,12 @@ class page_requirements_manager {
         $this->yui3loader = new stdClass();
         $this->YUI_config = new YUI_config();
 
-        if (is_https() && !empty($CFG->useexternalyui)) {
-            // On HTTPS sites all JS must be loaded from https sites,
-            // YUI CDN does not support https yet, sorry.
-            $CFG->useexternalyui = 0;
-        }
-
         // Set up some loader options.
         $this->yui3loader->local_base = $CFG->wwwroot . '/lib/yuilib/'. $CFG->yui3version . '/';
         $this->yui3loader->local_comboBase = $CFG->wwwroot . '/theme/yui_combo.php'.$sep;
 
-        if (!empty($CFG->useexternalyui)) {
-            $this->yui3loader->base = 'http://yui.yahooapis.com/' . $CFG->yui3version . '/';
-            $this->yui3loader->comboBase = 'http://yui.yahooapis.com/combo?';
-        } else {
-            $this->yui3loader->base = $this->yui3loader->local_base;
-            $this->yui3loader->comboBase = $this->yui3loader->local_comboBase;
-        }
+        $this->yui3loader->base = $this->yui3loader->local_base;
+        $this->yui3loader->comboBase = $this->yui3loader->local_comboBase;
 
         // Enable combo loader? This significantly helps with caching and performance!
         $this->yui3loader->combine = !empty($CFG->yuicomboloading);
@@ -219,7 +208,7 @@ class page_requirements_manager {
 
         $configname = $this->YUI_config->set_config_source('lib/yui/config/yui2.js');
         $this->YUI_config->add_group('yui2', array(
-            // Loader configuration for our 2in3, for now ignores $CFG->useexternalyui.
+            // Loader configuration for our 2in3.
             'base' => $CFG->wwwroot . '/lib/yuilib/2in3/' . $CFG->yui2version . '/build/',
             'comboBase' => $CFG->wwwroot . '/theme/yui_combo.php'.$sep,
             'combine' => $this->yui3loader->combine,
@@ -382,12 +371,8 @@ class page_requirements_manager {
         // Include block drag/drop if editing is on
         if ($page->user_is_editing()) {
             $params = array(
-                'courseid' => $page->course->id,
-                'pagetype' => $page->pagetype,
-                'pagelayout' => $page->pagelayout,
-                'subpage' => $page->subpage,
                 'regions' => $page->blocks->get_regions(),
-                'contextid' => $page->context->id,
+                'pagehash' => $page->get_edited_page_hash(),
             );
             if (!empty($page->cm->id)) {
                 $params['cmid'] = $page->cm->id;
@@ -398,6 +383,7 @@ class page_requirements_manager {
                                         'emptydragdropregion'),
                                   'moodle');
             $page->requires->yui_module('moodle-core-blocks', 'M.core_blocks.init_dragdrop', array($params), null, true);
+            $page->requires->js_call_amd('core_block/edit', 'init', ['pagehash' => $page->get_edited_page_hash()]);
         }
 
         // Include the YUI CSS Modules.
@@ -458,6 +444,10 @@ class page_requirements_manager {
      * @param bool $inhead initialise in head
      */
     public function js($url, $inhead = false) {
+        if ($url == '/question/qengine.js') {
+            debugging('The question/qengine.js has been deprecated. ' .
+                'Please use core_question/question_engine', DEBUG_DEVELOPER);
+        }
         $url = $this->js_fix_url($url);
         $where = $inhead ? 'head' : 'footer';
         $this->jsincludes[$where][$url->out()] = $url;
@@ -733,7 +723,7 @@ class page_requirements_manager {
             }
             // The URL is not a Moodle resource.
             return $url;
-        } else if (strpos($url, '/') === 0) {
+        } else if (null !== $url && strpos($url, '/') === 0) {
             // Fix the admin links if needed.
             if ($CFG->admin !== 'admin') {
                 if (strpos($url, "/admin/") === 0) {
@@ -1861,6 +1851,12 @@ class YUI_config {
     public $insertBefore = 'firstthemesheet';
     public $groups = array();
     public $modules = array();
+    /** @var array The log sources that should be not be logged. */
+    public $logInclude = [];
+    /** @var array Tog sources that should be logged. */
+    public $logExclude = [];
+    /** @var string The minimum log level for YUI logging statements. */
+    public $logLevel;
 
     /**
      * @var array List of functions used by the YUI Loader group pattern recognition.

@@ -42,9 +42,17 @@ class restore_quiz_activity_structure_step extends restore_questions_activity_st
      */
     protected $legacyshufflequestionsoption = false;
 
+    /** @var stdClass */
+    protected $oldquizlayout;
+
+    /**
+     * @var array Track old question ids that need to be removed at the end of the restore.
+     */
+    protected $oldquestionids = [];
+
     protected function define_structure() {
 
-        $paths = array();
+        $paths = [];
         $userinfo = $this->get_setting_value('userinfo');
 
         $quiz = new restore_path_element('quiz', '/activity/quiz');
@@ -180,6 +188,14 @@ class restore_quiz_activity_structure_step extends restore_questions_activity_st
                             display_options::LATER_WHILE_OPEN : 0) |
                     ($oldreview & QUIZ_OLD_CLOSED & QUIZ_OLD_SCORES ?
                             display_options::AFTER_CLOSE : 0);
+
+            if (!isset($data->reviewmaxmarks)) {
+                $data->reviewmaxmarks =
+                        display_options::DURING |
+                        display_options::IMMEDIATELY_AFTER |
+                        display_options::LATER_WHILE_OPEN |
+                        display_options::AFTER_CLOSE;
+            }
 
             $data->reviewmarks =
                     display_options::DURING |
@@ -341,11 +357,10 @@ class restore_quiz_activity_structure_step extends restore_questions_activity_st
             $questionsetreference->questionscontextid = $question->questioncontextid;
             $filtercondition = new stdClass();
             $filtercondition->questioncategoryid = $question->category;
-            $filtercondition->includingsubcategories = $data->includingsubcategories;
+            $filtercondition->includingsubcategories = $data->includingsubcategories ?? false;
             $questionsetreference->filtercondition = json_encode($filtercondition);
             $DB->insert_record('question_set_references', $questionsetreference);
-            // Cleanup leftover random qtype data from question table.
-            question_delete_question($question->questionid);
+            $this->oldquestionids[$question->questionid] = 1;
         } else {
             // Reference data.
             $questionreference = new \stdClass();
@@ -568,7 +583,7 @@ class restore_quiz_activity_structure_step extends restore_questions_activity_st
 
         $this->process_quiz_attempt($data);
 
-        $quiz = $DB->get_record('quiz', array('id' => $this->get_new_parentid('quiz')));
+        $quiz = $DB->get_record('quiz', ['id' => $this->get_new_parentid('quiz')]);
         $quiz->oldquestions = $this->oldquizlayout;
         $this->process_legacy_quiz_attempt_data($data, $quiz);
     }
@@ -600,10 +615,18 @@ class restore_quiz_activity_structure_step extends restore_questions_activity_st
         $this->add_related_files('mod_quiz', 'feedback', 'quiz_feedback');
 
         if (!$this->sectioncreated) {
-            $DB->insert_record('quiz_sections', array(
+            $DB->insert_record('quiz_sections', [
                     'quizid' => $this->get_new_parentid('quiz'),
                     'firstslot' => 1, 'heading' => '',
-                    'shufflequestions' => $this->legacyshufflequestionsoption));
+                    'shufflequestions' => $this->legacyshufflequestionsoption]);
+        }
+    }
+
+    protected function after_restore() {
+        parent::after_restore();
+        // Delete old random questions that have been converted to set references.
+        foreach (array_keys($this->oldquestionids) as $oldquestionid) {
+            question_delete_question($oldquestionid);
         }
     }
 }

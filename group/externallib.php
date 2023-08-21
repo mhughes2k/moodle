@@ -14,19 +14,15 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-
-/**
- * External groups API
- *
- * @package    core_group
- * @category   external
- * @copyright  2009 Petr Skodak
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
-
-defined('MOODLE_INTERNAL') || die();
-
-require_once("$CFG->libdir/externallib.php");
+use core_external\external_api;
+use core_external\external_format_value;
+use core_external\external_function_parameters;
+use core_external\external_multiple_structure;
+use core_external\external_single_structure;
+use core_external\external_value;
+use core_external\external_warnings;
+use core_external\util;
+use core_group\visibility;
 
 /**
  * Group external functions
@@ -38,6 +34,26 @@ require_once("$CFG->libdir/externallib.php");
  * @since Moodle 2.2
  */
 class core_group_external extends external_api {
+
+
+    /**
+     * Validate visibility.
+     *
+     * @param int $visibility Visibility string, must one of the visibility class constants.
+     * @throws invalid_parameter_exception if visibility is not an allowed value.
+     */
+    protected static function validate_visibility(int $visibility): void {
+        $allowed = [
+            GROUPS_VISIBILITY_ALL,
+            GROUPS_VISIBILITY_MEMBERS,
+            GROUPS_VISIBILITY_OWN,
+            GROUPS_VISIBILITY_NONE,
+        ];
+        if (!array_key_exists($visibility, $allowed)) {
+            throw new invalid_parameter_exception('Invalid group visibility provided. Must be one of '
+                    . join(',', $allowed));
+        }
+    }
 
     /**
      * Returns description of method parameters
@@ -56,7 +72,14 @@ class core_group_external extends external_api {
                             'description' => new external_value(PARAM_RAW, 'group description text'),
                             'descriptionformat' => new external_format_value('description', VALUE_DEFAULT),
                             'enrolmentkey' => new external_value(PARAM_RAW, 'group enrol secret phrase', VALUE_OPTIONAL),
-                            'idnumber' => new external_value(PARAM_RAW, 'id number', VALUE_OPTIONAL)
+                            'idnumber' => new external_value(PARAM_RAW, 'id number', VALUE_OPTIONAL),
+                            'visibility' => new external_value(PARAM_INT,
+                                    'group visibility mode. 0 = Visible to all. 1 = Visible to members. '
+                                    . '2 = See own membership. 3 = Membership is hidden. default: 0',
+                                    VALUE_DEFAULT, 0),
+                            'participation' => new external_value(PARAM_BOOL,
+                                    'activity participation enabled? Only for "all" and "members" visibility. Default true.',
+                                    VALUE_DEFAULT, true),
                         )
                     ), 'List of group object. A group has a courseid, a name, a description and an enrolment key.'
                 )
@@ -104,7 +127,10 @@ class core_group_external extends external_api {
             require_capability('moodle/course:managegroups', $context);
 
             // Validate format.
-            $group->descriptionformat = external_validate_format($group->descriptionformat);
+            $group->descriptionformat = util::validate_format($group->descriptionformat);
+
+            // Validate visibility.
+            self::validate_visibility($group->visibility);
 
             // finally create the group
             $group->id = groups_create_group($group, false);
@@ -126,7 +152,7 @@ class core_group_external extends external_api {
     /**
      * Returns description of method result value
      *
-     * @return external_description
+     * @return \core_external\external_description
      * @since Moodle 2.2
      */
     public static function create_groups_returns() {
@@ -139,7 +165,11 @@ class core_group_external extends external_api {
                     'description' => new external_value(PARAM_RAW, 'group description text'),
                     'descriptionformat' => new external_format_value('description'),
                     'enrolmentkey' => new external_value(PARAM_RAW, 'group enrol secret phrase'),
-                    'idnumber' => new external_value(PARAM_RAW, 'id number')
+                    'idnumber' => new external_value(PARAM_RAW, 'id number'),
+                    'visibility' => new external_value(PARAM_INT,
+                            'group visibility mode. 0 = Visible to all. 1 = Visible to members. 2 = See own membership. '
+                            . '3 = Membership is hidden.'),
+                    'participation' => new external_value(PARAM_BOOL, 'participation mode'),
                 )
             ), 'List of group object. A group has an id, a courseid, a name, a description and an enrolment key.'
         );
@@ -173,7 +203,8 @@ class core_group_external extends external_api {
         $groups = array();
         foreach ($params['groupids'] as $groupid) {
             // validate params
-            $group = groups_get_group($groupid, 'id, courseid, name, idnumber, description, descriptionformat, enrolmentkey', MUST_EXIST);
+            $group = groups_get_group($groupid, 'id, courseid, name, idnumber, description, descriptionformat, enrolmentkey, '
+                    . 'visibility, participation', MUST_EXIST);
 
             // now security checks
             $context = context_course::instance($group->courseid, IGNORE_MISSING);
@@ -187,9 +218,10 @@ class core_group_external extends external_api {
             }
             require_capability('moodle/course:managegroups', $context);
 
-            list($group->description, $group->descriptionformat) =
-                external_format_text($group->description, $group->descriptionformat,
-                        $context->id, 'group', 'description', $group->id);
+            $group->name = \core_external\util::format_string($group->name, $context);
+            [$group->description, $group->descriptionformat] =
+                \core_external\util::format_text($group->description, $group->descriptionformat,
+                        $context, 'group', 'description', $group->id);
 
             $groups[] = (array)$group;
         }
@@ -200,7 +232,7 @@ class core_group_external extends external_api {
     /**
      * Returns description of method result value
      *
-     * @return external_description
+     * @return \core_external\external_description
      * @since Moodle 2.2
      */
     public static function get_groups_returns() {
@@ -209,11 +241,15 @@ class core_group_external extends external_api {
                 array(
                     'id' => new external_value(PARAM_INT, 'group record id'),
                     'courseid' => new external_value(PARAM_INT, 'id of course'),
-                    'name' => new external_value(PARAM_TEXT, 'multilang compatible name, course unique'),
+                    'name' => new external_value(PARAM_TEXT, 'group name'),
                     'description' => new external_value(PARAM_RAW, 'group description text'),
                     'descriptionformat' => new external_format_value('description'),
                     'enrolmentkey' => new external_value(PARAM_RAW, 'group enrol secret phrase'),
-                    'idnumber' => new external_value(PARAM_RAW, 'id number')
+                    'idnumber' => new external_value(PARAM_RAW, 'id number'),
+                    'visibility' => new external_value(PARAM_INT,
+                            'group visibility mode. 0 = Visible to all. 1 = Visible to members. 2 = See own membership. '
+                            . '3 = Membership is hidden.'),
+                    'participation' => new external_value(PARAM_BOOL, 'participation mode'),
                 )
             )
         );
@@ -256,13 +292,15 @@ class core_group_external extends external_api {
         require_capability('moodle/course:managegroups', $context);
 
         $gs = groups_get_all_groups($params['courseid'], 0, 0,
-            'g.id, g.courseid, g.name, g.idnumber, g.description, g.descriptionformat, g.enrolmentkey');
+            'g.id, g.courseid, g.name, g.idnumber, g.description, g.descriptionformat, g.enrolmentkey, '
+            . 'g.visibility, g.participation');
 
         $groups = array();
         foreach ($gs as $group) {
-            list($group->description, $group->descriptionformat) =
-                external_format_text($group->description, $group->descriptionformat,
-                        $context->id, 'group', 'description', $group->id);
+            $group->name = \core_external\util::format_string($group->name, $context);
+            [$group->description, $group->descriptionformat] =
+                \core_external\util::format_text($group->description, $group->descriptionformat,
+                        $context, 'group', 'description', $group->id);
             $groups[] = (array)$group;
         }
 
@@ -272,7 +310,7 @@ class core_group_external extends external_api {
     /**
      * Returns description of method result value
      *
-     * @return external_description
+     * @return \core_external\external_description
      * @since Moodle 2.2
      */
     public static function get_course_groups_returns() {
@@ -281,11 +319,15 @@ class core_group_external extends external_api {
                 array(
                     'id' => new external_value(PARAM_INT, 'group record id'),
                     'courseid' => new external_value(PARAM_INT, 'id of course'),
-                    'name' => new external_value(PARAM_TEXT, 'multilang compatible name, course unique'),
+                    'name' => new external_value(PARAM_TEXT, 'group name'),
                     'description' => new external_value(PARAM_RAW, 'group description text'),
                     'descriptionformat' => new external_format_value('description'),
                     'enrolmentkey' => new external_value(PARAM_RAW, 'group enrol secret phrase'),
-                    'idnumber' => new external_value(PARAM_RAW, 'id number')
+                    'idnumber' => new external_value(PARAM_RAW, 'id number'),
+                    'visibility' => new external_value(PARAM_INT,
+                            'group visibility mode. 0 = Visible to all. 1 = Visible to members. 2 = See own membership. '
+                            . '3 = Membership is hidden.'),
+                    'participation' => new external_value(PARAM_BOOL, 'participation mode'),
                 )
             )
         );
@@ -408,7 +450,7 @@ class core_group_external extends external_api {
     /**
      * Returns description of method result value
      *
-     * @return external_description
+     * @return \core_external\external_description
      * @since Moodle 2.2
      */
     public static function get_group_members_returns() {
@@ -638,7 +680,7 @@ class core_group_external extends external_api {
             }
             require_capability('moodle/course:managegroups', $context);
 
-            $grouping->descriptionformat = external_validate_format($grouping->descriptionformat);
+            $grouping->descriptionformat = util::validate_format($grouping->descriptionformat);
 
             // Finally create the grouping.
             $grouping->id = groups_create_grouping($grouping);
@@ -653,7 +695,7 @@ class core_group_external extends external_api {
     /**
      * Returns description of method result value
      *
-     * @return external_description
+     * @return \core_external\external_description
      * @since Moodle 2.3
      */
     public static function create_groupings_returns() {
@@ -742,7 +784,7 @@ class core_group_external extends external_api {
             require_capability('moodle/course:managegroups', $context);
 
             // We must force allways FORMAT_HTML.
-            $grouping->descriptionformat = external_validate_format($grouping->descriptionformat);
+            $grouping->descriptionformat = util::validate_format($grouping->descriptionformat);
 
             // Finally update the grouping.
             groups_update_grouping($grouping);
@@ -756,7 +798,7 @@ class core_group_external extends external_api {
     /**
      * Returns description of method result value
      *
-     * @return external_description
+     * @return \core_external\external_description
      * @since Moodle 2.3
      */
     public static function update_groupings_returns() {
@@ -814,8 +856,8 @@ class core_group_external extends external_api {
             require_capability('moodle/course:managegroups', $context);
 
             list($grouping->description, $grouping->descriptionformat) =
-                external_format_text($grouping->description, $grouping->descriptionformat,
-                        $context->id, 'grouping', 'description', $grouping->id);
+                \core_external\util::format_text($grouping->description, $grouping->descriptionformat,
+                        $context, 'grouping', 'description', $grouping->id);
 
             $groupingarray = (array)$grouping;
 
@@ -827,8 +869,8 @@ class core_group_external extends external_api {
                     $groups = array();
                     foreach ($grouprecords as $grouprecord) {
                         list($grouprecord->description, $grouprecord->descriptionformat) =
-                        external_format_text($grouprecord->description, $grouprecord->descriptionformat,
-                        $context->id, 'group', 'description', $grouprecord->groupid);
+                        \core_external\util::format_text($grouprecord->description, $grouprecord->descriptionformat,
+                        $context, 'group', 'description', $grouprecord->groupid);
                         $groups[] = array('id' => $grouprecord->groupid,
                                           'name' => $grouprecord->name,
                                           'idnumber' => $grouprecord->idnumber,
@@ -850,7 +892,7 @@ class core_group_external extends external_api {
     /**
      * Returns description of method result value
      *
-     * @return external_description
+     * @return \core_external\external_description
      * @since Moodle 2.3
      */
     public static function get_groupings_returns() {
@@ -927,8 +969,8 @@ class core_group_external extends external_api {
         $groupings = array();
         foreach ($gs as $grouping) {
             list($grouping->description, $grouping->descriptionformat) =
-                external_format_text($grouping->description, $grouping->descriptionformat,
-                        $context->id, 'grouping', 'description', $grouping->id);
+                \core_external\util::format_text($grouping->description, $grouping->descriptionformat,
+                        $context, 'grouping', 'description', $grouping->id);
             $groupings[] = (array)$grouping;
         }
 
@@ -938,7 +980,7 @@ class core_group_external extends external_api {
     /**
      * Returns description of method result value
      *
-     * @return external_description
+     * @return \core_external\external_description
      * @since Moodle 2.3
      */
     public static function get_course_groupings_returns() {
@@ -1013,7 +1055,7 @@ class core_group_external extends external_api {
     /**
      * Returns description of method result value
      *
-     * @return external_description
+     * @return \core_external\external_description
      * @since Moodle 2.3
      */
     public static function delete_groupings_returns() {
@@ -1234,7 +1276,7 @@ class core_group_external extends external_api {
         }
 
         // Security checks.
-        list($courses, $warnings) = external_util::validate_courses(array_keys($courses), $courses, true);
+        list($courses, $warnings) = util::validate_courses(array_keys($courses), $courses, true);
 
         $usergroups = array();
         foreach ($courses as $course) {
@@ -1264,9 +1306,10 @@ class core_group_external extends external_api {
                 'g.id, g.name, g.description, g.descriptionformat, g.idnumber');
 
             foreach ($groups as $group) {
-                list($group->description, $group->descriptionformat) =
-                    external_format_text($group->description, $group->descriptionformat,
-                            $course->context->id, 'group', 'description', $group->id);
+                $group->name = \core_external\util::format_string($group->name, $course->context);
+                [$group->description, $group->descriptionformat] =
+                    \core_external\util::format_text($group->description, $group->descriptionformat,
+                            $course->context, 'group', 'description', $group->id);
                 $group->courseid = $course->id;
                 $usergroups[] = $group;
             }
@@ -1282,7 +1325,7 @@ class core_group_external extends external_api {
     /**
      * Returns description of method result value.
      *
-     * @return external_description A single structure containing groups and possible warnings.
+     * @return \core_external\external_description A single structure containing groups and possible warnings.
      * @since Moodle 2.9
      */
     public static function get_course_user_groups_returns() {
@@ -1303,7 +1346,7 @@ class core_group_external extends external_api {
         return new external_single_structure(
             array(
                 'id' => new external_value(PARAM_INT, 'group record id'),
-                'name' => new external_value(PARAM_TEXT, 'multilang compatible name, course unique'),
+                'name' => new external_value(PARAM_TEXT, 'group name'),
                 'description' => new external_value(PARAM_RAW, 'group description text'),
                 'descriptionformat' => new external_format_value('description'),
                 'idnumber' => new external_value(PARAM_RAW, 'id number'),
@@ -1388,9 +1431,10 @@ class core_group_external extends external_api {
             $groups = groups_get_activity_allowed_groups($cm, $user->id);
 
             foreach ($groups as $group) {
-                list($group->description, $group->descriptionformat) =
-                    external_format_text($group->description, $group->descriptionformat,
-                            $coursecontext->id, 'group', 'description', $group->id);
+                $group->name = \core_external\util::format_string($group->name, $coursecontext);
+                [$group->description, $group->descriptionformat] =
+                    \core_external\util::format_text($group->description, $group->descriptionformat,
+                            $coursecontext, 'group', 'description', $group->id);
                 $group->courseid = $cm->course;
                 $usergroups[] = $group;
             }
@@ -1407,7 +1451,7 @@ class core_group_external extends external_api {
     /**
      * Returns description of method result value.
      *
-     * @return external_description A single structure containing groups and possible warnings.
+     * @return \core_external\external_description A single structure containing groups and possible warnings.
      * @since Moodle 3.0
      */
     public static function get_activity_allowed_groups_returns() {
@@ -1474,7 +1518,7 @@ class core_group_external extends external_api {
     /**
      * Returns description of method result value.
      *
-     * @return external_description
+     * @return \core_external\external_description
      * @since Moodle 3.0
      */
     public static function get_activity_groupmode_returns() {
@@ -1504,7 +1548,12 @@ class core_group_external extends external_api {
                             'description' => new external_value(PARAM_RAW, 'group description text', VALUE_OPTIONAL),
                             'descriptionformat' => new external_format_value('description', VALUE_DEFAULT),
                             'enrolmentkey' => new external_value(PARAM_RAW, 'group enrol secret phrase', VALUE_OPTIONAL),
-                            'idnumber' => new external_value(PARAM_RAW, 'id number', VALUE_OPTIONAL)
+                            'idnumber' => new external_value(PARAM_RAW, 'id number', VALUE_OPTIONAL),
+                            'visibility' => new external_value(PARAM_TEXT,
+                                    'group visibility mode. 0 = Visible to all. 1 = Visible to members. '
+                                    . '2 = See own membership. 3 = Membership is hidden.', VALUE_OPTIONAL),
+                            'participation' => new external_value(PARAM_BOOL,
+                                    'activity participation enabled? Only for "all" and "members" visibility', VALUE_OPTIONAL),
                         )
                     ), 'List of group objects. A group is found by the id, then all other details provided will be updated.'
                 )
@@ -1528,13 +1577,13 @@ class core_group_external extends external_api {
         $transaction = $DB->start_delegated_transaction();
 
         foreach ($params['groups'] as $group) {
-            $group = (object)$group;
+            $group = (object) $group;
 
             if (trim($group->name) == '') {
                 throw new invalid_parameter_exception('Invalid group name');
             }
 
-            if (! $currentgroup = $DB->get_record('groups', array('id' => $group->id))) {
+            if (!$currentgroup = $DB->get_record('groups', array('id' => $group->id))) {
                 throw new invalid_parameter_exception("Group $group->id does not exist");
             }
 
@@ -1542,6 +1591,24 @@ class core_group_external extends external_api {
             if ($group->name != $currentgroup->name and
                     $DB->get_record('groups', array('courseid' => $currentgroup->courseid, 'name' => $group->name))) {
                 throw new invalid_parameter_exception('A different group with the same name already exists in the course');
+            }
+
+            if (isset($group->visibility) || isset($group->participation)) {
+                $hasmembers = $DB->record_exists('groups_members', ['groupid' => $group->id]);
+                if (isset($group->visibility)) {
+                    // Validate visibility.
+                    self::validate_visibility($group->visibility);
+                    if ($hasmembers && $group->visibility != $currentgroup->visibility) {
+                        throw new invalid_parameter_exception(
+                                'The visibility of this group cannot be changed as it currently has members.');
+                    }
+                } else {
+                    $group->visibility = $currentgroup->visibility;
+                }
+                if (isset($group->participation) && $hasmembers && $group->participation != $currentgroup->participation) {
+                    throw new invalid_parameter_exception(
+                            'The participation mode of this group cannot be changed as it currently has members.');
+                }
             }
 
             $group->courseid = $currentgroup->courseid;
@@ -1559,7 +1626,7 @@ class core_group_external extends external_api {
             require_capability('moodle/course:managegroups', $context);
 
             if (!empty($group->description)) {
-                $group->descriptionformat = external_validate_format($group->descriptionformat);
+                $group->descriptionformat = util::validate_format($group->descriptionformat);
             }
 
             groups_update_group($group);

@@ -27,6 +27,7 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+use core_question\output\question_version_info;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -285,7 +286,9 @@ abstract class question_bank {
      * @return question_definition loaded from the database.
      */
     public static function make_question($questiondata) {
-        return self::get_qtype($questiondata->qtype, false)->make_question($questiondata, false);
+        $definition = self::get_qtype($questiondata->qtype, false)->make_question($questiondata, false);
+        question_version_info::$pendingdefinitions[$definition->id] = $definition;
+        return $definition;
     }
 
     /**
@@ -307,6 +310,31 @@ abstract class question_bank {
               ORDER BY qv.version DESC";
 
         return $DB->get_records_sql($sql, [$questionid]);
+    }
+
+    /**
+     * Get all the versions of questions.
+     *
+     * @param array $questionids Array of question ids.
+     * @return array two dimensional array question_bank_entries.id => version number => question.id.
+     *      Versions in descending order.
+     */
+    public static function get_all_versions_of_questions(array $questionids): array {
+        global $DB;
+
+        [$listquestionid, $params] = $DB->get_in_or_equal($questionids, SQL_PARAMS_NAMED);
+        $sql = "SELECT qv.questionid, qv.version, qv.questionbankentryid
+                  FROM {question_versions} qv
+                  JOIN {question_versions} qv2 ON qv.questionbankentryid = qv2.questionbankentryid
+                 WHERE qv2.questionid $listquestionid
+              ORDER BY qv.questionbankentryid, qv.version DESC";
+        $result = [];
+        $rows = $DB->get_recordset_sql($sql, $params);
+        foreach ($rows as $row) {
+            $result[$row->questionbankentryid][$row->version] = $row->questionid;
+        }
+
+        return $result;
     }
 
     /**
@@ -650,6 +678,7 @@ class question_finder implements cache_data_source {
     /* See cache_data_source::load_many_for_cache. */
     public function load_many_for_cache(array $questionids) {
         global $DB;
+
         list($idcondition, $params) = $DB->get_in_or_equal($questionids);
         $sql = 'SELECT q.id, qc.id as category, q.parent, q.name, q.questiontext, q.questiontextformat,
                        q.generalfeedback, q.generalfeedbackformat, q.defaultmark, q.penalty, q.qtype,

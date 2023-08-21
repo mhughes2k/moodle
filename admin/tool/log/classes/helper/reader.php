@@ -38,6 +38,13 @@ defined('MOODLE_INTERNAL') || die();
  * @property string $store short plugin name initialised in store trait.
  */
 trait reader {
+
+    /** @var string Frankenstyle plugin name initialised in store trait. */
+    protected $component;
+
+    /** @var string short plugin name initialised in store trait. */
+    protected $store;
+
     /**
      * Default get name api.
      *
@@ -74,10 +81,10 @@ trait reader {
      * @return mixed Decoded value
      */
     public static function decode_other(?string $other) {
-        if ($other === 'N;' || preg_match('~^.:~', $other)) {
+        if ($other === 'N;' || preg_match('~^.:~', $other ?? '')) {
             return unserialize($other);
         } else {
-            return json_decode($other, true);
+            return json_decode($other ?? '', true);
         }
     }
 

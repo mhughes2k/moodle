@@ -79,6 +79,12 @@ class backpack_api_mapping {
     /** @var string Error string from authentication request. */
     private static $authenticationerror = '';
 
+    /** @var mixed List of parameters for this method. */
+    protected $postparams;
+
+    /** @var int OpenBadges version 1 or 2. */
+    protected $backpackapiversion;
+
     /**
      * Create a mapping.
      *
@@ -170,8 +176,8 @@ class backpack_api_mapping {
         $url = str_replace('[SCHEME]', $urlscheme, $url);
         $url = str_replace('[HOST]', $urlhost, $url);
         $url = str_replace('[URL]', $apiurl, $url);
-        $url = str_replace('[PARAM1]', $param1, $url);
-        $url = str_replace('[PARAM2]', $param2, $url);
+        $url = str_replace('[PARAM1]', $param1 ?? '', $url);
+        $url = str_replace('[PARAM2]', $param2 ?? '', $url);
 
         return $url;
     }

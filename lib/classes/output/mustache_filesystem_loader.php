@@ -53,4 +53,31 @@ class mustache_filesystem_loader extends \Mustache_Loader_FilesystemLoader {
         // Call the Moodle template finder.
         return mustache_template_finder::get_template_filepath($name);
     }
+
+    /**
+     * Only check if baseDir is a directory and requested templates are files if
+     * baseDir is using the filesystem stream wrapper.
+     *
+     * Always check path for mustache_filesystem_loader.
+     *
+     * @return bool Whether to check `is_dir` and `file_exists`
+     */
+    protected function shouldCheckPath() {
+        return true;
+    }
+
+    /**
+     * Load a Template by name.
+     *
+     * @param string $name the template name
+     * @return string Mustache Template source
+     */
+    public function load($name): string {
+        global $CFG;
+        if (!empty($CFG->debugtemplateinfo)) {
+            // We use many templates per page. We don't want to allocate more memory than necessary.
+            return "<!-- template(PHP): $name -->" . parent::load($name) . "<!-- /template(PHP): $name -->";
+        }
+        return parent::load($name);
+    }
 }

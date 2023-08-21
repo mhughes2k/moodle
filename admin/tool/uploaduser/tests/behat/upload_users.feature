@@ -125,12 +125,10 @@ Feature: Upload users
     And I should see "Users created: 4"
     And I press "Continue"
     # Boost check.
-    And I navigate to "Users > Accounts > Browse list of users" in site administration
-    And I click on ".icon[title=Edit]" "css_element" in the "jonest@example.com" "table_row"
+    And I am on the "jonest@example.com" "user > editing" page
     And I should see "Boost"
     # Classic check.
-    And I navigate to "Users > Accounts > Browse list of users" in site administration
-    And I click on ".icon[title=Edit]" "css_element" in the "reznor@example.com" "table_row"
+    And I am on the "reznor@example.com" "user > editing" page
     And I should see "Classic"
 
   @javascript
@@ -242,7 +240,7 @@ Feature: Upload users
     And I am on site homepage
     And I navigate to "Courses > Manage courses and categories" in site administration
     And I click on "permissions" action for "MGMT" in management category listing
-    And I select "Assign roles" from the "jump" singleselect
+    And I set the field "Participants tertiary navigation" to "Assign roles"
     And I should see "Manager"
     And I should see "Tom Jones"
     And I should see "Trent Reznor"
@@ -251,7 +249,7 @@ Feature: Upload users
     And I am on site homepage
     And I navigate to "Courses > Manage courses and categories" in site administration
     And I click on "permissions" action for "Film" in management category listing
-    And I select "Assign roles" from the "jump" singleselect
+    And I set the field "Participants tertiary navigation" to "Assign roles"
     And I should see "Course creator"
     And I should see "Federico Fellini"
 

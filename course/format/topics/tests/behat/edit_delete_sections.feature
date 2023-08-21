@@ -14,7 +14,7 @@ Feature: Sections can be edited and deleted in topics format
     And the following "activities" exist:
       | activity   | name                   | intro                         | course | idnumber    | section |
       | assign     | Test assignment name   | Test assignment description   | C1     | assign1     | 0       |
-      | book       | Test book name         | Test book description         | C1     | book1       | 1       |
+      | book       | Test book name         |                               | C1     | book1       | 1       |
       | chat       | Test chat name         | Test chat description         | C1     | chat1       | 4       |
       | choice     | Test choice name       | Test choice description       | C1     | choice1     | 5       |
     And the following "course enrolments" exist:
@@ -89,3 +89,11 @@ Feature: Sections can be edited and deleted in topics format
     Then I should see "Topic 6" in the "Topic 6" "section"
     And I should not see "Test choice name" in the "Topic 5" "section"
     And I should see "Test choice name" in the "Topic 6" "section"
+
+  @javascript
+  Scenario: Add a topic and then add an activity in it
+    When I click on "Add topic" "link" in the "Topic 5" "section"
+    And I add a "Assignment" to section "6" and I fill the form with:
+      | Assignment name | Very new activity |
+      | Description     | Test              |
+    Then I should see "Very new activity" in the "Topic 6" "section"

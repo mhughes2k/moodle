@@ -32,6 +32,7 @@ if (!defined('MAX_MODINFO_CACHE_SIZE')) {
     define('MAX_MODINFO_CACHE_SIZE', 10);
 }
 
+use core_courseformat\output\activitybadge;
 
 /**
  * Information about a course that is cached in the course table 'modinfo' field (and then in
@@ -640,7 +641,10 @@ class course_modinfo {
 
         $cachecoursemodinfo = cache::make('core', 'coursemodinfo');
         $cachekey = $course->id;
-        $cachecoursemodinfo->acquire_lock($cachekey);
+        if (!$cachecoursemodinfo->acquire_lock($cachekey)) {
+            throw new moodle_exception('ex_unabletolock', 'cache', '', null,
+                'Unable to lock modinfo cache for course ' . $cachekey);
+        }
         try {
             // Only actually do the build if it's still needed after getting the lock (not if
             // somebody else, who might have been holding the lock, built it already).
@@ -1754,6 +1758,28 @@ class cm_info implements IteratorAggregate {
     }
 
     /**
+     * Get the activity badge data associated to this course module (if the module supports it).
+     * Modules can use this method to provide additional data to be displayed in the activity badge.
+     *
+     * @param renderer_base $output Output render to use, or null for default (global)
+     * @return stdClass|null The activitybadge data (badgecontent, badgestyle...) or null if the module doesn't implement it.
+     */
+    public function get_activitybadge(?renderer_base $output = null): ?stdClass {
+        global $OUTPUT;
+
+        $activibybadgeclass = activitybadge::create_instance($this);
+        if (empty($activibybadgeclass)) {
+            return null;
+        }
+
+        if (!isset($output)) {
+            $output = $OUTPUT;
+        }
+
+        return $activibybadgeclass->export_for_template($output);
+    }
+
+    /**
      * Note: Will collect view data, if not already obtained.
      * @return string Extra HTML code to display after editing icons (e.g. more icons)
      */
@@ -1763,7 +1789,15 @@ class cm_info implements IteratorAggregate {
     }
 
     /**
-     * @param moodle_core_renderer $output Output render to use, or null for default (global)
+     * Fetch the module's icon URL.
+     *
+     * This function fetches the course module instance's icon URL.
+     * This method adds a `filtericon` parameter in the URL when rendering the monologo version of the course module icon or when
+     * the plugin declares, via its `filtericon` custom data, that the icon needs to be filtered.
+     * This additional information can be used by plugins when rendering the module icon to determine whether to apply
+     * CSS filtering to the icon.
+     *
+     * @param core_renderer $output Output render to use, or null for default (global)
      * @return moodle_url Icon URL for a suitable icon to put beside this cm
      */
     public function get_icon_url($output = null) {
@@ -1773,6 +1807,7 @@ class cm_info implements IteratorAggregate {
             $output = $OUTPUT;
         }
 
+        $ismonologo = false;
         if (!empty($this->iconurl)) {
             // Support modules setting their own, external, icon image.
             $icon = $this->iconurl;
@@ -1792,6 +1827,18 @@ class cm_info implements IteratorAggregate {
             }
         } else {
             $icon = $output->image_url('monologo', $this->modname);
+            // Activity modules may only have an `icon` icon instead of a `monologo` icon.
+            // So we need to determine if the module really has a `monologo` icon.
+            $ismonologo = core_component::has_monologo_icon('mod', $this->modname);
+        }
+
+        // Determine whether the icon will be filtered in the CSS.
+        // This can be controlled by the module by declaring a 'filtericon' custom data.
+        // If the 'filtericon' custom data is not set, icon filtering will be determined whether the module has a `monologo` icon.
+        // Additionally, we need to cast custom data to array as some modules may treat it as an object.
+        $filtericon = ((array)$this->customdata)['filtericon'] ?? $ismonologo;
+        if ($filtericon) {
+            $icon->param('filtericon', 1);
         }
         return $icon;
     }
@@ -3022,6 +3069,12 @@ class section_info implements IteratorAggregate {
      * @var course_modinfo
      */
     private $modinfo;
+
+    /**
+     * True if has activities, otherwise false.
+     * @var bool
+     */
+    public $hasactivites;
 
     /**
      * Constructs object from database information plus extra required data.

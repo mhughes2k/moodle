@@ -209,15 +209,14 @@
         .drawer-left,
         .drawer-right {
             top: $navbar-height;
-            height: calc(100vh - #{$navbar-height} - #{$navbar-height});
+            height: calc(100vh - #{$navbar-height} - #{$stickyfooter-height});
         }
     }
 
     #page.drawers {
         position: relative;
-        overflow-y: auto;
+        overflow-y: visible;
         @include transition(0.2s);
-        height: calc(100vh - #{$navbar-height});
         left: 0;
         right: 0;
         &.show-drawer-left {
@@ -238,7 +237,7 @@
             margin-right: $drawer-right-width;
         }
         &.hasstickyfooter {
-            height: calc(100vh - #{$navbar-height} - #{$navbar-height});
+            margin-bottom: $stickyfooter-height;
         }
     }
 }

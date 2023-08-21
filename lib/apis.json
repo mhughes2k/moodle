@@ -64,10 +64,20 @@
         "allowedlevel2": true,
         "allowedspread": true
     },
+    "context": {
+        "component": "core",
+        "allowedlevel2": true,
+        "allowedspread": false
+    },
     "core": {
         "component": null,
         "allowedlevel2": false,
         "allowedspread": false
+    },
+    "customfield": {
+      "component": "core_customfield",
+      "allowedlevel2": true,
+      "allowedspread": true
     },
     "ddl": {
         "component": "core",
@@ -105,7 +115,7 @@
         "allowedspread": true
     },
     "grade": {
-        "component": "core_grade",
+        "component": "core_grades",
         "allowedlevel2": false,
         "allowedspread": false
     },
@@ -143,6 +153,11 @@
         "component": "core_message",
         "allowedlevel2": true,
         "allowedspread": true
+    },
+    "moodlenet": {
+        "component": "core",
+        "allowedlevel2": false,
+        "allowedspread": false
     },
     "navigation": {
         "component": "core",

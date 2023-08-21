@@ -265,21 +265,6 @@ table.quizattemptsummary .noreviewmessage {
     margin-right: auto;
 }
 
-#page-mod-quiz-view .generalbox#feedback {
-    width: 70%;
-    margin-left: auto;
-    margin-right: auto;
-    padding-bottom: 15px;
-}
-
-#page-mod-quiz-view .generalbox#feedback h2 {
-    margin: 0;
-}
-
-#page-mod-quiz-view .generalbox#feedback h3 {
-    text-align: left;
-}
-
 #page-mod-quiz-view .generalbox#feedback .overriddennotice {
     text-align: center;
     font-size: 0.7em;
@@ -321,22 +306,10 @@ table.quizattemptsummary .noreviewmessage {
 }
 
 body.path-mod-quiz .gradedattempt,
-body.path-mod-quiz table tbody tr.gradedattempt > td {
+body.path-mod-quiz table tbody tr.gradedattempt > td,
+body.path-mod-quiz table tbody tr.gradedattempt > td.sticky-column {
     border-color: #bce8f1;
     background-color: #d9edf7;
-}
-
-.quizattemptcounts {
-    clear: left;
-    text-align: center;
-    display: inline;
-    margin-left: 20%;
-}
-
-#page-mod-quiz-view .quizattemptcounts {
-    display: block;
-    margin-left: 0;
-    margin-right: 0;
 }
 
 /** Mod quiz summary **/
@@ -394,6 +367,7 @@ table.quizreviewsummary td.cell {
 
 #page-mod-quiz-comment .mform fieldset {
     margin: 0;
+    border-bottom: none;
 }
 
 #page-mod-quiz-comment .que {
@@ -405,7 +379,6 @@ table.quizreviewsummary td.cell {
     clear: both;
 }
 
-#page-mod-quiz-report div#commands,
 #page-mod-quiz-report .controls {
     text-align: center;
 }
@@ -421,10 +394,6 @@ table.quizreviewsummary td.cell {
 
 #page-mod-quiz-report .negcovar {
     border: medium solid pink;
-}
-
-#page-mod-quiz-report .toggleincludeauto {
-    text-align: center;
 }
 
 #page-mod-quiz-report .gradetheselink {
@@ -456,7 +425,6 @@ table.quizreviewsummary td.cell {
 
 #page-mod-quiz-report table#attempts {
     clear: both;
-    width: 80%;
     margin: 0.2em auto;
 }
 
@@ -589,10 +557,21 @@ table.quizreviewsummary td.cell {
 }
 
 #page-mod-quiz-edit .slotnumber {
-    background-color: #d3d3d3;
     text-align: center;
     margin: 0.1em 0.5em;
     min-width: 2em;
+    display: inline-block;
+}
+#page-mod-quiz-edit li.section .slotnumber.unshuffled {
+    display: inline-block;
+}
+#page-mod-quiz-edit li.section .slotnumber.shuffled {
+    display: none;
+}
+#page-mod-quiz-edit li.section.shuffled .slotnumber.unshuffled {
+    display: none;
+}
+#page-mod-quiz-edit li.section.shuffled .slotnumber.shuffled {
     display: inline-block;
 }
 
@@ -609,7 +588,7 @@ table.quizreviewsummary td.cell {
 
 #page-mod-quiz-edit .section-heading .instancesectioncontainer h3 {
     display: inline;
-    color: #999;
+    color: #555;
 }
 
 #page-mod-quiz-edit .section-heading .editing_section,
@@ -697,8 +676,8 @@ table.quizreviewsummary td.cell {
 
 #page-mod-quiz-edit ul.slots li.section li.activity .instancemaxmarkcontainer {
     background: white;
-    padding: 0.2em;
-    margin: 0.4em;
+    padding: 0.5em 0 0.5em 0.1em;
+    margin: 2px;
 }
 
 #page-mod-quiz-edit ul.slots li.section li.activity .instancemaxmarkcontainer .editicon {
@@ -887,7 +866,8 @@ table.quizreviewsummary td.cell {
 }
 
 #categoryquestions td.modifiername,
-#categoryquestions td.creatorname {
+#categoryquestions td.creatorname,
+#categoryquestions td.questionlastused {
     line-height: 1em;
 }
 
@@ -1100,6 +1080,47 @@ table#categoryquestions {
 /* Base theme needs extra support. */
 #page-mod-quiz-edit ul.slots li.section ul.section {
     list-style: none;
+}
+
+#page-mod-quiz-edit .inplaceeditable {
+    box-sizing: border-box;
+    background: #fdfdfe;
+    display: inline-block;
+    margin: 2px;
+    padding: 0.5em 0 0.5em 0.1em;
+}
+#page-mod-quiz-edit .inplaceeditable.inplaceeditingon input {
+    width: 64px;
+    vertical-align: middle;
+}
+#page-mod-quiz-edit .inplaceeditable-text {
+    color: #000;
+    text-align: right;
+}
+#page-mod-quiz-edit .inplaceeditable .quickeditlink {
+    color: var(--primary);
+    text-decoration: none;
+    background-color: transparent;
+    padding-left: 1px;
+    margin: 0;
+}
+#page-mod-quiz-edit .quickeditlink .aalink {
+    color: var(--primary);
+    text-align: right;
+    width: 10px;
+    margin: 2px;
+}
+#page-mod-quiz-edit .quickedition {
+    color: var(--primary);
+    text-align: right;
+    width: 10px;
+    margin: 2px;
+}
+#page-mod-quiz-edit .quickedition .visibleifjs {
+    text-align: right;
+}
+#page-mod-quiz-edit .quickeditlink {
+    text-align: right;
 }
 
 @media (max-width: 576px) {

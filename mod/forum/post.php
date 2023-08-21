@@ -105,7 +105,10 @@ if (!isloggedin() or isguestuser()) {
     $referer = get_local_referer(false);
 
     echo $OUTPUT->header();
-    echo $OUTPUT->confirm(get_string('noguestpost', 'forum').'<br /><br />'.get_string('liketologin'), get_login_url(), $referer);
+    echo $OUTPUT->confirm(get_string('noguestpost', 'forum'), get_login_url(), $referer, [
+        'confirmtitle' => get_string('noguestpost:title', 'forum'),
+        'continuestr' => get_string('login')
+    ]);
     echo $OUTPUT->footer();
     exit;
 }
@@ -796,8 +799,8 @@ if ($mformpost->is_cancelled()) {
     // WARNING: the $fromform->message array has been overwritten, do not use it anymore!
     $fromform->messagetrust  = trusttext_trusted($modcontext);
 
-    // Clean message text.
-    $fromform = trusttext_pre_edit($fromform, 'message', $modcontext);
+    // Do not clean text here, text cleaning can be done only after conversion to HTML.
+    // Word counting now uses text formatting, there is no need to abuse trusttext_pre_edit() here.
 
     if ($fromform->edit) {
         // Updating a post.

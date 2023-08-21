@@ -146,7 +146,7 @@ class provider implements
         foreach ($autosaves as $autosave) {
             $context = \context::instance_by_id($autosave->contextid);
             $subcontext = [
-                get_string('autosaves', 'tiny_autosave'),
+                get_string('pluginname', 'tiny_autosave'),
                 $autosave->id,
             ];
 
@@ -172,7 +172,7 @@ class provider implements
     /**
      * Delete all data for all users in the specified context.
      *
-     * @param context $context The specific context to delete data for.
+     * @param \context $context The specific context to delete data for.
      */
     public static function delete_data_for_all_users_in_context(\context $context) {
         global $DB;

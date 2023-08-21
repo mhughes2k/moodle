@@ -138,7 +138,6 @@ input[type="file"],
 input[type="image"],
 .sr-only-focusable,
 a.dropdown-toggle,
-.modal-dialog[tabindex="0"],
 .moodle-dialogue-base .closebutton,
 button.close,
 .form-autocomplete-selection,
@@ -157,7 +156,14 @@ button.close,
 .modal-dialog[tabindex="0"] {
     &.focus,
     &:focus {
-        @include border-radius($modal-content-border-radius);
+        outline: 0;
+        .modal-content {
+            outline: 0;
+            box-shadow: $input-btn-focus-box-shadow;
+
+            // Modal dialogs border should be rounded too.
+            @include border-radius($modal-content-border-radius);
+        }
     }
 }
 
@@ -364,6 +370,23 @@ img.resize {
 .action-menu {
     white-space: nowrap;
     display: inline;
+
+    .dropdown.downleft .dropdown-subpanel-content {
+        right: 0;
+        left: auto;
+    }
+
+    .dropdown-subpanel.content-displayed {
+        background-color: $gray-200;
+    }
+
+    .dropdown-subpanel-content {
+        max-width: $modal-sm;
+
+        a:focus {
+            outline: solid $primary;
+        }
+    }
 }
 
 .block img.resize {
@@ -414,9 +437,20 @@ form.popupform div {
 
 // Position required for table sizing inside a flex container.
 .no-overflow > .generaltable {
-    position: relative;
     margin-bottom: 0;
 }
+
+.no-overflow,
+.table-responsive {
+    .generaltable {
+        .sr-only,
+        .accesshide {
+            position: relative;
+            display: block;
+        }
+    }
+}
+
 // Accessibility features
 
 // Accessibility: text 'seen' by screen readers but not visual users.
@@ -1166,20 +1200,9 @@ tr.flagged-tag a {
 audio.mediaplugin_html5audio {
     width: 300px;
 }
-/* TinyMCE moodle media preview frame should not have padding */
-.core_media_preview.pagelayout-embedded #content {
-    padding: 0;
-}
 
 .core_media_preview.pagelayout-embedded #maincontent {
     height: 0;
-}
-
-body#page-lib-editor-tinymce-plugins-moodlemedia-preview {
-    padding: 0;
-    margin: 0;
-    min-width: 0;
-    background: none;
 }
 
 .path-rating .ratingtable {
@@ -1520,7 +1543,7 @@ body#page-lib-editor-tinymce-plugins-moodlemedia-preview {
 .choosercontainer #chooseform .option label {
     display: block;
     margin: 0;
-    padding: ($spacer / 2) 0;
+    padding: ($spacer * 0.5) 0;
     border-bottom: 1px solid #fff;
 }
 
@@ -2199,12 +2222,6 @@ h3.sectionname .inplaceeditable.inplaceeditingon .editinstructions {
     }
 }
 
-// Reset for ul.
-ul {
-    padding-left: 1rem;
-    -webkit-margin-start: 0.2rem;  /* stylelint-disable-line */
-}
-
 /* YUI 2 Tree View */
 /*rtl:raw:
 .ygtvtn,
@@ -2287,7 +2304,7 @@ ul {
     padding-right: 0;
     padding-left: 0;
     .nav {
-        margin-right: $grid-gutter-width / 2;
+        margin-right: $grid-gutter-width * 0.5;
         background-color: $card-bg;
     }
     @include media-breakpoint-down(sm) {
@@ -2326,8 +2343,20 @@ $footer-link-color: $bg-inverse-link-color !default;
     @include box-shadow($popover-box-shadow);
 }
 
+.btn-footer-communication {
+    display: none;
+    position: fixed;
+    bottom: 5rem;
+    right: 2rem;
+    @include box-shadow($popover-box-shadow);
+}
+
 .hasstickyfooter .btn-footer-popover {
-    bottom: calc(2rem + #{$navbar-height});
+    bottom: calc(1rem + #{$stickyfooter-height});
+}
+
+.hasstickyfooter .btn-footer-communication {
+    bottom: calc(4rem + #{$stickyfooter-height});
 }
 
 .popover.footer {
@@ -2356,7 +2385,8 @@ $footer-link-color: $bg-inverse-link-color !default;
     .jsenabled #page-footer .footer-content-popover {
         display: none;
     }
-    .jsenabled .btn-footer-popover {
+    .jsenabled .btn-footer-popover,
+    .jsenabled .btn-footer-communication {
         display: block;
         z-index: $zindex-dropdown;
     }
@@ -2401,8 +2431,8 @@ $footer-link-color: $bg-inverse-link-color !default;
         display: flex;
         align-items: center;
         &:before {
-            @include fa-icon();
-            content: $fa-var-check;
+            @extend .fa-solid;
+            content: fa-content($fa-var-check);
             position: absolute;
             left: 0.4rem;
             font-size: 0.7rem;
@@ -2577,6 +2607,7 @@ input[disabled] {
 
 .custom-select {
     width: auto;
+    max-width: 100%;
 }
 
 .fade.in {
@@ -2606,6 +2637,46 @@ input[disabled] {
     }
 }
 
+.v-hidden {
+    visibility: hidden;
+}
+
+// Any dialog (modal or dropdown) forced max-widths limits.
+.dialog-big {
+    max-width: $modal-md;
+}
+
+.dialog-small {
+    max-width: $modal-sm;
+}
+
+@include media-breakpoint-up(sm) {
+    .dialog-big {
+        width: $modal-md;
+    }
+
+    .dialog-small {
+        width: $modal-sm;
+    }
+}
+
+/*
+ * Helpers to show elements only when a parent element has focus or hover.
+ */
+
+// Add this class to the element to hide.
+.v-parent-focus {
+    opacity: 0;
+    visibility: hidden;
+}
+
+// Add this class to the parent element to control focus.
+.focus-control:focus-within .v-parent-focus,
+.focus-control:hover .v-parent-focus {
+    opacity: 1;
+    visibility: visible;
+}
+
 // Emoji picker.
 $picker-width: 350px !default;
 $picker-width-xs: 320px !default;
@@ -2623,7 +2694,7 @@ $picker-emojis-per-row: 7 !default;
     .category-button {
         padding: .375rem 0;
         height: 100%;
-        width: $picker-width / $picker-emoji-category-count;
+        width: divide($picker-width, $picker-emoji-category-count);
         border-top: none;
         border-left: none;
         border-right: none;
@@ -2667,7 +2738,7 @@ $picker-emojis-per-row: 7 !default;
     }
 
     .emoji-short-name {
-        line-height: $picker-row-height / 2;
+        line-height: $picker-row-height * 0.5;
     }
 
     @include media-breakpoint-down(xs) {
@@ -2729,10 +2800,10 @@ $picker-emojis-per-row: 7 !default;
     .breadcrumb:not(:empty) {
         width: 100%;
         flex-wrap: nowrap;
-        margin-bottom: $spacer / 2;
+        margin-bottom: $spacer * 0.5;
         .breadcrumb-item {
-            padding-top: $spacer / 3;
-            padding-bottom: $spacer / 3;
+            padding-top: $spacer * 0.33333;
+            padding-bottom: $spacer * 0.33333;
             display: inline-flex;
             overflow: hidden;
         }
@@ -2757,7 +2828,7 @@ $picker-emojis-per-row: 7 !default;
         max-width: 100%;
     }
     .card .card-body {
-        padding: $card-spacer-x / 2;
+        padding: $card-spacer-x * 0.5;
     }
     #page-header {
         .card {
@@ -2771,7 +2842,7 @@ $picker-emojis-per-row: 7 !default;
     .nav-pills {
         margin: 0;
         border: 0;
-        padding: $spacer / 8;
+        padding: $spacer * 0.125;
         background-color: $gray-200;
         .nav-item {
             flex: 1 1 auto;
@@ -2780,7 +2851,7 @@ $picker-emojis-per-row: 7 !default;
         .nav-link {
             background: $white;
             border: 0;
-            margin: $spacer / 8;
+            margin: $spacer * 0.125;
             &.active {
                 @include button-outline-variant($gray-600);
                 border-color: $gray-600;
@@ -2908,6 +2979,41 @@ body.dragging {
 
 // Generic classes reactive components can use.
 
+.overlay-preview {
+    background-color: rgba($white, .8);
+    border: 2px dashed $primary;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+
+    .overlay-preview-wrapper {
+        position: absolute;
+        top: 0;
+        padding: 2rem;
+        width: 100%;
+    }
+
+    .overlay-preview-content {
+        position: relative;
+        top: 0;
+        padding: $modal-inner-padding;
+        margin: 0 auto;
+        width: 100%;
+        max-width: 600px;
+        background-color: $primary;
+        color: $white;
+        text-align: center;
+        font-size: $font-size-lg;
+        @include border-radius();
+    }
+}
+
+.overlay-preview-borders {
+    outline: 2px dashed $primary;
+}
+
 .waitstate {
     display: none;
 }
@@ -2950,13 +3056,45 @@ body.dragging {
 }
 
 .dropdown-toggle::after {
-    content: $fa-var-chevron-down;
+    @extend .fa-solid;
+    content: fa-content($fa-var-chevron-down);
     margin-right: 0;
     margin-left: 4px;
-    @include fa-icon();
     font-size: 9px;
     width: 9px;
     border: 0;
+
+}
+
+.dropleft .dropdown-toggle::before {
+    border: 0;
+    @extend .fa-solid;
+    content: fa-content($fa-var-chevron-left);
+    font-size: 9px;
+    margin-left: 0;
+    margin-right: 4px;
+    width: 9px;
+}
+
+.dir-rtl .dropleft .dropdown-toggle::before {
+    content: fa-content($fa-var-chevron-right);
+}
+
+.dropright .dropdown-toggle::after {
+    border: 0;
+    @extend .fa-solid;
+    content: fa-content($fa-var-chevron-right);
+}
+
+.dir-rtl .dropright .dropdown-toggle::after {
+    content: fa-content($fa-var-chevron-left);
+}
+
+
+.dropup .dropdown-toggle::after {
+    border: 0;
+    @extend .fa-solid;
+    content: fa-content($fa-var-chevron-up);
 }
 
 .select-menu {
@@ -2979,12 +3117,16 @@ body.dragging {
             padding-left: 2.5rem;
         }
     }
-    .dropdown-item {
-        cursor: pointer;
+    .dropdown-item[aria-selected="true"] {
+        font-weight: bold;
+    }
+}
 
-        &[aria-selected="true"] {
-            font-weight: bold;
-        }
+[role="listbox"] [role="option"] {
+    cursor: pointer;
+
+    &[aria-selected="true"] {
+        font-weight: bold;
     }
 }
 
@@ -3021,5 +3163,89 @@ body.dragging {
                 @include border-right-radius($pagination-border-radius-sm);
             }
         }
+    }
+}
+
+blockquote {
+    margin: 0 0.5rem 1rem;
+    padding-left: 1rem;
+    color: $gray-700;
+    border-left: 5px solid $gray-400;
+}
+
+/* Prevent long strings exceeding page width */
+.page-header-headings,
+.coursename,
+.categoryname,
+.breadcrumb-item {
+
+    &:not(.text-truncate) {
+        word-break: normal;
+        overflow-wrap: anywhere;
+        white-space: normal;
+    }
+}
+
+/* Showmore component */
+.showmore-container {
+    &.collapsed {
+        .collapsed-content {
+            display: block;
+        }
+        .expanded-content {
+            display: none;
+        }
+    }
+    &:not(.collapsed) {
+        .collapsed-content {
+            display: none;
+        }
+        .expanded-content {
+            display: block;
+        }
+    }
+    button {
+        float: right;
+        &.btn-link {
+            text-decoration: none;
+        }
+        .icon {
+            font-size: $btn-font-size-sm;
+            margin: 0;
+        }
+    }
+}
+
+/* Combobox search dropdowns */
+.usersearchdropdown,
+.gradesearchdropdown,
+.groupsearchdropdown {
+    max-width: 350px;
+    .searchresultitemscontainer {
+        max-height: 170px;
+        overflow: auto;
+        /* stylelint-disable declaration-no-important */
+        img {
+            height: 48px !important;
+            width: 48px !important;
+        }
+    }
+}
+
+/* Choice list component. */
+.choicelist {
+    min-width: $modal-sm;
+}
+
+[data-region="fixed-drawer"] {
+    .choicelist {
+        min-width: calc(#{$modal-sm} - 25px);
+    }
+}
+
+@include media-breakpoint-down(xs) {
+    // Modal small are larger than xs breakpoint.
+    .choicelist {
+        min-width: calc(#{$modal-sm} - 25px);
     }
 }

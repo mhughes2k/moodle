@@ -179,6 +179,7 @@ class moodlelib_test extends \advanced_testcase {
 
         // Invalid utf8 string.
         $this->assertSame('aš', fix_utf8('a'.chr(130).'š'), 'This fails with buggy iconv() when mbstring extenstion is not available as fallback.');
+        $this->assertSame('Hello ', fix_utf8('Hello ￿'));
     }
 
     public function test_optional_param() {
@@ -1315,7 +1316,7 @@ class moodlelib_test extends \advanced_testcase {
      *
      * @dataProvider shorten_filenames_provider
      *
-     * @param string $filenames
+     * @param array $filenames
      * @param int $length
      * @param string $expected
      * @param boolean $includehash
@@ -1556,227 +1557,6 @@ class moodlelib_test extends \advanced_testcase {
         set_user_preference('test_pref', 1);
         unset_user_preference('test_pref', $USER->id);
         $this->assertNull(get_user_preferences('test_pref'));
-    }
-
-    /**
-     * Test essential features implementation of {@link get_extra_user_fields()} as the admin user with all capabilities.
-     *
-     * @deprecated since Moodle 3.11 MDL-45242
-     */
-    public function test_get_extra_user_fields_essentials() {
-        global $CFG, $USER, $DB;
-        $this->resetAfterTest();
-
-        $this->setAdminUser();
-        $context = \context_system::instance();
-
-        // No fields.
-        $CFG->showuseridentity = '';
-        $this->assertEquals(array(), get_extra_user_fields($context));
-
-        // One field.
-        $CFG->showuseridentity = 'frog';
-        $this->assertEquals(array('frog'), get_extra_user_fields($context));
-
-        // Two fields.
-        $CFG->showuseridentity = 'frog,zombie';
-        $this->assertEquals(array('frog', 'zombie'), get_extra_user_fields($context));
-
-        // No fields, except.
-        $CFG->showuseridentity = '';
-        $this->assertEquals(array(), get_extra_user_fields($context, array('frog')));
-
-        // One field.
-        $CFG->showuseridentity = 'frog';
-        $this->assertEquals(array(), get_extra_user_fields($context, array('frog')));
-
-        // Two fields.
-        $CFG->showuseridentity = 'frog,zombie';
-        $this->assertEquals(array('zombie'), get_extra_user_fields($context, array('frog')));
-
-        $this->assertDebuggingCalledCount(6);
-    }
-
-    /**
-     * Prepare environment for couple of tests related to permission checks in {@link get_extra_user_fields()}.
-     *
-     * @return stdClass
-     * @deprecated since Moodle 3.11 MDL-45242
-     */
-    protected function environment_for_get_extra_user_fields_tests() {
-        global $CFG, $DB;
-
-        $CFG->showuseridentity = 'idnumber,country,city';
-        $CFG->hiddenuserfields = 'country,city';
-
-        $env = new \stdClass();
-
-        $env->course = $this->getDataGenerator()->create_course();
-        $env->coursecontext = \context_course::instance($env->course->id);
-
-        $env->teacherrole = $DB->get_record('role', array('shortname' => 'teacher'));
-        $env->studentrole = $DB->get_record('role', array('shortname' => 'student'));
-        $env->managerrole = $DB->get_record('role', array('shortname' => 'manager'));
-
-        $env->student = $this->getDataGenerator()->create_user();
-        $env->teacher = $this->getDataGenerator()->create_user();
-        $env->manager = $this->getDataGenerator()->create_user();
-
-        role_assign($env->studentrole->id, $env->student->id, $env->coursecontext->id);
-        role_assign($env->teacherrole->id, $env->teacher->id, $env->coursecontext->id);
-        role_assign($env->managerrole->id, $env->manager->id, SYSCONTEXTID);
-
-        return $env;
-    }
-
-    /**
-     * No identity fields shown to student user (no permission to view identity fields).
-     *
-     * @deprecated since Moodle 3.11 MDL-45242
-     */
-    public function test_get_extra_user_fields_no_access() {
-
-        $this->resetAfterTest();
-        $env = $this->environment_for_get_extra_user_fields_tests();
-        $this->setUser($env->student);
-
-        $this->assertEquals(array(), get_extra_user_fields($env->coursecontext));
-        $this->assertEquals(array(), get_extra_user_fields(\context_system::instance()));
-
-        $this->assertDebuggingCalledCount(2);
-    }
-
-    /**
-     * Teacher can see students' identity fields only within the course.
-     *
-     * @deprecated since Moodle 3.11 MDL-45242
-     */
-    public function test_get_extra_user_fields_course_only_access() {
-
-        $this->resetAfterTest();
-        $env = $this->environment_for_get_extra_user_fields_tests();
-        $this->setUser($env->teacher);
-
-        $this->assertEquals(array('idnumber', 'country', 'city'), get_extra_user_fields($env->coursecontext));
-        $this->assertEquals(array(), get_extra_user_fields(\context_system::instance()));
-
-        $this->assertDebuggingCalledCount(2);
-    }
-
-    /**
-     * Teacher can be prevented from seeing students' identity fields even within the course.
-     *
-     * @deprecated since Moodle 3.11 MDL-45242
-     */
-    public function test_get_extra_user_fields_course_prevented_access() {
-
-        $this->resetAfterTest();
-        $env = $this->environment_for_get_extra_user_fields_tests();
-        $this->setUser($env->teacher);
-
-        assign_capability('moodle/course:viewhiddenuserfields', CAP_PREVENT, $env->teacherrole->id, $env->coursecontext->id);
-        $this->assertEquals(array('idnumber'), get_extra_user_fields($env->coursecontext));
-
-        $this->assertDebuggingCalledCount(1);
-    }
-
-    /**
-     * Manager can see students' identity fields anywhere.
-     *
-     * @deprecated since Moodle 3.11 MDL-45242
-     */
-    public function test_get_extra_user_fields_anywhere_access() {
-
-        $this->resetAfterTest();
-        $env = $this->environment_for_get_extra_user_fields_tests();
-        $this->setUser($env->manager);
-
-        $this->assertEquals(array('idnumber', 'country', 'city'), get_extra_user_fields($env->coursecontext));
-        $this->assertEquals(array('idnumber', 'country', 'city'), get_extra_user_fields(\context_system::instance()));
-
-        $this->assertDebuggingCalledCount(2);
-    }
-
-    /**
-     * Manager can be prevented from seeing hidden fields outside the course.
-     *
-     * @deprecated since Moodle 3.11 MDL-45242
-     */
-    public function test_get_extra_user_fields_schismatic_access() {
-
-        $this->resetAfterTest();
-        $env = $this->environment_for_get_extra_user_fields_tests();
-        $this->setUser($env->manager);
-
-        assign_capability('moodle/user:viewhiddendetails', CAP_PREVENT, $env->managerrole->id, SYSCONTEXTID, true);
-        $this->assertEquals(array('idnumber'), get_extra_user_fields(\context_system::instance()));
-        // Note that inside the course, the manager can still see the hidden identifiers as this is currently
-        // controlled by a separate capability for legacy reasons.
-        $this->assertEquals(array('idnumber', 'country', 'city'), get_extra_user_fields($env->coursecontext));
-
-        $this->assertDebuggingCalledCount(2);
-    }
-
-    /**
-     * Two capabilities must be currently set to prevent manager from seeing hidden fields.
-     *
-     * @deprecated since Moodle 3.11 MDL-45242
-     */
-    public function test_get_extra_user_fields_hard_to_prevent_access() {
-
-        $this->resetAfterTest();
-        $env = $this->environment_for_get_extra_user_fields_tests();
-        $this->setUser($env->manager);
-
-        assign_capability('moodle/user:viewhiddendetails', CAP_PREVENT, $env->managerrole->id, SYSCONTEXTID, true);
-        assign_capability('moodle/course:viewhiddenuserfields', CAP_PREVENT, $env->managerrole->id, SYSCONTEXTID, true);
-
-        $this->assertEquals(array('idnumber'), get_extra_user_fields(\context_system::instance()));
-        $this->assertEquals(array('idnumber'), get_extra_user_fields($env->coursecontext));
-
-        $this->assertDebuggingCalledCount(2);
-    }
-
-    /**
-     * Tests get_extra_user_fields_sql.
-     *
-     * @deprecated since Moodle 3.11 MDL-45242
-     */
-    public function test_get_extra_user_fields_sql() {
-        global $CFG, $USER, $DB;
-        $this->resetAfterTest();
-
-        $this->setAdminUser();
-
-        $context = \context_system::instance();
-
-        // No fields.
-        $CFG->showuseridentity = '';
-        $this->assertSame('', get_extra_user_fields_sql($context));
-
-        // One field.
-        $CFG->showuseridentity = 'frog';
-        $this->assertSame(', frog', get_extra_user_fields_sql($context));
-
-        // Two fields with table prefix.
-        $CFG->showuseridentity = 'frog,zombie';
-        $this->assertSame(', u1.frog, u1.zombie', get_extra_user_fields_sql($context, 'u1'));
-
-        // Two fields with field prefix.
-        $CFG->showuseridentity = 'frog,zombie';
-        $this->assertSame(', frog AS u_frog, zombie AS u_zombie',
-            get_extra_user_fields_sql($context, '', 'u_'));
-
-        // One field excluded.
-        $CFG->showuseridentity = 'frog';
-        $this->assertSame('', get_extra_user_fields_sql($context, '', '', array('frog')));
-
-        // Two fields, one excluded, table+field prefix.
-        $CFG->showuseridentity = 'frog,zombie';
-        $this->assertEquals(', u1.zombie AS u_zombie',
-            get_extra_user_fields_sql($context, 'u1', 'u_', array('frog')));
-
-        $this->assertDebuggingCalledCount(6);
     }
 
     /**
@@ -2326,8 +2106,12 @@ class moodlelib_test extends \advanced_testcase {
         // Call var_export() on a newly generated lang_string.
         $str = new lang_string('no');
 
+        // In PHP 8.2 exported class names are now fully qualified;
+        // previously, the leading backslash was omitted.
+        $leadingbackslash = (version_compare(PHP_VERSION, '8.2.0', '>=')) ? '\\' : '';
+
         $expected1 = <<<EOF
-lang_string::__set_state(array(
+{$leadingbackslash}lang_string::__set_state(array(
    'identifier' => 'no',
    'component' => 'moodle',
    'a' => NULL,
@@ -2528,10 +2312,6 @@ EOF;
         // Test Event.
         $this->assertInstanceOf('\core\event\user_deleted', $event);
         $this->assertSame($user->id, $event->objectid);
-        $this->assertSame('user_deleted', $event->get_legacy_eventname());
-        $this->assertEventLegacyData($user, $event);
-        $expectedlogdata = array(SITEID, 'user', 'delete', "view.php?id=$user->id", $user->firstname.' '.$user->lastname);
-        $this->assertEventLegacyLogData($expectedlogdata, $event);
         $eventdata = $event->get_data();
         $this->assertSame($eventdata['other']['username'], $user->username);
         $this->assertSame($eventdata['other']['email'], $user->email);
@@ -3174,62 +2954,6 @@ EOF;
         $CFG->alternativefullnameformat = $originalcfg->alternativefullnameformat;
     }
 
-    /**
-     * Tests the get_all_user_name_fields() deprecated function.
-     *
-     * @deprecated since Moodle 3.11 MDL-45242
-     */
-    public function test_get_all_user_name_fields() {
-        $this->resetAfterTest();
-
-        // Additional names in an array.
-        $testarray = array('firstnamephonetic' => 'firstnamephonetic',
-                'lastnamephonetic' => 'lastnamephonetic',
-                'middlename' => 'middlename',
-                'alternatename' => 'alternatename',
-                'firstname' => 'firstname',
-                'lastname' => 'lastname');
-        $this->assertEquals($testarray, get_all_user_name_fields());
-
-        // Additional names as a string.
-        $teststring = 'firstnamephonetic,lastnamephonetic,middlename,alternatename,firstname,lastname';
-        $this->assertEquals($teststring, get_all_user_name_fields(true));
-
-        // Additional names as a string with an alias.
-        $teststring = 't.firstnamephonetic,t.lastnamephonetic,t.middlename,t.alternatename,t.firstname,t.lastname';
-        $this->assertEquals($teststring, get_all_user_name_fields(true, 't'));
-
-        // Additional name fields with a prefix - object.
-        $testarray = array('firstnamephonetic' => 'authorfirstnamephonetic',
-                'lastnamephonetic' => 'authorlastnamephonetic',
-                'middlename' => 'authormiddlename',
-                'alternatename' => 'authoralternatename',
-                'firstname' => 'authorfirstname',
-                'lastname' => 'authorlastname');
-        $this->assertEquals($testarray, get_all_user_name_fields(false, null, 'author'));
-
-        // Additional name fields with an alias and a title - string.
-        $teststring = 'u.firstnamephonetic AS authorfirstnamephonetic,u.lastnamephonetic AS authorlastnamephonetic,u.middlename AS authormiddlename,u.alternatename AS authoralternatename,u.firstname AS authorfirstname,u.lastname AS authorlastname';
-        $this->assertEquals($teststring, get_all_user_name_fields(true, 'u', null, 'author'));
-
-        // Test the order parameter of the function.
-        // Returning an array.
-        $testarray = array('firstname' => 'firstname',
-                'lastname' => 'lastname',
-                'firstnamephonetic' => 'firstnamephonetic',
-                'lastnamephonetic' => 'lastnamephonetic',
-                'middlename' => 'middlename',
-                'alternatename' => 'alternatename'
-        );
-        $this->assertEquals($testarray, get_all_user_name_fields(false, null, null, null, true));
-
-        // Returning a string.
-        $teststring = 'firstname,lastname,firstnamephonetic,lastnamephonetic,middlename,alternatename';
-        $this->assertEquals($teststring, get_all_user_name_fields(true, null, null, null, true));
-
-        $this->assertDebuggingCalledCount(7);
-    }
-
     public function test_order_in_string() {
         $this->resetAfterTest();
 
@@ -3313,11 +3037,6 @@ EOF;
         // Test Event.
         $this->assertInstanceOf('\core\event\user_loggedout', $event);
         $this->assertSame($user->id, $event->objectid);
-        $this->assertSame('user_logout', $event->get_legacy_eventname());
-        $this->assertEventLegacyData($user, $event);
-        $expectedlogdata = array(SITEID, 'user', 'logout', 'view.php?id='.$event->objectid.'&course='.SITEID, $event->objectid, 0,
-            $event->objectid);
-        $this->assertEventLegacyLogData($expectedlogdata, $event);
         $this->assertEventContextNotUsed($event);
     }
 
@@ -3959,9 +3678,11 @@ EOF;
      * @dataProvider count_words_testcases
      * @param int $expectedcount number of words in $string.
      * @param string $string the test string to count the words of.
+     * @param int|null $format
      */
-    public function test_count_words(int $expectedcount, string $string): void {
-        $this->assertEquals($expectedcount, count_words($string));
+    public function test_count_words(int $expectedcount, string $string, $format = null): void {
+        $this->assertEquals($expectedcount, count_words($string, $format),
+            "'$string' with format '$format' does not match count $expectedcount");
     }
 
     /**
@@ -3970,6 +3691,13 @@ EOF;
      * @return array of test cases.
      */
     public function count_words_testcases(): array {
+        // Copy-pasting example from MDL-64240.
+        $copypasted = <<<EOT
+<p onclick="alert('boop');">Snoot is booped</p>
+ <script>alert('Boop the snoot');</script>
+ <img alt="Boop the Snoot." src="https://proxy.duckduckgo.com/iu/?u=http%3A%2F%2Fwww.geekfill.com%2Fwp-content%2Fuploads%2F2015%2F08%2FBoop-the-Snoot.jpg&f=1">
+EOT;
+
         // The counts here should match MS Word and Libre Office.
         return [
             [0, ''],
@@ -4005,6 +3733,17 @@ EOF;
             [2, "one\ftwo"],
             [1, "SO<sub>4</sub><sup>2-</sup>"],
             [6, '4+4=8 i.e. O(1) a,b,c,d I’m black&blue_really'],
+            [1, '<span>a</span><span>b</span>'],
+            [1, '<span>a</span><span>b</span>', FORMAT_PLAIN],
+            [1, '<span>a</span><span>b</span>', FORMAT_HTML],
+            [1, '<span>a</span><span>b</span>', FORMAT_MOODLE],
+            [1, '<span>a</span><span>b</span>', FORMAT_MARKDOWN],
+            [1, 'aa <argh <bleh>pokus</bleh>'],
+            [2, 'aa <argh <bleh>pokus</bleh>', FORMAT_HTML],
+            [6, $copypasted],
+            [6, $copypasted, FORMAT_PLAIN],
+            [3, $copypasted, FORMAT_HTML],
+            [3, $copypasted, FORMAT_MOODLE],
         ];
     }
 
@@ -4014,9 +3753,11 @@ EOF;
      * @dataProvider count_letters_testcases
      * @param int $expectedcount number of characters in $string.
      * @param string $string the test string to count the letters of.
+     * @param int|null $format
      */
-    public function test_count_letters(int $expectedcount, string $string): void {
-        $this->assertEquals($expectedcount, count_letters($string));
+    public function test_count_letters(int $expectedcount, string $string, $format = null): void {
+        $this->assertEquals($expectedcount, count_letters($string, $format),
+            "'$string' with format '$format' does not match count $expectedcount");
     }
 
     /**
@@ -4030,6 +3771,12 @@ EOF;
             [1, 'x'],
             [1, '&amp;'],
             [4, '<p>frog</p>'],
+            [4, '<p>frog</p>', FORMAT_PLAIN],
+            [4, '<p>frog</p>', FORMAT_MOODLE],
+            [4, '<p>frog</p>', FORMAT_HTML],
+            [4, '<p>frog</p>', FORMAT_MARKDOWN],
+            [2, 'aa <argh <bleh>pokus</bleh>'],
+            [7, 'aa <argh <bleh>pokus</bleh>', FORMAT_HTML],
         ];
     }
 
@@ -4126,35 +3873,6 @@ EOF;
 
     }
 
-    /*
-     * Test emulation of random_bytes() function.
-     */
-    public function test_random_bytes_emulate() {
-        $result = random_bytes_emulate(10);
-        $this->assertSame(10, strlen($result));
-        $this->assertnotSame($result, random_bytes_emulate(10));
-
-        $result = random_bytes_emulate(21);
-        $this->assertSame(21, strlen($result));
-        $this->assertnotSame($result, random_bytes_emulate(21));
-
-        $result = random_bytes_emulate(666);
-        $this->assertSame(666, strlen($result));
-
-        $result = random_bytes_emulate(40);
-        $this->assertSame(40, strlen($result));
-
-        $this->assertDebuggingNotCalled();
-
-        $result = random_bytes_emulate(0);
-        $this->assertSame('', $result);
-        $this->assertDebuggingCalled();
-
-        $result = random_bytes_emulate(-1);
-        $this->assertSame('', $result);
-        $this->assertDebuggingCalled();
-    }
-
     /**
      * Test function for creation of random strings.
      */
@@ -4180,14 +3898,6 @@ EOF;
         $this->assertMatchesRegularExpression('/^[' . $pool . ']+$/', $result);
 
         $this->assertDebuggingNotCalled();
-
-        $result = random_string(0);
-        $this->assertSame('', $result);
-        $this->assertDebuggingCalled();
-
-        $result = random_string(-1);
-        $this->assertSame('', $result);
-        $this->assertDebuggingCalled();
     }
 
     /**
@@ -4215,14 +3925,6 @@ EOF;
         $this->assertMatchesRegularExpression('/^[' . $pool . ']+$/', $result);
 
         $this->assertDebuggingNotCalled();
-
-        $result = complex_random_string(0);
-        $this->assertSame('', $result);
-        $this->assertDebuggingCalled();
-
-        $result = complex_random_string(-1);
-        $this->assertSame('', $result);
-        $this->assertDebuggingCalled();
     }
 
     /**
@@ -5495,4 +5197,70 @@ EOF;
         $this->assertEquals(false, html_is_blank('<p>.</p>'));
         $this->assertEquals(false, html_is_blank('<img src="#">'));
     }
+
+    /**
+     * Provider for is_proxybypass
+     *
+     * @return array of test cases.
+     */
+    public function is_proxybypass_provider(): array {
+
+        return [
+            'Proxybypass contains the same IP as the beginning of the URL' => [
+                'http://192.168.5.5-fake-app-7f000101.nip.io',
+                '192.168.5.5, 127.0.0.1',
+                false
+            ],
+            'Proxybypass contains the last part of the URL' => [
+                'http://192.168.5.5-fake-app-7f000101.nip.io',
+                'app-7f000101.nip.io',
+                false
+            ],
+            'Proxybypass contains the last part of the URL 2' => [
+                'http://store.mydomain.com',
+                'mydomain.com',
+                false
+            ],
+            'Proxybypass contains part of the url' => [
+                'http://myweb.com',
+                'store.myweb.com',
+                false
+            ],
+            'Different IPs used in proxybypass' => [
+                'http://192.168.5.5',
+                '192.168.5.3',
+                false
+            ],
+            'Proxybypass and URL matchs' => [
+                'http://store.mydomain.com',
+                'store.mydomain.com',
+                true
+            ],
+            'IP used in proxybypass' => [
+                'http://192.168.5.5',
+                '192.168.5.5',
+                true
+            ],
+        ];
+    }
+
+    /**
+     * Check if $url matches anything in proxybypass list
+     *
+     * Test function {@see is_proxybypass()}.
+     * @dataProvider is_proxybypass_provider
+     * @param string $url url to check
+     * @param string $proxybypass
+     * @param bool $expected Expected value.
+     */
+    public function test_is_proxybypass(string $url, string $proxybypass, bool $expected): void {
+        $this->resetAfterTest();
+
+        global $CFG;
+        $CFG->proxyhost = '192.168.5.5'; // Test with a fake proxy.
+        $CFG->proxybypass = $proxybypass;
+
+        $this->assertEquals($expected, is_proxybypass($url));
+    }
+
 }

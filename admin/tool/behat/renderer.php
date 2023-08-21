@@ -24,6 +24,8 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+require_once($CFG->libdir . '/behat/classes/behat_generator_base.php');
+
 /**
  * Renderer for behat tool web features
  *
@@ -106,6 +108,32 @@ class tool_behat_renderer extends plugin_renderer_base {
                 },
                 $stepsdefinitions
             );
+
+            $elementstrings = [];
+            $count = 1;
+            $stepsdefinitions = preg_replace_callback('/(the following ")ELEMENT\d?_STRING(" exist:)/',
+                function($matches) use (&$elementstrings, &$count) {
+                    // Replace element type arguments with a user-friendly select.
+                    if (empty($elementstrings)) {
+                        $behatgenerators = new behat_data_generators();
+                        $componententities = $behatgenerators->get_all_entities();
+                        ksort($componententities);
+                        $elementstrings = [];
+                        foreach ($componententities as $component => $entities) {
+                            asort($entities);
+                            foreach ($entities as $entity) {
+                                $string = ($component === 'core') ? $entity : $component . ' > ' . $entity;
+                                $elementstrings[$string] = $string;
+                            }
+                        }
+                    }
+                    $select = html_writer::select($elementstrings, 'entities' . $count, '', ['' => 'choosedots'],
+                            ['class' => 'entities']);
+                    $count++;
+                    return $matches[1] . $select . $matches[2];
+                },
+                $stepsdefinitions
+            );
         }
 
         // Steps definitions.
@@ -156,9 +184,10 @@ class tool_behat_renderer extends plugin_renderer_base {
         // Info.
         $installurl = behat_command::DOCS_URL;
         $installlink = html_writer::tag('a', $installurl, array('href' => $installurl, 'target' => '_blank'));
-        $writetestsurl = 'https://docs.moodle.org/dev/Writing acceptance tests';
+        $writetestsurl = 'https://moodledev.io/general/development/tools/behat/writing';
         $writetestslink = html_writer::tag('a', $writetestsurl, array('href' => $writetestsurl, 'target' => '_blank'));
-        $writestepsurl = 'https://docs.moodle.org/dev/Writing_new_acceptance_test_step_definitions';
+        $writestepsurl = 'https://moodledev.io/general/development/tools/behat/writing#' .
+            'writing-new-acceptance-test-step-definitions';
         $writestepslink = html_writer::tag('a', $writestepsurl, array('href' => $writestepsurl, 'target' => '_blank'));
         $infos = array(
             get_string('installinfo', 'tool_behat', $installlink),

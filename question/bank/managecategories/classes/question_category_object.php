@@ -306,8 +306,14 @@ class question_category_object {
      * @param int $questionsincategory
      * @param object $category
      * @throws \coding_exception
+     *
+     * @deprecated No longer used by internal code and not recommended since Moodle 4.2 MDL-77299.
      */
     public function display_move_form($questionsincategory, $category): void {
+        debugging(
+            'display_move_form() is deprecated and no longer used by internal code.',
+            DEBUG_DEVELOPER
+        );
         global $OUTPUT;
         $vars = new stdClass();
         $vars->name = $category->name;
@@ -473,23 +479,6 @@ class question_category_object {
         // Log the update of this category.
         $event = \core\event\question_category_updated::create_from_question_category_instance($cat);
         $event->trigger();
-
-        // If the category name has changed, rename any random questions in that category.
-        if ($oldcat->name != $cat->name) {
-            // Get the question ids for each question category.
-            $questionids = $this->get_real_question_ids_in_category($cat->id);
-
-            foreach ($questionids as $question) {
-                $where = "qtype = 'random' AND id = ? AND " . $DB->sql_compare_text('questiontext') . " = ?";
-
-                $randomqtype = question_bank::get_qtype('random');
-                $randomqname = $randomqtype->question_name($cat, false);
-                $DB->set_field_select('question', 'name', $randomqname, $where, [$question->id, '0']);
-
-                $randomqname = $randomqtype->question_name($cat, true);
-                $DB->set_field_select('question', 'name', $randomqname, $where, [$question->id, '1']);
-            }
-        }
 
         if ($oldcat->contextid != $tocontextid) {
             // Moving to a new context. Must move files belonging to questions.

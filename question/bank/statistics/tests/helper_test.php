@@ -17,9 +17,9 @@
 namespace qbank_statistics;
 
 use core_question\statistics\questions\all_calculated_for_qubaid_condition;
-use quiz;
+use mod_quiz\quiz_attempt;
+use mod_quiz\quiz_settings;
 use question_engine;
-use quiz_attempt;
 
 /**
  * Tests for question statistics.
@@ -35,8 +35,8 @@ class helper_test extends \advanced_testcase {
      * Test quizzes that contain a specified question.
      *
      * @covers ::get_all_places_where_questions_were_attempted
-     * @throws \coding_exception
-     * @throws \dml_exception
+     * @deprecated since Moodle 4.3 please use the method from statistics_bulk_loader.
+     * @todo MDL-78090 Final deprecation in Moodle 4.7
      */
     public function test_get_all_places_where_questions_were_attempted(): void {
         $this->resetAfterTest();
@@ -171,7 +171,7 @@ class helper_test extends \advanced_testcase {
         // Create user.
         $user = $this->getDataGenerator()->create_user();
         // Create attempt.
-        $quizobj = quiz::create($quiz->id, $user->id);
+        $quizobj = quiz_settings::create($quiz->id, $user->id);
         $quba = question_engine::make_questions_usage_by_activity('mod_quiz', $quizobj->get_context());
         $quba->set_preferred_behaviour($quizobj->get_quiz()->preferredbehaviour);
         $timenow = time();
@@ -225,6 +225,12 @@ class helper_test extends \advanced_testcase {
         foreach ($quiz2attempts as $attempt) {
             $this->submit_quiz($quiz2, $attempt);
         }
+
+        // Calculate the statistics.
+        $this->expectOutputRegex('~.*Calculations completed.*~');
+        $statisticstask = new \quiz_statistics\task\recalculate();
+        $statisticstask->execute();
+
         return [$quiz1, $quiz2, $questions];
     }
 
@@ -233,7 +239,7 @@ class helper_test extends \advanced_testcase {
      *
      * @param all_calculated_for_qubaid_condition $statistics the batch of statistics.
      * @param int $questionid a question id.
-     * @param string $item ane of the field names in all_calculated_for_qubaid_condition, e.g. 'facility'.
+     * @param string $item one of the field names in all_calculated_for_qubaid_condition, e.g. 'facility'.
      * @return float|null the required value.
      */
     private function extract_item_value(all_calculated_for_qubaid_condition $statistics,
@@ -301,6 +307,8 @@ class helper_test extends \advanced_testcase {
      * @param array $quiz2attempts quiz 2 attempts
      * @param array $expectedquiz2facilities  expected quiz 2 facilities
      * @param array $expectedaveragefacilities expected average facilities
+     * @deprecated since Moodle 4.3 please use the method from statistics_bulk_loader.
+     * @todo MDL-78090 Final deprecation in Moodle 4.7
      */
     public function test_load_question_facility(
         array $quiz1attempts,
@@ -347,6 +355,19 @@ class helper_test extends \advanced_testcase {
         $this->assertEquals($expectedaveragefacilities[1], helper::format_percentage($averagefacility2));
         $this->assertEquals($expectedaveragefacilities[2], helper::format_percentage($averagefacility3));
         $this->assertEquals($expectedaveragefacilities[3], helper::format_percentage($averagefacility4));
+
+        $this->assertDebuggingCalledCount(4,
+            [
+                'Deprecated: please use statistics_bulk_loader instead, or get_required_statistics_fields ' .
+                    'in your question bank column class.',
+                'Deprecated: please use statistics_bulk_loader instead, or get_required_statistics_fields ' .
+                    'in your question bank column class.',
+                'Deprecated: please use statistics_bulk_loader instead, or get_required_statistics_fields ' .
+                    'in your question bank column class.',
+                'Deprecated: please use statistics_bulk_loader instead, or get_required_statistics_fields ' .
+                    'in your question bank column class.',
+            ],
+            [DEBUG_DEVELOPER, DEBUG_DEVELOPER, DEBUG_DEVELOPER, DEBUG_DEVELOPER]);
     }
 
     /**
@@ -383,6 +404,8 @@ class helper_test extends \advanced_testcase {
      * @param array $quiz2attempts quiz 2 attempts
      * @param array $expectedquiz2discriminativeefficiency expected quiz 2 discriminative efficiency
      * @param array $expectedaveragediscriminativeefficiency expected average discriminative efficiency
+     * @deprecated since Moodle 4.3 please use the method from statistics_bulk_loader.
+     * @todo MDL-78090 Final deprecation in Moodle 4.7
      */
     public function test_load_question_discriminative_efficiency(
         array $quiz1attempts,
@@ -453,6 +476,19 @@ class helper_test extends \advanced_testcase {
         $this->assertEquals($expectedaveragediscriminativeefficiency[3],
             helper::format_percentage($avgdiscriminativeefficiency4, false),
             "Failure in question 4 average discriminative efficiency");
+
+        $this->assertDebuggingCalledCount(4,
+            [
+                'Deprecated: please use statistics_bulk_loader instead, or get_required_statistics_fields ' .
+                    'in your question bank column class.',
+                'Deprecated: please use statistics_bulk_loader instead, or get_required_statistics_fields ' .
+                    'in your question bank column class.',
+                'Deprecated: please use statistics_bulk_loader instead, or get_required_statistics_fields ' .
+                    'in your question bank column class.',
+                'Deprecated: please use statistics_bulk_loader instead, or get_required_statistics_fields ' .
+                    'in your question bank column class.',
+            ],
+            [DEBUG_DEVELOPER, DEBUG_DEVELOPER, DEBUG_DEVELOPER, DEBUG_DEVELOPER]);
     }
 
     /**
@@ -489,6 +525,8 @@ class helper_test extends \advanced_testcase {
      * @param array $quiz2attempts quiz 2 attempts
      * @param array $expectedquiz2discriminationindex expected quiz 2 discrimination index
      * @param array $expectedaveragediscriminationindex expected average discrimination index
+     * @deprecated since Moodle 4.3 please use the method from statistics_bulk_loader.
+     * @todo MDL-78090 Final deprecation in Moodle 4.7
      */
     public function test_load_question_discrimination_index(
         array $quiz1attempts,
@@ -559,5 +597,18 @@ class helper_test extends \advanced_testcase {
         $this->assertEquals($expectedaveragediscriminationindex[3],
             helper::format_percentage($avgdiscriminationindex4, false),
             "Failure in question 4 average discrimination index");
+
+        $this->assertDebuggingCalledCount(4,
+            [
+                'Deprecated: please use statistics_bulk_loader instead, or get_required_statistics_fields ' .
+                    'in your question bank column class.',
+                'Deprecated: please use statistics_bulk_loader instead, or get_required_statistics_fields ' .
+                    'in your question bank column class.',
+                'Deprecated: please use statistics_bulk_loader instead, or get_required_statistics_fields ' .
+                    'in your question bank column class.',
+                'Deprecated: please use statistics_bulk_loader instead, or get_required_statistics_fields ' .
+                    'in your question bank column class.',
+            ],
+            [DEBUG_DEVELOPER, DEBUG_DEVELOPER, DEBUG_DEVELOPER, DEBUG_DEVELOPER]);
     }
 }

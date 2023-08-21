@@ -24,14 +24,16 @@
 
 namespace core_question\local\bank;
 
+use core\plugininfo\qbank;
+use core_plugin_manager;
+use core_question\bank\search\condition;
+use core_question\local\statistics\statistics_bulk_loader;
+use qbank_columnsortorder\column_manager;
+use qbank_editquestion\editquestion_helper;
+
 defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->dirroot . '/question/editlib.php');
-use core_plugin_manager;
-use core_question\bank\search\condition;
-use qbank_columnsortorder\column_manager;
-use qbank_editquestion\editquestion_helper;
-use qbank_managecategories\helper;
 
 /**
  * This class prints a view of the question bank.
@@ -90,19 +92,26 @@ class view {
     public $course;
 
     /**
-     * @var \question_bank_column_base[] these are all the 'columns' that are
+     * @var column_base[] these are all the 'columns' that are
      * part of the display. Array keys are the class name.
      */
     protected $requiredcolumns;
 
     /**
-     * @var \question_bank_column_base[] these are the 'columns' that are
+     * @var question_action_base[] these are all the actions that can be displayed in a question's action menu.
+     *
+     * Array keys are the class name.
+     */
+    protected $questionactions;
+
+    /**
+     * @var column_base[] these are the 'columns' that are
      * actually displayed as a column, in order. Array keys are the class name.
      */
     protected $visiblecolumns;
 
     /**
-     * @var \question_bank_column_base[] these are the 'columns' that are
+     * @var column_base[] these are the 'columns' that are
      * actually displayed as an additional row (e.g. question text), in order.
      * Array keys are the class name.
      */
@@ -138,6 +147,15 @@ class view {
      * @var array params used by $countsql and $loadsql (which currently must be the same).
      */
     protected $sqlparams;
+
+    /**
+     * @var ?array Stores all the average statistics that this question bank view needs.
+     *
+     * This field gets initialised in {@see display_question_list()}. It is a two dimensional
+     * $this->loadedstatistics[$questionid][$fieldname] = $average value of that statistics for that question.
+     * Column classes in qbank plugins can access these values using {@see get_aggregate_statistic()}.
+     */
+    protected $loadedstatistics = null;
 
     /**
      * @var condition[] search conditions.
@@ -191,6 +209,7 @@ class view {
 
         // Possibly the heading part can be removed.
         $this->init_columns($this->wanted_columns(), $this->heading_column());
+        $this->init_question_actions();
         $this->init_sort();
         $this->init_search_conditions();
         $this->init_bulk_actions();
@@ -242,6 +261,28 @@ class view {
     }
 
     /**
+     * Initialise list of menu actions for enabled question bank plugins.
+     *
+     * Menu action objects are stored in $this->menuactions, keyed by class name.
+     *
+     * @return void
+     */
+    protected function init_question_actions(): void {
+        $plugins = \core_component::get_plugin_list_with_class('qbank', 'plugin_feature', 'plugin_feature.php');
+        $this->questionactions = [];
+        foreach ($plugins as $component => $plugin) {
+            if (!qbank::is_plugin_enabled($component)) {
+                continue;
+            }
+            $pluginentrypointobject = new $plugin();
+            $menuactions = $pluginentrypointobject->get_question_actions($this);
+            foreach ($menuactions as $menuaction) {
+                $this->questionactions[$menuaction::class] = $menuaction;
+            }
+        }
+    }
+
+    /**
      * Get the list of qbank plugins with available objects for features.
      *
      * @return array
@@ -254,19 +295,12 @@ class view {
                 'question_type_column',
                 'question_name_idnumber_tags_column',
                 'edit_menu_column',
-                'edit_action_column',
-                'copy_action_column',
-                'tags_action_column',
-                'preview_action_column',
-                'history_action_column',
-                'delete_action_column',
-                'export_xml_action_column',
                 'question_status_column',
                 'version_number_column',
                 'creator_name_column',
                 'comment_count_column'
         ];
-        if (question_get_display_preference('qbshowtext', 0, PARAM_BOOL, new \moodle_url(''))) {
+        if (question_get_display_preference('qbshowtext', 0, PARAM_INT, new \moodle_url(''))) {
             $corequestionbankcolumns[] = 'question_text_row';
         }
 
@@ -290,7 +324,7 @@ class view {
             }
             foreach ($plugincolumnobjects as $columnobject) {
                 $columnname = $columnobject->get_column_name();
-                foreach ($corequestionbankcolumns as $key => $corequestionbankcolumn) {
+                foreach ($corequestionbankcolumns as $corequestionbankcolumn) {
                     if (!\core\plugininfo\qbank::is_plugin_enabled($componentname)) {
                         unset($questionbankclasscolumns[$columnname]);
                         continue;
@@ -324,7 +358,7 @@ class view {
 
         // Mitigate the error in case of any regression.
         foreach ($questionbankclasscolumns as $shortname => $questionbankclasscolumn) {
-            if (empty($questionbankclasscolumn)) {
+            if (!is_object($questionbankclasscolumn)) {
                 unset($questionbankclasscolumns[$shortname]);
             }
         }
@@ -378,14 +412,6 @@ class view {
      * @param string $heading The name of column that is set as heading
      */
     protected function init_columns($wanted, $heading = ''): void {
-        // If we are using the edit menu column, allow it to absorb all the actions.
-        foreach ($wanted as $column) {
-            if ($column instanceof edit_menu_column) {
-                $wanted = $column->claim_menuable_columns($wanted);
-                break;
-            }
-        }
-
         // Now split columns into real columns and rows.
         $this->visiblecolumns = [];
         $this->extrarows = [];
@@ -579,26 +605,77 @@ class view {
     }
 
     /**
-     * Create the SQL query to retrieve the indicated questions, based on
-     * \core_question\bank\search\condition filters.
+     * Return an array 'table_alias' => 'JOIN clause' to bring in any data that
+     * the core view requires.
+     *
+     * @return string[] 'table_alias' => 'JOIN clause'
      */
-    protected function build_query(): void {
-        // Get the required tables and fields.
-        $joins = [];
-        $fields = ['qv.status', 'qc.id as categoryid', 'qv.version', 'qv.id as versionid', 'qbe.id as questionbankentryid'];
-        if (!empty($this->requiredcolumns)) {
-            foreach ($this->requiredcolumns as $column) {
-                $extrajoins = $column->get_extra_joins();
+    protected function get_required_joins(): array {
+        return [
+            'qv' => 'JOIN {question_versions} qv ON qv.questionid = q.id',
+            'qbe' => 'JOIN {question_bank_entries} qbe on qbe.id = qv.questionbankentryid',
+            'qc' => 'JOIN {question_categories} qc ON qc.id = qbe.questioncategoryid',
+        ];
+    }
+
+    /**
+     * Return an array of fields for any data that the core view requires.
+     *
+     * Use table alias 'q' for the question table, or one of the ones from get_required_joins.
+     * Every field requested must specify a table prefix.
+     *
+     * @return string[] fields required.
+     */
+    protected function get_required_fields(): array {
+        return [
+            'q.id',
+            'q.qtype',
+            'q.createdby',
+            'qc.id as categoryid',
+            'qc.contextid',
+            'qv.status',
+            'qv.version',
+            'qv.id as versionid',
+            'qbe.id as questionbankentryid',
+        ];
+    }
+
+    /**
+     * Gather query requirements from view component objects.
+     *
+     * This will take the required fields and joins for this view, and combine them with those for all active view components.
+     * Fields will be de-duplicated in multiple components require the same field.
+     * Joins will be de-duplicated if the alias and join clause match exactly.
+     *
+     * @throws \coding_exception If two components attempt to use the same alias for different joins.
+     * @param view_component[] $viewcomponents List of component objects included in the current view
+     * @return array [$fields, $joins] SQL fields and joins to add to the query.
+     */
+    protected function get_component_requirements(array $viewcomponents): array {
+        $fields = $this->get_required_fields();
+        $joins = $this->get_required_joins();
+        if (!empty($viewcomponents)) {
+            foreach ($viewcomponents as $viewcomponent) {
+                $extrajoins = $viewcomponent->get_extra_joins();
                 foreach ($extrajoins as $prefix => $join) {
                     if (isset($joins[$prefix]) && $joins[$prefix] != $join) {
                         throw new \coding_exception('Join ' . $join . ' conflicts with previous join ' . $joins[$prefix]);
                     }
                     $joins[$prefix] = $join;
                 }
-                $fields = array_merge($fields, $column->get_required_fields());
+                $fields = array_merge($fields, $viewcomponent->get_required_fields());
             }
         }
-        $fields = array_unique($fields);
+        return [array_unique($fields), $joins];
+    }
+
+    /**
+     * Create the SQL query to retrieve the indicated questions, based on
+     * \core_question\bank\search\condition filters.
+     */
+    protected function build_query(): void {
+        // Get the required tables and fields.
+        [$fields, $joins] = $this->get_component_requirements(array_merge($this->requiredcolumns, $this->questionactions));
 
         // Build the order by clause.
         $sorts = [];
@@ -934,7 +1011,7 @@ class view {
     protected function create_new_question_form($category, $canadd): void {
         if (\core\plugininfo\qbank::is_plugin_enabled('qbank_editquestion')) {
             echo editquestion_helper::create_new_question_button($category->id,
-                    $this->requiredcolumns['edit_action_column']->editquestionurl->params(), $canadd);
+                    $this->questionactions['qbank_editquestion\edit_action']->editquestionurl->params(), $canadd);
         }
     }
 
@@ -979,6 +1056,11 @@ class view {
             }
         }
         $questionsrs->close();
+
+        // Bulk load any required statistics.
+        $this->load_required_statistics($questions);
+
+        // Bulk load any extra data that any column requires.
         foreach ($this->requiredcolumns as $name => $column) {
             $column->load_additional_data($questions);
         }
@@ -1003,6 +1085,60 @@ class view {
 
         echo \html_writer::end_tag('fieldset');
         echo \html_writer::end_tag('form');
+    }
+
+    /**
+     * Work out the list of all the required statistics fields for this question bank view.
+     *
+     * This gathers all the required fields from all columns, so they can all be loaded at once.
+     *
+     * @return string[] the names of all the required fields for this question bank view.
+     */
+    protected function determine_required_statistics(): array {
+        $requiredfields = [];
+        foreach ($this->requiredcolumns as $column) {
+            $requiredfields = array_merge($requiredfields, $column->get_required_statistics_fields());
+        }
+
+        return array_unique($requiredfields);
+    }
+
+    /**
+     * Load the aggregate statistics that all the columns require.
+     *
+     * @param \stdClass[] $questions the questions that will be displayed indexed by question id.
+     */
+    protected function load_required_statistics(array $questions): void {
+        $requiredstatistics = $this->determine_required_statistics();
+        $this->loadedstatistics = statistics_bulk_loader::load_aggregate_statistics(
+                array_keys($questions), $requiredstatistics);
+    }
+
+    /**
+     * Get the aggregated value of a particular statistic for a particular question.
+     *
+     * You can only get values for the questions on the current page of the question bank view,
+     * and only if you declared the need for this statistic in the get_required_statistics_fields()
+     * method of your question bank column.
+     *
+     * @param int $questionid the id of a question
+     * @param string $fieldname the name of a statistics field, e.g. 'facility'.
+     * @return float|null the average (across all users) of this statistic for this question.
+     *      Null if the value is not available right now.
+     */
+    public function get_aggregate_statistic(int $questionid, string $fieldname): ?float {
+        if (!array_key_exists($questionid, $this->loadedstatistics)) {
+            throw new \coding_exception('Question ' . $questionid . ' is not on the current page of ' .
+                    'this question bank view, so its statistics are not available.');
+        }
+
+        // Must be array_key_exists, not isset, because we care about null values.
+        if (!array_key_exists($fieldname, $this->loadedstatistics[$questionid])) {
+            throw new \coding_exception('Statistics field ' . $fieldname . ' was not requested by any ' .
+                    'question bank column in this view, so it is not available.');
+        }
+
+        return $this->loadedstatistics[$questionid][$fieldname];
     }
 
     /**
@@ -1256,5 +1392,23 @@ class view {
      */
     public function get_visiblecolumns(): array {
         return $this->visiblecolumns;
+    }
+
+    /**
+     * Is this view showing separate versions of a question?
+     *
+     * @return bool
+     */
+    public function is_listing_specific_versions(): bool {
+        return false;
+    }
+
+    /**
+     * Return array of menu actions.
+     *
+     * @return question_action_base[]
+     */
+    public function get_question_actions(): array {
+        return $this->questionactions;
     }
 }

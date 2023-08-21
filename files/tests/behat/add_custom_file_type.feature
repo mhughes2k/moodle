@@ -26,14 +26,15 @@ Feature: Add a new custom file type
       | Custom description | Moodle rules |
     And I press "Save changes"
     And I should see "application/x-moodle-rules"
-    And I log out
-    And I log in as "teacher1"
-    And I am on "Course 1" course homepage with editing mode on
+    And I am on the "Course 1" course page logged in as teacher1
+    And I turn editing mode on
     When I add a "File" to section "1" and I fill the form with:
       | Name | Test file |
       | Select files | files/tests/fixtures/custom_filetype.mdlr |
+      | Show size    | 1                             |
       | Show type    | 1                             |
       | Display resource description | 1             |
     And I am on "Course 1" course homepage
     Then I should see "Test file"
-    And I should see "Moodle rules" in the "span.resourcelinkdetails" "css_element"
+    And I should see "MDLR" in the "div.activitybadge" "css_element"
+    And I should not see "MDLR" in the "span.resourcelinkdetails" "css_element"
