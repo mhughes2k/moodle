@@ -68,7 +68,6 @@ if ($mform && $mform->is_cancelled()) {
 } else if ($action == 'edit') {
 
     if ($data = $mform->get_data()) {
-
         try {
             if (!empty($data->id)) {
                 core\oauth2\api::update_user_field_mapping($data);

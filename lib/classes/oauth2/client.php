@@ -238,7 +238,11 @@ class client extends \oauth2_client {
 
         $map = [];
         foreach ($fields as $field) {
-            $map[$field->get('externalfield')] = $field->get('internalfield');
+            $externalfield = $field->get('externalfield');
+            if (!isset($map[$externalfield])) {
+                $map[$externalfield] = [];
+            }
+            $map[$externalfield][] = $field->get('internalfield');
         }
         return $map;
     }
@@ -545,39 +549,48 @@ class client extends \oauth2_client {
         $map = $this->get_userinfo_mapping();
 
         $user = new stdClass();
-        foreach ($map as $openidproperty => $moodleproperty) {
-            // We support nested objects via a-b-c syntax.
-            $getfunc = function($obj, $prop) use (&$getfunc) {
-                $proplist = explode('-', $prop, 2);
-
-                // The value of proplist[0] can be falsey, so just check if not set.
-                if (empty($obj) || !isset($proplist[0])) {
-                    return false;
+        foreach ($map as $openidproperty => $moodleproperties) {
+            foreach($moodleproperties as $moodleproperty) {
+                if (!empty($user->$moodleproperty)) {
+                    // $user->$moodleproperty is already set, so skip it.
+                    // However, we should warn that there are 2 external properties
+                    // mapping to the same internal property.
+                    debugging("Property {$moodleproperty} is already set, skipping {$openidproperty}". DEBUG_ALL);
+                    continue;
                 }
+                // We support nested objects via a-b-c syntax.
+                $getfunc = function ($obj, $prop) use (&$getfunc) {
+                    $proplist = explode('-', $prop, 2);
 
-                if (preg_match('/^(.*)\[([0-9]*)\]$/', $proplist[0], $matches)
+                    // The value of proplist[0] can be falsey, so just check if not set.
+                    if (empty($obj) || !isset($proplist[0])) {
+                        return false;
+                    }
+
+                    if (preg_match('/^(.*)\[([0-9]*)\]$/', $proplist[0], $matches)
                         && count($matches) == 3) {
-                    $property = $matches[1];
-                    $index = $matches[2];
-                    $obj = $obj->{$property}[$index] ?? null;
-                } else if (!empty($obj->{$proplist[0]})) {
-                    $obj = $obj->{$proplist[0]};
-                } else if (is_array($obj) && !empty($obj[$proplist[0]])) {
-                    $obj = $obj[$proplist[0]];
-                } else {
-                    // Nothing found after checking all possible valid combinations, return false.
-                    return false;
-                }
+                        $property = $matches[1];
+                        $index = $matches[2];
+                        $obj = $obj->{$property}[$index] ?? null;
+                    } else if (!empty($obj->{$proplist[0]})) {
+                        $obj = $obj->{$proplist[0]};
+                    } else if (is_array($obj) && !empty($obj[$proplist[0]])) {
+                        $obj = $obj[$proplist[0]];
+                    } else {
+                        // Nothing found after checking all possible valid combinations, return false.
+                        return false;
+                    }
 
-                if (count($proplist) > 1) {
-                    return $getfunc($obj, $proplist[1]);
-                }
-                return $obj;
-            };
+                    if (count($proplist) > 1) {
+                        return $getfunc($obj, $proplist[1]);
+                    }
+                    return $obj;
+                };
 
-            $resolved = $getfunc($userinfo, $openidproperty);
-            if (!empty($resolved)) {
-                $user->$moodleproperty = $resolved;
+                $resolved = $getfunc($userinfo, $openidproperty);
+                if (!empty($resolved)) {
+                    $user->$moodleproperty = $resolved;
+                }
             }
         }
 
