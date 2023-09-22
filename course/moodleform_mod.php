@@ -231,6 +231,12 @@ abstract class moodleform_mod extends moodleform {
             $default_values['ratingtime']=
                 ($default_values['assesstimestart'] && $default_values['assesstimefinish']) ? 1 : 0;
         }
+
+        // Amend completion settings.
+        if (isset($default_values['completiongradeitemnumber']) &&
+            !is_null($default_values['completiongradeitemnumber'])) {
+            $default_values['receiveagrade'] = 1;
+        }
     }
 
     /**
@@ -318,7 +324,11 @@ abstract class moodleform_mod extends moodleform {
         }
 
         // Completion: If necessary, freeze fields.
-        $this->definition_after_data_completion();
+        $cm = null;
+        if ($this->_cm) {
+            $cm = get_fast_modinfo($COURSE)->get_cm($this->_cm->id);
+        }
+        $this->definition_after_data_completion($cm);
 
         // Freeze admin defaults if required (and not different from default)
         $this->apply_admin_locked_flags();
@@ -500,7 +510,7 @@ abstract class moodleform_mod extends moodleform {
      * Adds all the standard elements to a form to edit the settings for an activity module.
      */
     protected function standard_coursemodule_elements() {
-        global $COURSE, $CFG, $DB;
+        global $COURSE, $CFG, $DB, $OUTPUT;
         $mform =& $this->_form;
 
         $this->_outcomesused = false;
@@ -623,6 +633,13 @@ abstract class moodleform_mod extends moodleform {
                     get_string('accessrestrictions', 'availability'),
                     ['class' => 'd-none']
             );
+            // Availability loading indicator.
+            $loadingcontainer = $OUTPUT->container(
+                $OUTPUT->render_from_template('core/loading', []),
+                'd-flex justify-content-center py-5 icon-size-5',
+                'availabilityconditions-loading'
+            );
+            $mform->addElement('html', $loadingcontainer);
 
             // The _cm variable may not be a proper cm_info, so get one from modinfo.
             if ($this->_cm) {
@@ -642,7 +659,7 @@ abstract class moodleform_mod extends moodleform {
         // Add the completion tracking elements to the form.
         if ($completion->is_enabled()) {
             $mform->addElement('header', 'activitycompletionheader', get_string('activitycompletion', 'completion'));
-            $this->add_completion_elements();
+            $this->add_completion_elements(null, false, false, false, $this->_course->id);
         }
 
         // Populate module tags.
@@ -811,6 +828,15 @@ abstract class moodleform_mod extends moodleform {
      */
     function completion_rule_enabled($data) {
         return false;
+    }
+
+    /**
+     * Add completion grading elements to the form and return the list of element ids.
+     *
+     * @return array Array of string IDs of added items, empty array if none
+     */
+    public function add_completiongrade_rules(): array {
+        return [];
     }
 
     function standard_hidden_coursemodule_elements(){

@@ -306,7 +306,7 @@ class core_course_renderer extends plugin_renderer_base {
      * @deprecated since Moodle 3.11
      */
     public function course_section_cm_completion() {
-        throw new coding_exception(__FUNCTION__ . ' is deprecated. Use the activity_information output component instead.');
+        throw new coding_exception(__FUNCTION__ . ' is deprecated. Use the activity_completion output component instead.');
     }
 
     /**
@@ -979,7 +979,7 @@ class core_course_renderer extends plugin_renderer_base {
                     html_writer::empty_tag('img', ['src' => $url, 'alt' => '']),
                     ['class' => 'courseimage']);
             } else {
-                $image = $this->output->pix_icon(file_file_icon($file, 24), $file->get_filename(), 'moodle');
+                $image = $this->output->pix_icon(file_file_icon($file), $file->get_filename(), 'moodle');
                 $filename = html_writer::tag('span', $image, ['class' => 'fp-icon']).
                     html_writer::tag('span', $file->get_filename(), ['class' => 'fp-filename']);
                 $contentfiles .= html_writer::tag('span',
@@ -1428,13 +1428,13 @@ class core_course_renderer extends plugin_renderer_base {
         if (core_course_category::is_simple_site()) {
             // There is only one category in the system, do not display link to it.
             $strfulllistofcourses = get_string('fulllistofcourses');
-            $this->page->set_title("$site->shortname: $strfulllistofcourses");
+            $this->page->set_title($strfulllistofcourses);
         } else if (!$coursecat->id || !$coursecat->is_uservisible()) {
             $strcategories = get_string('categories');
-            $this->page->set_title("$site->shortname: $strcategories");
+            $this->page->set_title($strcategories);
         } else {
             $strfulllistofcourses = get_string('fulllistofcourses');
-            $this->page->set_title("$site->shortname: $strfulllistofcourses");
+            $this->page->set_title($strfulllistofcourses);
         }
 
         // Print current category description
@@ -1876,10 +1876,13 @@ class core_course_renderer extends plugin_renderer_base {
      *
      * Defer to template.
      *
+     * @deprecated since Moodle 4.3 MDL-78744
+     * @todo MDL-78926 This method will be deleted in Moodle 4.7
      * @param \core_course\output\activity_information $page
      * @return string html for the page
      */
     public function render_activity_information(\core_course\output\activity_information $page) {
+        debugging('render_activity_information method is deprecated.', DEBUG_DEVELOPER);
         $data = $page->export_for_template($this->output);
         return $this->output->render_from_template('core_course/activity_info', $data);
     }

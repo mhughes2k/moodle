@@ -41,7 +41,6 @@ $string['activitydate:closes'] = 'Closes:';
 $string['activitydate:opened'] = 'Opened:';
 $string['activitydate:opens'] = 'Opens:';
 $string['aria:coursecategory'] = 'Course category';
-$string['aria:courseimage'] = 'Course image';
 $string['aria:courseshortname'] = 'Course short name';
 $string['aria:coursename'] = 'Course name';
 $string['aria:defaulttab'] = 'Default activities';
@@ -73,6 +72,7 @@ $string['coursecontentnotifnewbody'] = '<p>{$a->moduletypename} <a href="{$a->li
 $string['coursecontentnotifupdate'] = '{$a->coursename} content change';
 $string['coursecontentnotifupdatebody'] = '<p>{$a->moduletypename} <a href="{$a->link}">{$a->modulename}</a> has been changed in the course <a href="{$a->courselink}">{$a->coursename}</a>.</p><p><a href="{$a->notificationpreferenceslink}">Change your notification preferences</a></p>';
 $string['coursecontentnotification_help'] = 'Tick the box to notify course participants about this new or changed activity or resource. Only users who can access the activity or resource will receive the notification.';
+$string['coursecount'] = 'Course count';
 $string['coursenotyetstarted'] = 'The course has not yet started';
 $string['coursenotyetfinished'] = 'The course has not yet finished';
 $string['courseparticipants'] = 'Course participants';
@@ -162,3 +162,6 @@ $string['targetlabelstudentgradetopassno'] = 'Student who is likely to meet the 
 $string['targetlabelstudentgradetopassyes'] = 'Student at risk of not meeting the minimum grade to pass the course.';
 $string['targetlabelteachingyes'] = 'Users with teaching capabilities who have access to the course';
 $string['targetlabelteachingno'] = 'Courses at risk of not starting';
+
+// Deprecated since Moodle 4.3.
+$string['aria:courseimage'] = 'Course image';

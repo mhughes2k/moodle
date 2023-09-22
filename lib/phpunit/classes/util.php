@@ -104,6 +104,9 @@ class phpunit_util extends testing_util {
     public static function reset_all_data($detectchanges = false) {
         global $DB, $CFG, $USER, $SITE, $COURSE, $PAGE, $OUTPUT, $SESSION, $FULLME, $FILTERLIB_PRIVATE;
 
+        // Stop all hook redirections.
+        \core\hook\manager::get_instance()->phpunit_stop_redirections();
+
         // Stop any message redirection.
         self::stop_message_redirection();
 
@@ -260,6 +263,12 @@ class phpunit_util extends testing_util {
         }
         if (class_exists('\core_cohort\customfield\cohort_handler')) {
             \core_cohort\customfield\cohort_handler::reset_caches();
+        }
+        if (class_exists('\core_group\customfield\group_handler')) {
+            \core_group\customfield\group_handler::reset_caches();
+        }
+        if (class_exists('\core_group\customfield\grouping_handler')) {
+            \core_group\customfield\grouping_handler::reset_caches();
         }
 
         // Clear static cache within restore.

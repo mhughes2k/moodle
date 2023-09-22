@@ -788,6 +788,13 @@ $capabilities = array(
         'clonepermissionsfrom' => 'moodle/site:config'
     ),
 
+    'moodle/group:configurecustomfields' => array(
+        'riskbitmask' => RISK_SPAM,
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'clonepermissionsfrom' => 'moodle/site:config'
+    ),
+
     'moodle/course:create' => array(
 
         'riskbitmask' => RISK_XSS,
@@ -2718,6 +2725,16 @@ $capabilities = array(
     // Allow users to configure course communication rooms.
     'moodle/course:configurecoursecommunication' => [
         'captype' => 'write',
+        'contextlevel' => CONTEXT_COURSE,
+        'archetypes' => [
+            'editingteacher' => CAP_ALLOW,
+            'manager' => CAP_ALLOW,
+        ]
+    ],
+
+    // Allow users to share courses to MoodleNet.
+    'moodle/moodlenet:sharecourse' => [
+        'captype' => 'read',
         'contextlevel' => CONTEXT_COURSE,
         'archetypes' => [
             'editingteacher' => CAP_ALLOW,

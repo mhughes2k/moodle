@@ -1661,8 +1661,8 @@ function course_get_cm_edit_actions(cm_info $mod, $indent = -1, $sr = null) {
     if (!isset($str)) {
         $str = get_strings(
             [
-                'delete', 'move', 'moveright', 'moveleft', 'editsettings', 'duplicate', 'modhide',
-                'makeavailable', 'makeunavailable', 'modshow', 'modshowcmtitle', 'makeavailablecmtitle',
+                'delete', 'move', 'moveright', 'moveleft', 'editsettings',
+                'duplicate', 'availability'
             ],
             'moodle'
         );
@@ -1759,76 +1759,16 @@ function course_get_cm_edit_actions(cm_info $mod, $indent = -1, $sr = null) {
 
     // Hide/Show/Available/Unavailable.
     if (has_capability('moodle/course:activityvisibility', $modcontext)) {
-        $allowstealth = !empty($CFG->allowstealth) && $courseformat->allow_stealth_module_visibility($mod, $sectioninfo);
-
-        $sectionvisible = $sectioninfo->visible;
-        // The module on the course page may be in one of the following states:
-        // - Available and displayed on the course page ($displayedoncoursepage);
-        // - Not available and not displayed on the course page ($unavailable);
-        // - Available but not displayed on the course page ($stealth) - this can also be a visible activity in a hidden section.
-        $displayedoncoursepage = $mod->visible && $mod->visibleoncoursepage && $sectionvisible;
-        $unavailable = !$mod->visible;
-        $stealth = $mod->visible && (!$mod->visibleoncoursepage || !$sectionvisible);
-        if ($displayedoncoursepage) {
-            $actions['hide'] = new action_menu_link_secondary(
-                new moodle_url($baseurl, array('hide' => $mod->id)),
-                new pix_icon('t/hide', '', 'moodle', array('class' => 'iconsmall')),
-                $str->modhide,
-                [
-                    'class' => 'editing_hide',
-                    'data-action' => ($usecomponents) ? 'cmHide' : 'hide',
-                    'data-id' => $mod->id,
-                ]
-            );
-        } else if (!$displayedoncoursepage && $sectionvisible) {
-            // Offer to "show" only if the section is visible.
-            $actions['show'] = new action_menu_link_secondary(
-                new moodle_url($baseurl, array('show' => $mod->id)),
-                new pix_icon('t/show', '', 'moodle', array('class' => 'iconsmall')),
-                $str->modshow,
-                [
-                    'class' => 'editing_show',
-                    'data-action' => ($usecomponents) ? 'cmShow' : 'show',
-                    'data-id' => $mod->id,
-                    // Title is needed mostly for behat tests. Otherwise it will follow any link with "show".
-                    'title' => $str->modshowcmtitle,
-                ]
-            );
-        }
-
-        if ($stealth) {
-            // When making the "stealth" module unavailable we perform the same action as hiding the visible module.
-            $actions['hide'] = new action_menu_link_secondary(
-                new moodle_url($baseurl, array('hide' => $mod->id)),
-                new pix_icon('t/unblock', '', 'moodle', array('class' => 'iconsmall')),
-                $str->makeunavailable,
-                [
-                    'class' => 'editing_makeunavailable',
-                    'data-action' => ($usecomponents) ? 'cmHide' : 'hide',
-                    'data-sectionreturn' => $sr,
-                    'data-id' => $mod->id,
-                ]
-            );
-        } else if ($unavailable && (!$sectionvisible || $allowstealth) && $mod->has_view()) {
-            // Allow to make visually hidden module available in gradebook and other reports by making it a "stealth" module.
-            // When the section is hidden it is an equivalent of "showing" the module.
-            // Activities without the link (i.e. labels) can not be made available but hidden on course page.
-            $action = $sectionvisible ? 'stealth' : 'show';
-            if ($usecomponents) {
-                $action = 'cm' . ucfirst($action);
-            }
-            $actions[$action] = new action_menu_link_secondary(
-                new moodle_url($baseurl, array('stealth' => $mod->id)),
-                new pix_icon('t/block', '', 'moodle', array('class' => 'iconsmall')),
-                $str->makeavailable,
-                [
-                    'class' => 'editing_makeavailable',
-                    'data-action' => $action,
-                    'data-sectionreturn' => $sr,
-                    'data-id' => $mod->id,
-                    // Title is needed mostly for behat tests. Otherwise it will follow any link with "make available".
-                    'title' => $str->makeavailablecmtitle,
-                ]
+        $availabilityclass = $courseformat->get_output_classname('content\\cm\\visibility');
+        /** @var core_courseformat\output\local\content\cm\visibility */
+        $availability = new $availabilityclass($courseformat, $sectioninfo, $mod);
+        $availabilitychoice = $availability->get_choice_list();
+        if ($availabilitychoice->count_options() > 1) {
+            $actions['availability'] = new action_menu_subpanel(
+                $str->availability,
+                $availabilitychoice,
+                ['class' => 'editing_availability'],
+                new pix_icon('t/hide', '', 'moodle', array('class' => 'iconsmall'))
             );
         }
     }
@@ -1880,7 +1820,7 @@ function course_get_cm_edit_actions(cm_info $mod, $indent = -1, $sr = null) {
             new pix_icon('t/delete', '', 'moodle', ['class' => 'iconsmall']),
             $str->delete,
             [
-                'class' => 'editing_delete',
+                'class' => 'editing_delete text-danger',
                 'data-action' => ($usecomponents) ? 'cmDelete' : 'delete',
                 'data-sectionreturn' => $sr,
                 'data-id' => $mod->id,
@@ -2345,13 +2285,19 @@ function create_course($data, $editoroptions = NULL) {
             // Prepare the communication api data.
             $courseimage = course_get_courseimage($course);
             $communicationroomname = !empty($data->communicationroomname) ? $data->communicationroomname : $data->fullname;
+
             // Communication api call.
             $communication = \core_communication\api::load_by_instance(
                 'core_course',
                 'coursecommunication',
-                $course->id
+                $course->id,
             );
-            $communication->create_and_configure_room($provider, $communicationroomname, $courseimage, $data);
+            $communication->create_and_configure_room(
+                $provider,
+                $communicationroomname,
+                $courseimage ?: null,
+                $data,
+            );
         }
     }
 
@@ -3564,10 +3510,9 @@ function duplicate_module($course, $cm, int $sectionid = null, bool $changename 
         // triggering a lot of create/update duplicated events.
         $newcm = get_coursemodule_from_id($cm->modname, $newcmid, $cm->course);
         if ($changename) {
-            // Add ' (copy)' to duplicates. Note we don't cleanup or validate lengths here. It comes
-            // from original name that was valid, so the copy should be too.
+            // Add ' (copy)' language string postfix to duplicated module.
             $newname = get_string('duplicatedmodule', 'moodle', $newcm->name);
-            $DB->set_field($cm->modname, 'name', $newname, ['id' => $newcm->instance]);
+            set_coursemodule_name($newcm->id, $newname);
         }
 
         $section = $DB->get_record('course_sections', ['id' => $sectionid ?? $cm->section, 'course' => $cm->course]);

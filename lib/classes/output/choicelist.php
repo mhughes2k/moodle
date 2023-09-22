@@ -84,6 +84,14 @@ class choicelist implements renderable, named_templatable {
     }
 
     /**
+     * Get the number of options added to the choice list.
+     * @return int
+     */
+    public function count_options(): int {
+        return count($this->options);
+    }
+
+    /**
      * Set the selected option.
      *
      * @param string $value The value of the selected option.
@@ -161,7 +169,7 @@ class choicelist implements renderable, named_templatable {
         $options = [];
         foreach ($this->options as $option) {
             if (!empty($option['icon'])) {
-                $option['icon'] = $option['icon']->export_for_template($output);
+                $option['icon'] = $option['icon']->export_for_pix($output);
             }
             $option['hasicon'] = !empty($option['icon']);
 

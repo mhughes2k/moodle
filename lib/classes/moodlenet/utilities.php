@@ -43,14 +43,81 @@ class utilities {
     }
 
     /**
-     * Check whether a user has the capabilities required to share activities from a given course to MoodleNet.
+     * Check whether a user has the capabilities required to share activities or courses to MoodleNet.
      *
-     * @param \core\context\course $coursecontext Course context where the activity would be shared from.
+     * @param \core\context\course $coursecontext Course context where the activity or course would be shared from.
      * @param int $userid The user ID being checked.
+     * @param string $type The type of resource being checked (either 'activity' or 'course').
      * @return boolean
+     * @throws \coding_exception If an invalid resource type is provided.
      */
-    public static function can_user_share(\core\context\course $coursecontext, int $userid): bool {
-        return (has_capability('moodle/moodlenet:shareactivity', $coursecontext, $userid) &&
-            has_capability('moodle/backup:backupactivity', $coursecontext, $userid));
+    public static function can_user_share(\core\context\course $coursecontext, int $userid, string $type = 'activity'): bool {
+        if ($type === 'course') {
+            return (has_capability('moodle/moodlenet:sharecourse', $coursecontext, $userid) &&
+                has_capability('moodle/backup:backupcourse', $coursecontext, $userid));
+        } else if ($type === 'activity') {
+            return (has_capability('moodle/moodlenet:shareactivity', $coursecontext, $userid) &&
+                has_capability('moodle/backup:backupactivity', $coursecontext, $userid));
+        }
+
+        throw new \coding_exception('Invalid resource type');
+    }
+
+    /**
+     * Get the support url.
+     *
+     * @return string
+     */
+    public static function get_support_url(): string {
+        global $CFG;
+        $supporturl = '';
+
+        if ($CFG->supportavailability && $CFG->supportavailability !== CONTACT_SUPPORT_DISABLED) {
+            if (!empty($CFG->supportpage)) {
+                $supporturl = $CFG->supportpage;
+            } else {
+                $supporturl = $CFG->wwwroot . '/user/contactsitesupport.php';
+            }
+        }
+
+        return $supporturl;
+    }
+
+    /**
+     * Check the user has a valid capability in any course they are enrolled in.
+     *
+     * @param int $userid The user id to query
+     * @return string Returns 'yes' if capability found, 'no' if not
+     */
+    public static function does_user_have_capability_in_any_course(int $userid): string {
+        // We are checking this way because we are not always in the course context and need
+        // a way to retrieve the user's courses to see if any of them have the correct capability.
+        $capabilities = [
+            'moodle/moodlenet:sharecourse',
+            'moodle/moodlenet:shareactivity'
+        ];
+        // We are using 'no' instead of false to avoid confusing a cache key
+        // that was not found (returns false) with a user who does not have the capablity.
+        $isallowed = 'no';
+        $cache = \cache::make('core', 'moodlenet_usercanshare');
+        $cachedvalue = $cache->get($userid);
+
+        if ($cachedvalue === false) {
+            foreach ($capabilities as $capability) {
+                // Find at least one course that contains a capability match.
+                $course = get_user_capability_course($capability, $userid, true, '', 'id', 1);
+
+                if (!empty($course)) {
+                    // Set the cache to 'yes' and break out of the loop.
+                    $isallowed = 'yes';
+                    break;
+                }
+            }
+            $cache->set($userid, $isallowed);
+        } else {
+            $isallowed = $cachedvalue;
+        }
+
+        return $isallowed;
     }
 }

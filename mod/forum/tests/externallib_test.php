@@ -59,9 +59,9 @@ class externallib_test extends externallib_advanced_testcase {
     /**
      * Get the expected attachment.
      *
-     * @param stored_file $file
+     * @param \stored_file $file
      * @param array $values
-     * @param moodle_url|null $url
+     * @param \moodle_url|null $url
      * @return array
      */
     protected function get_expected_attachment(\stored_file $file, array $values  = [], ?\moodle_url $url = null): array {
@@ -94,7 +94,7 @@ class externallib_test extends externallib_advanced_testcase {
                 'license' => $file->get_license(),
                 'filenameshort' => $file->get_filename(),
                 'filesizeformatted' => display_size((int) $file->get_filesize()),
-                'icon' => $file->is_directory() ? file_folder_icon(128) : file_file_icon($file, 128),
+                'icon' => $file->is_directory() ? file_folder_icon() : file_file_icon($file),
                 'timecreatedformatted' => userdate($file->get_timecreated()),
                 'timemodifiedformatted' => userdate($file->get_timemodified()),
                 'url' => $url->out(),
@@ -2163,7 +2163,7 @@ class externallib_test extends externallib_advanced_testcase {
 
         // Check default values for capabilities.
         $enabledcaps = array('canviewdiscussion', 'canstartdiscussion', 'canreplypost', 'canviewrating', 'cancreateattachment',
-            'canexportownpost', 'cancantogglefavourite', 'candeleteownpost', 'canallowforcesubscribe');
+            'canexportownpost', 'cancantogglefavourite', 'cancanmailnow', 'candeleteownpost', 'canallowforcesubscribe');
 
         unset($result['warnings']);
         foreach ($result as $capname => $capvalue) {

@@ -104,7 +104,8 @@ class core_completion_defaultedit_form extends core_completion_edit_base_form {
      * Form definition,
      */
     public function definition() {
-        $this->course = $this->_customdata['course'];
+        $course = $this->_customdata['course'];
+        $this->course = is_numeric($course) ? get_course($course) : $course;
         $this->modules = $this->_customdata['modules'];
 
         $mform = $this->_form;
@@ -135,16 +136,6 @@ class core_completion_defaultedit_form extends core_completion_edit_base_form {
             unset($data['id']);
             $this->set_data($data);
         }
-    }
-
-    /**
-     * There is no course module for this form, because it is used to update default completion settings. So it will
-     * always return null.
-     *
-     * @return \stdClass|null
-     */
-    protected function get_cm(): ?\stdClass {
-        return null;
     }
 
     /**

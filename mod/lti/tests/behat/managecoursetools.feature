@@ -63,7 +63,6 @@ Feature: Manage course tools
     Given the following "role capability" exists:
       | role                             | editingteacher |
       | mod/lti:addcoursetool            | allow          |
-      | mod/lti:addmanualinstance        | allow          |
       | mod/lti:addpreconfiguredinstance | prohibit       |
     And the following "mod_lti > course tools" exist:
       | name      | description         | baseurl                  | course |
@@ -128,3 +127,156 @@ Feature: Manage course tools
     And I click on "Delete" "button" in the "Delete Test tool" "dialogue"
     And I should see "Test tool removed"
     And I should not see "Test tool" in the "reportbuilder-table" "table"
+
+  @javascript
+  Scenario: Add a course tool using a cartridge URL
+    Given I am on the "Course 1" course page logged in as teacher1
+    And I navigate to "LTI External tools" in current page administration
+    When I click on "Add tool" "link"
+    And I set the following fields to these values:
+      | Tool name        | Test tool 1             |
+      | Tool description | Test tool 1 description |
+    And I set the field "Tool URL" to local url "/mod/lti/tests/fixtures/ims_cartridge_basic_lti_link.xml"
+    And I press "Save changes"
+    Then I should see "Test tool 1" in the "reportbuilder-table" "table"
+    # The cartridge description, if set, overrides the description set in the type edit form (bug?).
+    And I should see "Example tool description" in the "Test tool 1" "table_row"
+    And I open the action menu in "Test tool 1" "table_row"
+    And I choose "Edit" in the open action menu
+    And the field "Tool name" matches value "Test tool 1"
+    And the field "Tool URL" matches value "http://www.example.com/lti/provider.php"
+    And the field "Icon URL" matches value "http://download.moodle.org/unittest/test.jpg"
+    And the field "Secure icon URL" matches value "https://download.moodle.org/unittest/test.jpg"
+
+  @javascript
+  Scenario: Site tool appearing in activity chooser according to settings
+    Given the following "mod_lti > tool types" exist:
+      | name            | baseurl                                   | coursevisible | state |
+      | Teaching Tool 1 | /mod/lti/tests/fixtures/tool_provider.php | 2             | 1     |
+      | Teaching Tool 2 | /mod/lti/tests/fixtures/tool_provider.php | 1             | 1     |
+      | Teaching Tool 3 | /mod/lti/tests/fixtures/tool_provider.php | 0             | 1     |
+    And the following "courses" exist:
+      | fullname | shortname | category |
+      | Course 2 | C2        | 0        |
+    And the following "course enrolments" exist:
+      | user     | course | role           |
+      | teacher1 | C2     | editingteacher |
+    And I log in as "teacher1"
+    And I am on "Course 1" course homepage with editing mode on
+    And I click on "Add an activity or resource" "button" in the "Topic 1" "section"
+    And I should see "Teaching Tool 1" in the ".modal-body" "css_element"
+    And I should not see "Teaching Tool 2" in the ".modal-body" "css_element"
+    And I should not see "Teaching Tool 3" in the ".modal-body" "css_element"
+    And I click on "Close" "button" in the ".modal-dialog" "css_element"
+    And I navigate to "LTI External tools" in current page administration
+    And I should not see "Teaching Tool 3"
+    And I click on "Don't show in activity chooser" "field" in the "Teaching Tool 1" "table_row"
+    And I click on "Show in activity chooser" "field" in the "Teaching Tool 2" "table_row"
+    And I am on "Course 1" course homepage
+    And I click on "Add an activity or resource" "button" in the "Topic 1" "section"
+    And I should not see "Teaching Tool 1" in the ".modal-body" "css_element"
+    And I should see "Teaching Tool 2" in the ".modal-body" "css_element"
+    And I should not see "Teaching Tool 3" in the ".modal-body" "css_element"
+    And I click on "Close" "button" in the ".modal-dialog" "css_element"
+
+    # Should not affect other courses.
+    And I am on "Course 2" course homepage
+    And I click on "Add an activity or resource" "button" in the "Topic 1" "section"
+    And I should see "Teaching Tool 1" in the ".modal-body" "css_element"
+    And I should not see "Teaching Tool 2" in the ".modal-body" "css_element"
+    And I should not see "Teaching Tool 3" in the ".modal-body" "css_element"
+    And I click on "Close" "button" in the ".modal-dialog" "css_element"
+
+    And I am on "Course 1" course homepage
+    And I navigate to "LTI External tools" in current page administration
+    And I click on "Show in activity chooser" "field" in the "Teaching Tool 1" "table_row"
+    And I click on "Don't show in activity chooser" "field" in the "Teaching Tool 2" "table_row"
+    And I am on "Course 1" course homepage
+    And I click on "Add an activity or resource" "button" in the "Topic 1" "section"
+    And I should see "Teaching Tool 1" in the ".modal-body" "css_element"
+    And I should not see "Teaching Tool 2" in the ".modal-body" "css_element"
+    And I should not see "Teaching Tool 3" in the ".modal-body" "css_element"
+
+    When the following "role capability" exists:
+      | role                             | editingteacher |
+      | mod/lti:addcoursetool            | prohibit       |
+    And I am on "Course 1" course homepage with editing mode on
+    And I navigate to "LTI External tools" in current page administration
+    Then the "Don't show in activity chooser" "field" should be disabled
+    And the "Show in activity chooser" "field" should be disabled
+
+  @javascript
+  Scenario: Course tool appearing in activity chooser according to settings
+    Given the following "mod_lti > course tools" exist:
+      | name          | baseurl                                   | course | coursevisible |
+      | Course Tool 1 | /mod/lti/tests/fixtures/tool_provider.php | C1     | 2             |
+      | Course Tool 2 | /mod/lti/tests/fixtures/tool_provider.php | C1     | 1             |
+    And I log in as "teacher1"
+    And I am on "Course 1" course homepage with editing mode on
+    And I click on "Add an activity or resource" "button" in the "Topic 1" "section"
+    And I should see "Course Tool 1" in the ".modal-body" "css_element"
+    And I should not see "Course Tool 2" in the ".modal-body" "css_element"
+    And I click on "Close" "button" in the ".modal-dialog" "css_element"
+    And I navigate to "LTI External tools" in current page administration
+    And I click on "Don't show in activity chooser" "field" in the "Course Tool 1" "table_row"
+    And I click on "Show in activity chooser" "field" in the "Course Tool 2" "table_row"
+    And I am on "Course 1" course homepage
+    And I click on "Add an activity or resource" "button" in the "Topic 1" "section"
+    And I should not see "Course Tool 1" in the ".modal-body" "css_element"
+    And I should see "Course Tool 2" in the ".modal-body" "css_element"
+    And I click on "Close" "button" in the ".modal-dialog" "css_element"
+    And I navigate to "LTI External tools" in current page administration
+    And I click on "Show in activity chooser" "field" in the "Course Tool 1" "table_row"
+    And I click on "Don't show in activity chooser" "field" in the "Course Tool 2" "table_row"
+    And I am on "Course 1" course homepage
+    And I click on "Add an activity or resource" "button" in the "Topic 1" "section"
+    And I should see "Course Tool 1" in the ".modal-body" "css_element"
+    And I should not see "Course Tool 2" in the ".modal-body" "css_element"
+
+    When the following "role capability" exists:
+      | role                             | editingteacher |
+      | mod/lti:addcoursetool            | prohibit       |
+    And I am on "Course 1" course homepage with editing mode on
+    And I navigate to "LTI External tools" in current page administration
+    Then the "Don't show in activity chooser" "field" should be disabled
+    And the "Show in activity chooser" "field" should be disabled
+
+  @javascript
+  Scenario: Site and course tools settings are preserved when backup and restore
+    Given the following "mod_lti > tool types" exist:
+      | name            | baseurl                                   | coursevisible | state |
+      | Teaching Tool 1 | /mod/lti/tests/fixtures/tool_provider.php | 2             | 1     |
+      | Teaching Tool 2 | /mod/lti/tests/fixtures/tool_provider.php | 1             | 1     |
+    And the following "mod_lti > course tools" exist:
+      | name          | description         | baseurl                  | course |
+      | Course Tool 1 | Example description | https://example.com/tool | C1     |
+    And I log in as "admin"
+    And I am on "Course 1" course homepage with editing mode on
+    And I add a "Teaching Tool 1" to section "1"
+    And I set the field "Activity name" to "Test tool activity 1"
+    And I press "Save and return to course"
+    And I add a "Course Tool 1" to section "1"
+    And I set the field "Activity name" to "Course tool activity 1"
+    And I press "Save and return to course"
+    And I navigate to "LTI External tools" in current page administration
+    And I click on "Don't show in activity chooser" "field" in the "Teaching Tool 1" "table_row"
+    And I click on "Show in activity chooser" "field" in the "Teaching Tool 2" "table_row"
+    And I click on "Don't show in activity chooser" "field" in the "Course Tool 1" "table_row"
+    And I am on "Course 1" course homepage
+    And I add a "Teaching Tool 2" to section "1"
+    And I set the field "Activity name" to "Test tool activity 2"
+    And I press "Save and return to course"
+    When I backup "Course 1" course using this options:
+      | Confirmation | Filename | test_backup.mbz |
+    And I restore "test_backup.mbz" backup into a new course using this options:
+      | Schema | Course name | Restored course |
+    And I should see "Restored course"
+    And I click on "Add an activity or resource" "button" in the "Topic 1" "section"
+    Then I should not see "Teaching Tool 1" in the ".modal-body" "css_element"
+    And I should see "Teaching Tool 2" in the ".modal-body" "css_element"
+    And I should not see "Course Tool 2" in the ".modal-body" "css_element"
+    And I click on "Close" "button" in the ".modal-dialog" "css_element"
+    And I navigate to "LTI External tools" in current page administration
+    And I should see "Show in activity chooser" in the "Teaching Tool 1" "table_row"
+    And I should see "Don't show in activity chooser" in the "Teaching Tool 2" "table_row"
+    And I should see "Show in activity chooser" in the "Course Tool 1" "table_row"

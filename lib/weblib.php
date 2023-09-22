@@ -2560,7 +2560,6 @@ function print_collapsible_region_start($classes, $id, $caption, $userpref = '',
 
     // Work out the initial state.
     if (!empty($userpref) and is_string($userpref)) {
-        user_preference_allow_ajax_update($userpref, PARAM_BOOL);
         $collapsed = get_user_preferences($userpref, $default);
     } else {
         $collapsed = $default;
@@ -3211,7 +3210,6 @@ function print_maintenance_message() {
 
     $PAGE->set_pagetype('maintenance-message');
     $PAGE->set_pagelayout('maintenance');
-    $PAGE->set_title(strip_tags($SITE->fullname));
     $PAGE->set_heading($SITE->fullname);
     echo $OUTPUT->header();
     echo $OUTPUT->heading(get_string('sitemaintenance', 'admin'));

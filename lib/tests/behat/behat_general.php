@@ -1455,7 +1455,7 @@ EOF;
 
         // Check if value exists in specific row/column.
         // Get row xpath.
-        // GoutteDriver uses DomCrawler\Crawler and it is making XPath relative to the current context, so use descendant.
+        // Some drivers make XPath relative to the current context, so use descendant.
         $rowxpath = $tablexpath . "/tbody/tr[descendant::*[@class='rowtitle'][normalize-space(.)=" . $rowliteral . "] | " . "
             descendant::th[normalize-space(.)=" . $rowliteral . "] | descendant::td[normalize-space(.)=" . $rowliteral . "]]";
 
@@ -1802,7 +1802,7 @@ EOF;
 
     /**
      * Presses a given button in the browser.
-     * NOTE: Phantomjs and goutte driver reloads page while navigating back and forward.
+     * NOTE: Phantomjs and browserkit driver reloads page while navigating back and forward.
      *
      * @Then /^I press the "(back|forward|reload)" button in the browser$/
      * @param string $button the button to press.
@@ -2358,4 +2358,36 @@ EOF;
         }
     }
 
+    /**
+     * Check that the page title contains a given string.
+     *
+     * @Given the page title should contain ":title"
+     * @param string $title The string that should be present on the page title.
+     */
+    public function the_page_title_should_contain(string $title): void {
+        $session = $this->getSession();
+        if ($this->running_javascript()) {
+            // When running on JS, the page title can be changed via JS, so it's more reliable to get the actual page title via JS.
+            $actualtitle = $session->evaluateScript("return document.title");
+        } else {
+            $titleelement = $session->getPage()->find('css', 'head title');
+            if ($titleelement === null) {
+                // Throw an exception if a page title is not present on the page.
+                throw new ElementNotFoundException(
+                    $this->getSession(),
+                    '<title> element',
+                    'css',
+                    'head title'
+                );
+            }
+            $actualtitle = $titleelement->getText();
+        }
+
+        if (!str_contains($actualtitle, $title)) {
+            throw new ExpectationException(
+                "'$title' was not found from the current page title '$actualtitle'",
+                $session
+            );
+        }
+    }
 }

@@ -27,6 +27,7 @@ import {dispatchEvent} from 'core/event_dispatcher';
 import {debounce} from 'core/utils';
 import {isSmall, isLarge} from 'core/pagehelpers';
 import Pending from 'core/pending';
+import {setUserPreference} from 'core_user/repository';
 // The jQuery module is only used for interacting with Boostrap 4. It can we removed when MDL-71979 is integrated.
 import jQuery from 'jquery';
 
@@ -42,6 +43,7 @@ const SELECTORS = {
     DRAWERS: '[data-region="fixed-drawer"]',
     DRAWERCONTENT: '.drawercontent',
     PAGECONTENT: '#page-content',
+    HEADERCONTENT: '.drawerheadercontent',
 };
 
 const CLASSES = {
@@ -421,8 +423,10 @@ export default class Drawers {
             return;
         }
 
-        // Hide close button while the drawer is showing to prevent glitchy effects.
+        // Hide close button and header content while the drawer is showing to prevent glitchy effects.
         this.drawerNode.querySelector(SELECTORS.CLOSEBTN)?.classList.toggle('hidden', true);
+        this.drawerNode.querySelector(SELECTORS.HEADERCONTENT)?.classList.toggle('hidden', true);
+
 
         // Remove open tooltip if still visible.
         let openButton = getDrawerOpenButton(this.drawerNode.id);
@@ -436,7 +440,7 @@ export default class Drawers {
 
         const preference = this.drawerNode.dataset.preference;
         if (preference && !isSmall() && (this.drawerNode.dataset.forceopen != 1)) {
-            M.util.set_user_preference(preference, true);
+            setUserPreference(preference, true);
         }
 
         const state = this.drawerNode.dataset.state;
@@ -458,13 +462,15 @@ export default class Drawers {
             .catch();
         }
 
-        // Show close button once the drawer is fully opened.
+        // Show close button and header content once the drawer is fully opened.
         const closeButton = this.drawerNode.querySelector(SELECTORS.CLOSEBTN);
+        const headerContent = this.drawerNode.querySelector(SELECTORS.HEADERCONTENT);
         if (focusOnCloseButton && closeButton) {
             disableButtonTooltip(closeButton, true);
         }
         setTimeout(() => {
             closeButton.classList.toggle('hidden', false);
+            headerContent.classList.toggle('hidden', false);
             if (focusOnCloseButton) {
                 closeButton.focus();
             }
@@ -490,9 +496,11 @@ export default class Drawers {
             return;
         }
 
-        // Hide close button while the drawer is hiding to prevent glitchy effects.
+        // Hide close button and header content while the drawer is hiding to prevent glitchy effects.
         const closeButton = this.drawerNode.querySelector(SELECTORS.CLOSEBTN);
         closeButton?.classList.toggle('hidden', true);
+        const headerContent = this.drawerNode.querySelector(SELECTORS.HEADERCONTENT);
+        headerContent?.classList.toggle('hidden', true);
         // Remove the close button tooltip if visible.
         if (closeButton.hasAttribute('data-original-title')) {
             // The jQuery is still used in Boostrap 4. It can we removed when MDL-71979 is integrated.
@@ -501,7 +509,7 @@ export default class Drawers {
 
         const preference = this.drawerNode.dataset.preference;
         if (preference && updatePreferences && !isSmall()) {
-            M.util.set_user_preference(preference, false);
+            setUserPreference(preference, false);
         }
 
         const state = this.drawerNode.dataset.state;
