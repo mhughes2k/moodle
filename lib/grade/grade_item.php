@@ -301,7 +301,7 @@ class grade_item extends grade_object {
      * @param bool $isbulkupdate If bulk grade update is happening.
      * @return bool success
      */
-    public function update($source = null, $isbulkupdate = false) {
+    public function update($source = null, $isbulkupdate = false, $eventstriggered = false) {
         // reset caches
         $this->dependson_cache = null;
 
@@ -328,7 +328,7 @@ class grade_item extends grade_object {
 
         $result = parent::update($source, $isbulkupdate);
 
-        if ($result) {
+        if ($result && !$eventstriggered) {
             $event = \core\event\grade_item_updated::create_from_grade_item($this);
             $event->trigger();
         }
@@ -743,7 +743,9 @@ class grade_item extends grade_object {
      * @param bool $cascade apply to child objects too
      */
     public function set_hidden($hidden, $cascade=false) {
-        parent::set_hidden($hidden, $cascade);
+        //parent::set_hidden($hidden, $cascade); // MDL-79643 Decided to not use parent implementation.
+        $this->hidden = $hidden;
+        $this->update(null, null, true);    // Suppress the _updated event.
         // Fire off hidden / shown event.
         if ($hidden) {
             $event = \core\event\grade_item_hidden::create_from_grade_item($this);
