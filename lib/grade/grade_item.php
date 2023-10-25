@@ -744,7 +744,14 @@ class grade_item extends grade_object {
      */
     public function set_hidden($hidden, $cascade=false) {
         parent::set_hidden($hidden, $cascade);
-
+        // Fire off hidden / shown event.
+        if ($hidden) {
+            $event = \core\event\grade_item_hidden::create_from_grade_item($this);
+            $event->trigger();
+        } else {
+            $event = \core\event\grade_item_revealed::create_from_grade_item($this);
+            $event->trigger();
+        }
         if ($cascade) {
             if ($grades = grade_grade::fetch_all(array('itemid'=>$this->id))) {
                 foreach($grades as $grade) {
