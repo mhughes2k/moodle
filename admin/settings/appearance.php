@@ -8,59 +8,6 @@ $capabilities = array(
 );
 
 if ($hassiteconfig or has_any_capability($capabilities, $systemcontext)) { // speedup for non-admins, add all caps used on this page
-
-    $ADMIN->add('appearance', new admin_category('themes', new lang_string('themes')));
-    // "themesettings" settingpage
-    $temp = new admin_settingpage('themesettings', new lang_string('themesettings', 'admin'));
-    $setting = new admin_setting_configtext('themelist', new lang_string('themelist', 'admin'),
-        new lang_string('configthemelist', 'admin'), '', PARAM_NOTAGS);
-    $setting->set_force_ltr(true);
-    $temp->add($setting);
-    $setting = new admin_setting_configcheckbox('themedesignermode', new lang_string('themedesignermode', 'admin'), new lang_string('configthemedesignermode', 'admin'), 0);
-    $setting->set_updatedcallback('theme_reset_all_caches');
-    $temp->add($setting);
-    $temp->add(new admin_setting_configcheckbox('allowuserthemes', new lang_string('allowuserthemes', 'admin'), new lang_string('configallowuserthemes', 'admin'), 0));
-    $temp->add(new admin_setting_configcheckbox('allowcoursethemes', new lang_string('allowcoursethemes', 'admin'), new lang_string('configallowcoursethemes', 'admin'), 0));
-    $temp->add(new admin_setting_configcheckbox('allowcategorythemes',  new lang_string('allowcategorythemes', 'admin'), new lang_string('configallowcategorythemes', 'admin'), 0));
-    $temp->add(new admin_setting_configcheckbox('allowcohortthemes',  new lang_string('allowcohortthemes', 'admin'), new lang_string('configallowcohortthemes', 'admin'), 0));
-    $temp->add(new admin_setting_configcheckbox('allowthemechangeonurl',  new lang_string('allowthemechangeonurl', 'admin'), new lang_string('configallowthemechangeonurl', 'admin'), 0));
-    $temp->add(new admin_setting_configcheckbox('allowuserblockhiding', new lang_string('allowuserblockhiding', 'admin'), new lang_string('configallowuserblockhiding', 'admin'), 1));
-    $temp->add(new admin_setting_configcheckbox('langmenuinsecurelayout',
-        new lang_string('langmenuinsecurelayout', 'admin'),
-        new lang_string('langmenuinsecurelayout_desc', 'admin'), 0));
-    $temp->add(new admin_setting_configcheckbox('logininfoinsecurelayout',
-        new lang_string('logininfoinsecurelayout', 'admin'),
-        new lang_string('logininfoinsecurelayout_desc', 'admin'), 0));
-    $temp->add(new admin_setting_configtextarea('custommenuitems', new lang_string('custommenuitems', 'admin'),
-        new lang_string('configcustommenuitems', 'admin'), '', PARAM_RAW, '50', '10'));
-    $temp->add(new admin_setting_configtextarea(
-        'customusermenuitems',
-        new lang_string('customusermenuitems', 'admin'),
-        new lang_string('configcustomusermenuitems', 'admin'),
-        'profile,moodle|/user/profile.php
-grades,grades|/grade/report/mygrades.php
-calendar,core_calendar|/calendar/view.php?view=month
-privatefiles,moodle|/user/files.php
-reports,core_reportbuilder|/reportbuilder/index.php',
-        PARAM_RAW,
-        '50',
-        '10'
-    ));
-    $ADMIN->add('themes', $temp);
-    $ADMIN->add('themes', new admin_externalpage('themeselector', new lang_string('themeselector','admin'), $CFG->wwwroot . '/theme/index.php'));
-
-    // settings for each theme
-    foreach (core_component::get_plugin_list('theme') as $theme => $themedir) {
-        $settings_path = "$themedir/settings.php";
-        if (file_exists($settings_path)) {
-            $settings = new admin_settingpage('themesetting'.$theme, new lang_string('pluginname', 'theme_'.$theme));
-            include($settings_path);
-            if ($settings) {
-                $ADMIN->add('themes', $settings);
-            }
-        }
-    }
-
     // Logos section.
     $temp = new admin_settingpage('logos', new lang_string('logossettings', 'admin'));
 
@@ -200,14 +147,14 @@ reports,core_reportbuilder|/reportbuilder/index.php',
     ));
 
     $choices = [HOMEPAGE_SITE => new lang_string('home')];
-    if (!empty($CFG->enabledashboard)) {
+    if (!isset($CFG->enabledashboard) || $CFG->enabledashboard) {
         $choices[HOMEPAGE_MY] = new lang_string('mymoodle', 'admin');
     }
     $choices[HOMEPAGE_MYCOURSES] = new lang_string('mycourses', 'admin');
     $choices[HOMEPAGE_USER] = new lang_string('userpreference', 'admin');
     $temp->add(new admin_setting_configselect('defaulthomepage', new lang_string('defaulthomepage', 'admin'),
             new lang_string('configdefaulthomepage', 'admin'), get_default_home_page(), $choices));
-    if (!empty($CFG->enabledashboard)) {
+    if (!isset($CFG->enabledashboard) || $CFG->enabledashboard) {
         $temp->add(new admin_setting_configcheckbox(
             'allowguestmymoodle',
             new lang_string('allowguestmymoodle', 'admin'),
@@ -234,7 +181,6 @@ reports,core_reportbuilder|/reportbuilder/index.php',
         new lang_string('confignavcourselimit', 'admin'), 10, PARAM_INT));
     $temp->add(new admin_setting_configcheckbox('usesitenameforsitepages', new lang_string('usesitenameforsitepages', 'admin'), new lang_string('configusesitenameforsitepages', 'admin'), 0));
     $temp->add(new admin_setting_configcheckbox('linkadmincategories', new lang_string('linkadmincategories', 'admin'), new lang_string('linkadmincategories_help', 'admin'), 1));
-    $temp->add(new admin_setting_configcheckbox('linkcoursesections', new lang_string('linkcoursesections', 'admin'), new lang_string('linkcoursesections_help', 'admin'), 1));
     $temp->add(new admin_setting_configcheckbox('navshowfrontpagemods', new lang_string('navshowfrontpagemods', 'admin'), new lang_string('navshowfrontpagemods_help', 'admin'), 1));
     $temp->add(new admin_setting_configcheckbox('navadduserpostslinks', new lang_string('navadduserpostslinks', 'admin'), new lang_string('navadduserpostslinks_help', 'admin'), 1));
 
@@ -336,4 +282,82 @@ reports,core_reportbuilder|/reportbuilder/index.php',
     $temp = new admin_settingpage('templates', new lang_string('templates', 'admin'));
     $temp->add($setting);
     $ADMIN->add('appearance', $temp);
+
+    // Advanced theme settings page.
+    $temp = new admin_settingpage('themesettingsadvanced', new lang_string('themesettingsadvanced', 'admin'));
+    $setting = new admin_setting_configtext('themelist', new lang_string('themelist', 'admin'),
+        new lang_string('configthemelist', 'admin'), '', PARAM_NOTAGS);
+    $setting->set_force_ltr(true);
+    $temp->add($setting);
+    $setting = new admin_setting_configcheckbox('themedesignermode', new lang_string('themedesignermode', 'admin'),
+        new lang_string('configthemedesignermode', 'admin'), 0);
+    $setting->set_updatedcallback('theme_reset_all_caches');
+    $temp->add($setting);
+
+    $setting = new admin_setting_configcheckbox('allowuserthemes', new lang_string('allowuserthemes', 'admin'),
+        new lang_string('configallowuserthemes', 'admin'), 0);
+    $setting->set_updatedcallback('theme_purge_used_in_context_caches');
+    $temp->add($setting);
+
+    $setting = new admin_setting_configcheckbox('allowcoursethemes', new lang_string('allowcoursethemes', 'admin'),
+        new lang_string('configallowcoursethemes', 'admin'), 0);
+    $setting->set_updatedcallback('theme_purge_used_in_context_caches');
+    $temp->add($setting);
+
+    $setting = new admin_setting_configcheckbox('allowcategorythemes',  new lang_string('allowcategorythemes', 'admin'),
+        new lang_string('configallowcategorythemes', 'admin'), 0);
+    $setting->set_updatedcallback('theme_purge_used_in_context_caches');
+    $temp->add($setting);
+
+    $setting = new admin_setting_configcheckbox('allowcohortthemes',  new lang_string('allowcohortthemes', 'admin'),
+        new lang_string('configallowcohortthemes', 'admin'), 0);
+    $setting->set_updatedcallback('theme_purge_used_in_context_caches');
+    $temp->add($setting);
+
+    $temp->add(new admin_setting_configcheckbox('allowthemechangeonurl',  new lang_string('allowthemechangeonurl', 'admin'),
+        new lang_string('configallowthemechangeonurl', 'admin'), 0));
+    $temp->add(new admin_setting_configcheckbox('allowuserblockhiding', new lang_string('allowuserblockhiding', 'admin'),
+        new lang_string('configallowuserblockhiding', 'admin'), 1));
+    $temp->add(new admin_setting_configcheckbox('langmenuinsecurelayout',
+        new lang_string('langmenuinsecurelayout', 'admin'),
+        new lang_string('langmenuinsecurelayout_desc', 'admin'), 0));
+    $temp->add(new admin_setting_configcheckbox('logininfoinsecurelayout',
+        new lang_string('logininfoinsecurelayout', 'admin'),
+        new lang_string('logininfoinsecurelayout_desc', 'admin'), 0));
+    $temp->add(new admin_setting_configtextarea('custommenuitems', new lang_string('custommenuitems', 'admin'),
+        new lang_string('configcustommenuitems', 'admin'), '', PARAM_RAW, '50', '10'));
+    $defaultsettingcustomusermenuitems = [
+        'profile,moodle|/user/profile.php',
+        'grades,grades|/grade/report/mygrades.php',
+        'calendar,core_calendar|/calendar/view.php?view=month',
+        'privatefiles,moodle|/user/files.php',
+        'reports,core_reportbuilder|/reportbuilder/index.php',
+    ];
+    $temp->add(new admin_setting_configtextarea(
+        'customusermenuitems',
+        new lang_string('customusermenuitems', 'admin'),
+        new lang_string('configcustomusermenuitems', 'admin'),
+        implode("\n", $defaultsettingcustomusermenuitems),
+        PARAM_RAW,
+        '50',
+        '10'
+    ));
+    $ADMIN->add('appearance', $temp);
+
+    // Theme selector page.
+    $ADMIN->add('appearance', new admin_externalpage('themeselector',
+        new lang_string('themeselector', 'admin'), $CFG->wwwroot . '/admin/themeselector.php'));
+
+    // Settings page for each theme.
+    foreach (core_component::get_plugin_list('theme') as $theme => $themedir) {
+        $settingspath = "$themedir/settings.php";
+        if (file_exists($settingspath)) {
+            $settings = new admin_externalpage('themesetting' . $theme, new lang_string('pluginname', 'theme_'.$theme),
+                new moodle_url($settingspath), 'moodle/site:config', true);
+            include($settingspath);
+            if ($settings) {
+                $ADMIN->add('appearance', $settings);
+            }
+        }
+    }
 } // end of speedup

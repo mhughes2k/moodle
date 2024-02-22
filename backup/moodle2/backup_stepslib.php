@@ -400,9 +400,14 @@ class backup_section_structure_step extends backup_structure_step {
 
         // Define each element separated
 
-        $section = new backup_nested_element('section', array('id'), array(
+        $section = new backup_nested_element(
+            'section',
+            ['id'],
+            [
                 'number', 'name', 'summary', 'summaryformat', 'sequence', 'visible',
-                'availabilityjson', 'timemodified'));
+                'availabilityjson', 'component', 'itemid', 'timemodified',
+            ]
+        );
 
         // attach format plugin structure to $section element, only one allowed
         $this->add_plugin_structure('format', $section, false);
@@ -472,7 +477,7 @@ class backup_course_structure_step extends backup_structure_step {
 
         $customfields = new backup_nested_element('customfields');
         $customfield = new backup_nested_element('customfield', array('id'), array(
-          'shortname', 'type', 'value', 'valueformat'
+            'shortname', 'type', 'value', 'valueformat', 'valuetrust',
         ));
 
         $courseformatoptions = new backup_nested_element('courseformatoptions');
@@ -1356,7 +1361,7 @@ class backup_groups_structure_step extends backup_structure_step {
 
         $groupcustomfields = new backup_nested_element('groupcustomfields');
         $groupcustomfield = new backup_nested_element('groupcustomfield', ['id'], [
-            'shortname', 'type', 'value', 'valueformat', 'groupid']);
+            'shortname', 'type', 'value', 'valueformat', 'valuetrust', 'groupid']);
 
         $members = new backup_nested_element('group_members');
 
@@ -1371,7 +1376,7 @@ class backup_groups_structure_step extends backup_structure_step {
 
         $groupingcustomfields = new backup_nested_element('groupingcustomfields');
         $groupingcustomfield = new backup_nested_element('groupingcustomfield', ['id'], [
-            'shortname', 'type', 'value', 'valueformat', 'groupingid']);
+            'shortname', 'type', 'value', 'valueformat', 'valuetrust', 'groupingid']);
 
         $groupinggroups = new backup_nested_element('grouping_groups');
 
@@ -1663,7 +1668,13 @@ class backup_block_instance_structure_step extends backup_structure_step {
         // Transform configdata information if needed (process links and friends)
         $blockrec = $DB->get_record('block_instances', array('id' => $this->task->get_blockid()));
         if ($attrstotransform = $this->task->get_configdata_encoded_attributes()) {
-            $configdata = (array)unserialize(base64_decode($blockrec->configdata));
+            $configdata = array_filter(
+                (array) unserialize_object(base64_decode($blockrec->configdata)),
+                static function($value): bool {
+                    return !($value instanceof __PHP_Incomplete_Class);
+                }
+            );
+
             foreach ($configdata as $attribute => $value) {
                 if (in_array($attribute, $attrstotransform)) {
                     $configdata[$attribute] = $this->contenttransformer->process($value);

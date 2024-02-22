@@ -26,6 +26,7 @@ defined('MOODLE_INTERNAL') || die;
 
 use core_course\external\course_summary_exporter;
 use core_courseformat\base as course_format;
+use core_courseformat\formatactions;
 use core\output\local\action_menu\subpanel as action_menu_subpanel;
 
 require_once($CFG->libdir.'/completionlib.php');
@@ -399,7 +400,7 @@ function course_integrity_check($courseid, $rawmods = null, $sections = null, $f
 function get_module_types_names($plural = false, $resetcache = false) {
     static $modnames = null;
     global $DB, $CFG;
-    if ($modnames === null || $resetcache) {
+    if ($modnames === null || empty($modnames[0]) || $resetcache) {
         $modnames = array(0 => array(), 1 => array());
         if ($allmods = $DB->get_records("modules")) {
             foreach ($allmods as $mod) {
@@ -541,40 +542,7 @@ function add_course_module($mod) {
  * @return stdClass created section object
  */
 function course_create_section($courseorid, $position = 0, $skipcheck = false) {
-    global $DB;
-    $courseid = is_object($courseorid) ? $courseorid->id : $courseorid;
-
-    // Find the last sectionnum among existing sections.
-    if ($skipcheck) {
-        $lastsection = $position - 1;
-    } else {
-        $lastsection = (int)$DB->get_field_sql('SELECT max(section) from {course_sections} WHERE course = ?', [$courseid]);
-    }
-
-    // First add section to the end.
-    $cw = new stdClass();
-    $cw->course   = $courseid;
-    $cw->section  = $lastsection + 1;
-    $cw->summary  = '';
-    $cw->summaryformat = FORMAT_HTML;
-    $cw->sequence = '';
-    $cw->name = null;
-    $cw->visible = 1;
-    $cw->availability = null;
-    $cw->timemodified = time();
-    $cw->id = $DB->insert_record("course_sections", $cw);
-
-    // Now move it to the specified position.
-    if ($position > 0 && $position <= $lastsection) {
-        $course = is_object($courseorid) ? $courseorid : get_course($courseorid);
-        move_section_to($course, $cw->section, $position, true);
-        $cw->section = $position;
-    }
-
-    core\event\course_section_created::create_from_section($cw)->trigger();
-
-    rebuild_course_cache($courseid, true);
-    return $cw;
+    return formatactions::section($courseorid)->create($position, $skipcheck);
 }
 
 /**
@@ -588,14 +556,7 @@ function course_create_sections_if_missing($courseorid, $sections) {
     if (!is_array($sections)) {
         $sections = array($sections);
     }
-    $existing = array_keys(get_fast_modinfo($courseorid)->get_section_info_all());
-    if ($newsections = array_diff($sections, $existing)) {
-        foreach ($newsections as $sectionnum) {
-            course_create_section($courseorid, $sectionnum, true);
-        }
-        return true;
-    }
-    return false;
+    return formatactions::section($courseorid)->create_if_missing($sections);
 }
 
 /**
@@ -639,7 +600,7 @@ function course_add_cm_to_section($courseorid, $cmid, $sectionnum, $beforemod = 
     $modarray = explode(",", trim($section->sequence));
     if (empty($section->sequence)) {
         $newsequence = "$cmid";
-    } else if ($beforemod && ($key = array_keys($modarray, $beforemod))) {
+    } else if ($beforemod && ($key = moodle_array_keys_filter($modarray, $beforemod))) {
         $insertarray = array($cmid, $beforemod);
         array_splice($modarray, $key[0], 1, $insertarray);
         $newsequence = implode(",", $modarray);
@@ -711,12 +672,17 @@ function set_downloadcontent(int $id, bool $downloadcontent): bool {
  * has been moved to {@link set_section_visible()} which was the only place from which
  * the parameter was used.
  *
+ * If $rebuildcache is set to false, the calling code is responsible for ensuring the cache is purged
+ * and rebuilt as appropriate. Consider using this if set_coursemodule_visible is called multiple times
+ * (e.g. in a loop).
+ *
  * @param int $id of the module
  * @param int $visible state of the module
  * @param int $visibleoncoursepage state of the module on the course page
+ * @param bool $rebuildcache If true (default), perform a partial cache purge and rebuild.
  * @return bool false when the module was not found, true otherwise
  */
-function set_coursemodule_visible($id, $visible, $visibleoncoursepage = 1) {
+function set_coursemodule_visible($id, $visible, $visibleoncoursepage = 1, bool $rebuildcache = true) {
     global $DB, $CFG;
     require_once($CFG->libdir.'/gradelib.php');
     require_once($CFG->dirroot.'/calendar/lib.php');
@@ -773,8 +739,10 @@ function set_coursemodule_visible($id, $visible, $visibleoncoursepage = 1) {
         }
     }
 
-    \course_modinfo::purge_course_module_cache($cm->course, $cm->id);
-    rebuild_course_cache($cm->course, false, true);
+    if ($rebuildcache) {
+        \course_modinfo::purge_course_module_cache($cm->course, $cm->id);
+        rebuild_course_cache($cm->course, false, true);
+    }
     return true;
 }
 
@@ -1104,7 +1072,7 @@ function delete_mod_from_section($modid, $sectionid) {
 
         $modarray = explode(",", $section->sequence);
 
-        if ($key = array_keys ($modarray, $modid)) {
+        if ($key = moodle_array_keys_filter($modarray, $modid)) {
             array_splice($modarray, $key[0], 1);
             $newsequence = implode(",", $modarray);
             $DB->set_field("course_sections", "sequence", $newsequence, array("id"=>$section->id));
@@ -1269,61 +1237,18 @@ function move_section_to($course, $section, $destination, $ignorenumsections = f
  * check if section can actually be deleted.
  *
  * @param int|stdClass $course
- * @param int|stdClass|section_info $section
+ * @param int|stdClass|section_info $sectionornum
  * @param bool $forcedeleteifnotempty if set to false section will not be deleted if it has modules in it.
  * @param bool $async whether or not to try to delete the section using an adhoc task. Async also depends on a plugin hook.
  * @return bool whether section was deleted
  */
-function course_delete_section($course, $section, $forcedeleteifnotempty = true, $async = false) {
-    global $DB;
-
-    // Prepare variables.
-    $courseid = (is_object($course)) ? $course->id : (int)$course;
-    $sectionnum = (is_object($section)) ? $section->section : (int)$section;
-    $section = $DB->get_record('course_sections', array('course' => $courseid, 'section' => $sectionnum));
-    if (!$section) {
-        // No section exists, can't proceed.
+function course_delete_section($course, $sectionornum, $forcedeleteifnotempty = true, $async = false) {
+    $sectionnum = (is_object($sectionornum)) ? $sectionornum->section : (int)$sectionornum;
+    $sectioninfo = get_fast_modinfo($course)->get_section_info($sectionnum);
+    if (!$sectioninfo) {
         return false;
     }
-
-    // Check the 'course_module_background_deletion_recommended' hook first.
-    // Only use asynchronous deletion if at least one plugin returns true and if async deletion has been requested.
-    // Both are checked because plugins should not be allowed to dictate the deletion behaviour, only support/decline it.
-    // It's up to plugins to handle things like whether or not they are enabled.
-    if ($async && $pluginsfunction = get_plugins_with_function('course_module_background_deletion_recommended')) {
-        foreach ($pluginsfunction as $plugintype => $plugins) {
-            foreach ($plugins as $pluginfunction) {
-                if ($pluginfunction()) {
-                    return course_delete_section_async($section, $forcedeleteifnotempty);
-                }
-            }
-        }
-    }
-
-    $format = course_get_format($course);
-    $sectionname = $format->get_section_name($section);
-
-    // Delete section.
-    $result = $format->delete_section($section, $forcedeleteifnotempty);
-
-    // Trigger an event for course section deletion.
-    if ($result) {
-        $context = context_course::instance($courseid);
-        $event = \core\event\course_section_deleted::create(
-            array(
-                'objectid' => $section->id,
-                'courseid' => $courseid,
-                'context' => $context,
-                'other' => array(
-                    'sectionnum' => $section->section,
-                    'sectionname' => $sectionname,
-                )
-            )
-        );
-        $event->add_record_snapshot('course_sections', $section);
-        $event->trigger();
-    }
-    return $result;
+    return formatactions::section($course)->delete($sectioninfo, $forcedeleteifnotempty, $async);
 }
 
 /**
@@ -1337,75 +1262,14 @@ function course_delete_section($course, $section, $forcedeleteifnotempty = true,
  * @return bool true if the section was scheduled for deletion, false otherwise.
  */
 function course_delete_section_async($section, $forcedeleteifnotempty = true) {
-    global $DB, $USER;
-
-    // Objects only, and only valid ones.
-    if (!is_object($section) || empty($section->id)) {
+    if (!is_object($section) || empty($section->id) || empty($section->course)) {
         return false;
     }
-
-    // Does the object currently exist in the DB for removal (check for stale objects).
-    $section = $DB->get_record('course_sections', array('id' => $section->id));
-    if (!$section || !$section->section) {
-        // No section exists, or the section is 0. Can't proceed.
+    $sectioninfo = get_fast_modinfo($section->course)->get_section_info_by_id($section->id);
+    if (!$sectioninfo) {
         return false;
     }
-
-    // Check whether the section can be removed.
-    if (!$forcedeleteifnotempty && (!empty($section->sequence) || !empty($section->summary))) {
-        return false;
-    }
-
-    $format = course_get_format($section->course);
-    $sectionname = $format->get_section_name($section);
-
-    // Flag those modules having no existing deletion flag. Some modules may have been scheduled for deletion manually, and we don't
-    // want to create additional adhoc deletion tasks for these. Moving them to section 0 will suffice.
-    $affectedmods = $DB->get_records_select('course_modules', 'course = ? AND section = ? AND deletioninprogress <> ?',
-                                            [$section->course, $section->id, 1], '', 'id');
-    $DB->set_field('course_modules', 'deletioninprogress', '1', ['course' => $section->course, 'section' => $section->id]);
-
-    // Move all modules to section 0.
-    $modules = $DB->get_records('course_modules', ['section' => $section->id], '');
-    $sectionzero = $DB->get_record('course_sections', ['course' => $section->course, 'section' => '0']);
-    foreach ($modules as $mod) {
-        moveto_module($mod, $sectionzero);
-    }
-
-    // Create and queue an adhoc task for the deletion of the modules.
-    $removaltask = new \core_course\task\course_delete_modules();
-    $data = array(
-        'cms' => $affectedmods,
-        'userid' => $USER->id,
-        'realuserid' => \core\session\manager::get_realuser()->id
-    );
-    $removaltask->set_custom_data($data);
-    \core\task\manager::queue_adhoc_task($removaltask);
-
-    // Delete the now empty section, passing in only the section number, which forces the function to fetch a new object.
-    // The refresh is needed because the section->sequence is now stale.
-    $result = $format->delete_section($section->section, $forcedeleteifnotempty);
-
-    // Trigger an event for course section deletion.
-    if ($result) {
-        $context = \context_course::instance($section->course);
-        $event = \core\event\course_section_deleted::create(
-            array(
-                'objectid' => $section->id,
-                'courseid' => $section->course,
-                'context' => $context,
-                'other' => array(
-                    'sectionnum' => $section->section,
-                    'sectionname' => $sectionname,
-                )
-            )
-        );
-        $event->add_record_snapshot('course_sections', $section);
-        $event->trigger();
-    }
-    rebuild_course_cache($section->course, true);
-
-    return $result;
+    return formatactions::section($section->course)->delete_async($sectioninfo, $forcedeleteifnotempty);
 }
 
 /**
@@ -1459,20 +1323,22 @@ function course_update_section($course, $section, $data) {
     // If section visibility was changed, hide the modules in this section too.
     if ($changevisibility && !empty($section->sequence)) {
         $modules = explode(',', $section->sequence);
+        $cmids = [];
         foreach ($modules as $moduleid) {
             if ($cm = get_coursemodule_from_id(null, $moduleid, $courseid)) {
+                $cmids[] = $cm->id;
                 if ($data['visible']) {
                     // As we unhide the section, we use the previously saved visibility stored in visibleold.
-                    set_coursemodule_visible($moduleid, $cm->visibleold, $cm->visibleoncoursepage);
+                    set_coursemodule_visible($moduleid, $cm->visibleold, $cm->visibleoncoursepage, false);
                 } else {
                     // We hide the section, so we hide the module but we store the original state in visibleold.
-                    set_coursemodule_visible($moduleid, 0, $cm->visibleoncoursepage);
+                    set_coursemodule_visible($moduleid, 0, $cm->visibleoncoursepage, false);
                     $DB->set_field('course_modules', 'visibleold', $cm->visible, ['id' => $moduleid]);
-                    \course_modinfo::purge_course_module_cache($cm->course, $cm->id);
                 }
                 \core\event\course_module_updated::create_from_cm($cm)->trigger();
             }
         }
+        \course_modinfo::purge_course_modules_cache($courseid, $cmids);
         rebuild_course_cache($courseid, false, true);
     }
 }
@@ -1688,7 +1554,7 @@ function course_get_cm_edit_actions(cm_info $mod, $indent = -1, $sr = null) {
     }
 
     // Move (only for component compatible formats).
-    if ($usecomponents) {
+    if ($hasmanageactivities && $usecomponents) {
         $actions['move'] = new action_menu_link_secondary(
             new moodle_url($baseurl, [
                 'sesskey' => sesskey(),
@@ -1801,7 +1667,7 @@ function course_get_cm_edit_actions(cm_info $mod, $indent = -1, $sr = null) {
     }
 
     // Groupmode.
-    if ($courseformat->show_groupmode($mod) && $usecomponents) {
+    if ($courseformat->show_groupmode($mod) && $usecomponents  && !$mod->coursegroupmodeforce) {
         $groupmodeclass = $courseformat->get_output_classname('content\\cm\\groupmode');
         /** @var core_courseformat\output\local\content\cm\groupmode */
         $groupmode = new $groupmodeclass($courseformat, $sectioninfo, $mod);
@@ -2246,7 +2112,7 @@ function create_course($data, $editoroptions = NULL) {
     // Trigger a course created event.
     $event = \core\event\course_created::create(array(
         'objectid' => $course->id,
-        'context' => context_course::instance($course->id),
+        'context' => $context,
         'other' => array('shortname' => $course->shortname,
             'fullname' => $course->fullname)
     ));
@@ -2273,7 +2139,7 @@ function create_course($data, $editoroptions = NULL) {
 
     // Update course tags.
     if (isset($data->tags)) {
-        core_tag_tag::set_item_tags('core', 'course', $course->id, context_course::instance($course->id), $data->tags);
+        core_tag_tag::set_item_tags('core', 'course', $course->id, $context, $data->tags);
     }
     // Set up communication.
     if (core_communication\api::is_available()) {
@@ -2288,12 +2154,13 @@ function create_course($data, $editoroptions = NULL) {
 
             // Communication api call.
             $communication = \core_communication\api::load_by_instance(
-                'core_course',
-                'coursecommunication',
-                $course->id,
+                context: $context,
+                component: 'core_course',
+                instancetype: 'coursecommunication',
+                instanceid: $course->id,
+                provider: $provider,
             );
             $communication->create_and_configure_room(
-                $provider,
                 $communicationroomname,
                 $courseimage ?: null,
                 $data,
@@ -2431,7 +2298,12 @@ function update_course($data, $editoroptions = NULL) {
 
     // Attempt to get the communication provider if it wasn't provided in the data.
     if (empty($provider) && core_communication\api::is_available()) {
-        $provider = \core_communication\api::load_by_instance('core_course', 'coursecommunication', $data->id)->get_provider();
+        $provider = \core_communication\api::load_by_instance(
+            context: $context,
+            component: 'core_course',
+            instancetype: 'coursecommunication',
+            instanceid: $data->id,
+        )->get_provider();
     }
 
     // Communication api call.
@@ -2455,37 +2327,97 @@ function update_course($data, $editoroptions = NULL) {
             $enrolledusers[] = $user->id;
         }
 
+        // Existing communication provider.
         $communication = \core_communication\api::load_by_instance(
-            'core_course',
-            'coursecommunication',
-            $data->id
+            context: $context,
+            component: 'core_course',
+            instancetype: 'coursecommunication',
+            instanceid: $data->id,
         );
+        $existingprovider = $communication->get_provider();
+        $addusersrequired = false;
+        $enablenewprovider = false;
+        $instanceexists = true;
 
-        $addafterupdate = false;
-        if ($provider !== $communication->get_provider()) {
-            // If provider set to none, remove all the members.
-            if ($provider === 'none') {
+        // Action required changes if provider has changed.
+        if ($provider !== $existingprovider) {
+            // Provider changed, flag new one to be enabled.
+            $enablenewprovider = true;
+
+            // If provider set to none, remove all the members from previous provider.
+            if ($provider === 'none' && $existingprovider !== '') {
                 $communication->remove_members_from_room($enrolledusers);
             } else if (
-                // If previous provider was not none and current provider is not none, but a different provider, remove members.
-                $communication->get_provider() !== '' &&
-                $communication->get_provider() !== 'none' &&
-                $provider !== $communication->get_provider()
+                // If previous provider was not none and current provider is not none,
+                // remove members from previous provider.
+                $existingprovider !== '' &&
+                $existingprovider !== 'none'
             ) {
                 $communication->remove_members_from_room($enrolledusers);
-                $addafterupdate = true;
+                $addusersrequired = true;
             } else if (
-                // If previous provider was none and current provider is not none, but a different provider, remove members.
-                ($communication->get_provider() === '' || $communication->get_provider() === 'none') &&
-                $provider !== $communication->get_provider()
+                // If previous provider was none and current provider is not none,
+                // remove members from previous provider.
+                ($existingprovider === '' || $existingprovider === 'none')
             ) {
-                $addafterupdate = true;
+                $addusersrequired = true;
+            }
+
+            // Disable previous provider, if one was enabled.
+            if ($existingprovider !== '' && $existingprovider !== 'none') {
+                $communication->update_room(
+                    active: \core_communication\processor::PROVIDER_INACTIVE,
+                );
+            }
+
+            // Switch to the newly selected provider so it can be updated.
+            if ($provider !== 'none') {
+                $communication = \core_communication\api::load_by_instance(
+                    context: $context,
+                    component: 'core_course',
+                    instancetype: 'coursecommunication',
+                    instanceid: $data->id,
+                    provider: $provider,
+                );
+
+                // Create it if it does not exist.
+                if ($communication->get_provider() === '') {
+                    $communication->create_and_configure_room(
+                        communicationroomname: $communicationroomname,
+                        avatar: $courseimage,
+                        instance: $data
+                    );
+
+                    $communication = \core_communication\api::load_by_instance(
+                        context: $context,
+                        component: 'core_course',
+                        instancetype: 'coursecommunication',
+                        instanceid: $data->id,
+                        provider: $provider,
+                    );
+
+                    $addusersrequired = true;
+                    $instanceexists = false;
+                }
             }
         }
 
-        $communication->update_room($provider, $communicationroomname, $courseimage, $data);
-        if ($addafterupdate) {
-            $communication->add_members_to_room($enrolledusers, false);
+        if ($provider !== 'none' && $instanceexists) {
+            // Update the currently enabled provider's room data.
+            // Newly created providers do not need to run this, the create process handles it.
+            $communication->update_room(
+                active: $enablenewprovider ? \core_communication\processor::PROVIDER_ACTIVE : null,
+                communicationroomname: $communicationroomname,
+                avatar: $courseimage,
+                instance: $data,
+            );
+        }
+
+        // Complete room membership tasks if required.
+        // Newly created providers complete the user mapping but do not queue the task
+        // (it will be handled by the room creation task).
+        if ($addusersrequired) {
+            $communication->add_members_to_room($enrolledusers, $instanceexists);
         }
     }
 
@@ -2552,6 +2484,11 @@ function update_course($data, $editoroptions = NULL) {
         // 'course_updated' and in method format_XXX::update_course_format_options()
         $DB->delete_records('course_format_options',
                 array('courseid' => $course->id, 'format' => $oldcourse->format));
+    }
+
+    // Delete theme usage cache if the theme has been changed.
+    if (isset($data->theme) && ($data->theme != $oldcourse->theme)) {
+        theme_delete_used_in_context_cache($data->theme, $oldcourse->theme);
     }
 }
 
@@ -3196,8 +3133,6 @@ function include_course_ajax($course, $usedmodules = array(), $enabledmodules = 
             'groupsnone',
             'groupsvisible',
             'groupsseparate',
-            'markthistopic',
-            'markedthistopic',
             'movesection',
             'movecoursemodule',
             'movecoursesection',
@@ -5148,4 +5083,23 @@ function course_get_communication_instance_data(int $courseid): array {
 function course_update_communication_instance_data(stdClass $data): void {
     $data->id = $data->instanceid; // For correct use in update_course.
     update_course($data);
+}
+
+/**
+ * Trigger course section viewed event.
+ *
+ * @param context_course $context course context object
+ * @param int $sectionid section number
+ * @since Moodle 4.4.
+ */
+function course_section_view(context_course $context, int $sectionid) {
+
+    $eventdata = [
+        'objectid' => $sectionid,
+        'context' => $context,
+    ];
+    $event = \core\event\section_viewed::create($eventdata);
+    $event->trigger();
+
+    user_accesstime_log($context->instanceid);
 }

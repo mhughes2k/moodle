@@ -142,12 +142,13 @@ class section implements named_templatable, renderable {
         $data = (object)[
             'num' => $section->section ?? '0',
             'id' => $section->id,
-            'sectionreturnid' => $format->get_section_number(),
+            'sectionreturnid' => $format->get_sectionnum(),
             'insertafter' => false,
             'summary' => $summary->export_for_template($output),
             'highlightedlabel' => $format->get_section_highlighted_name(),
             'sitehome' => $course->id == SITEID,
-            'editing' => $PAGE->user_is_editing()
+            'editing' => $PAGE->user_is_editing(),
+            'displayonesection' => ($course->id != SITEID && !is_null($format->get_sectionid())),
         ];
 
         $haspartials = [];
@@ -180,7 +181,7 @@ class section implements named_templatable, renderable {
         $headerdata = $header->export_for_template($output);
 
         // When a section is displayed alone the title goes over the section, not inside it.
-        if ($section->section != 0 && $section->section == $format->get_section_number()) {
+        if ($section->section != 0 && $section->section == $format->get_sectionnum()) {
             $data->singleheader = $headerdata;
         } else {
             $data->header = $headerdata;
@@ -202,7 +203,7 @@ class section implements named_templatable, renderable {
         $format = $this->format;
 
         $showsummary = ($section->section != 0 &&
-            $section->section != $format->get_section_number() &&
+            $section->section != $format->get_sectionnum() &&
             $format->get_course_display() == COURSE_DISPLAY_MULTIPAGE &&
             !$format->show_editor()
         );
@@ -283,11 +284,16 @@ class section implements named_templatable, renderable {
      * @return bool if the cm has name data
      */
     protected function add_editor_data(stdClass &$data, renderer_base $output): bool {
-        if (!$this->format->show_editor()) {
+        $course = $this->format->get_course();
+        $coursecontext = context_course::instance($course->id);
+        $editcaps = [];
+        if (has_capability('moodle/course:sectionvisibility', $coursecontext)) {
+            $editcaps = ['moodle/course:sectionvisibility'];
+        }
+        if (!$this->format->show_editor($editcaps)) {
             return false;
         }
 
-        $course = $this->format->get_course();
         if (empty($this->hidecontrols)) {
             $controlmenu = new $this->controlmenuclass($this->format, $this->section);
             $data->controlmenu = $controlmenu->export_for_template($output);
@@ -296,7 +302,7 @@ class section implements named_templatable, renderable {
             $data->cmcontrols = $output->course_section_add_cm_control(
                 $course,
                 $this->section->section,
-                $this->format->get_section_number()
+                $this->format->get_sectionnum()
             );
         }
         return true;

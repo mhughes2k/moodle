@@ -137,9 +137,11 @@ abstract class backup_cron_automated_helper {
             $rs->close();
 
             // Send email to admin if necessary.
-            if ($emailpending) {
-                self::send_backup_status_to_admin($admin);
-            }
+            set_config(
+                'backup_auto_emailpending',
+                $emailpending ? 1 : 0,
+                'backup',
+            );
         } finally {
             // Everything is finished release lock.
             $lock->release();
@@ -188,7 +190,7 @@ abstract class backup_cron_automated_helper {
      * @param stdClass $admin
      * @return array
      */
-    private static function send_backup_status_to_admin($admin) {
+    public static function send_backup_status_to_admin($admin) {
         global $DB, $CFG;
 
         mtrace("Sending email to admin");
@@ -386,7 +388,22 @@ abstract class backup_cron_automated_helper {
             'courseid' => $backupcourse->courseid,
             'adminid' => $admin->id
         ));
-        \core\task\manager::queue_adhoc_task($asynctask);
+        $taskid = \core\task\manager::queue_adhoc_task($asynctask);
+
+        // Get the queued tasks.
+        $queuedtasks = [];
+        if ($value = get_config('backup', 'backup_auto_adhoctasks')) {
+            $queuedtasks = explode(',', $value);
+        }
+        if ($taskid) {
+            $queuedtasks[] = (int) $taskid;
+        }
+        // Save the queued tasks.
+        set_config(
+            'backup_auto_adhoctasks',
+            implode(',', $queuedtasks),
+            'backup',
+        );
 
         $backupcourse->laststatus = self::BACKUP_STATUS_QUEUED;
         $DB->update_record('backup_courses', $backupcourse);
@@ -778,18 +795,31 @@ abstract class backup_cron_automated_helper {
      * intentional, since we cannot reliably determine if any modification was made or not.
      */
     protected static function is_course_modified($courseid, $since) {
+        global $DB;
         $logmang = get_log_manager();
         $readers = $logmang->get_readers('core\log\sql_reader');
         $params = array('courseid' => $courseid, 'since' => $since);
 
+        // Exclude events defined by hook.
+        $hook = new \core\hook\backup\get_excluded_events();
+        \core\hook\manager::get_instance()->dispatch($hook);
+        $excludedevents = $hook->get_events();
+
         foreach ($readers as $readerpluginname => $reader) {
             $where = "courseid = :courseid and timecreated > :since and crud <> 'r'";
 
+            $excludeevents = [];
             // Prevent logs of prevous backups causing a false positive.
             if ($readerpluginname != 'logstore_legacy') {
-                $where .= " and target <> 'course_backup'";
+                $excludeevents[] = '\core\event\course_backup_created';
             }
 
+            $excludeevents = array_merge($excludeevents, $excludedevents);
+            if ($excludeevents) {
+                list($notinsql, $notinparams) = $DB->get_in_or_equal($excludeevents, SQL_PARAMS_NAMED, 'eventname', false);
+                $where .= 'AND eventname ' . $notinsql;
+                $params = array_merge($params, $notinparams);
+            }
             if ($reader->get_events_select_exists($where, $params)) {
                 return true;
             }

@@ -512,7 +512,9 @@ abstract class handler {
                     'shortname' => $d->get_field()->get('shortname'),
                     'type' => $d->get_field()->get('type'),
                     'value' => $d->get_value(),
-                    'valueformat' => $d->get('valueformat')];
+                    'valueformat' => $d->get('valueformat'),
+                    'valuetrust' => $d->get('valuetrust'),
+                ];
             }
         }
         return $finalfields;
@@ -650,7 +652,7 @@ abstract class handler {
             }
             $data->instance_form_definition($mform);
             $field = $data->get_field()->to_record();
-            if (strlen($field->description)) {
+            if (strlen((string)$field->description)) {
                 // Add field description.
                 $context = $this->get_configuration_context();
                 $value = file_rewrite_pluginfile_urls($field->description, 'pluginfile.php',

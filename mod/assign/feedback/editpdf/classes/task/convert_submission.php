@@ -20,7 +20,9 @@ use core\task\adhoc_task;
 use core\task\manager;
 use assignfeedback_editpdf\document_services;
 use assignfeedback_editpdf\combined_document;
+use assignfeedback_editpdf\pdf;
 use context_module;
+use moodle_exception;
 use assign;
 
 /**
@@ -47,6 +49,13 @@ class convert_submission extends adhoc_task {
             return;
         }
 
+        // Early exit if ghostscript isn't correctly configured.
+        $result = pdf::test_gs_path(false);
+        if ($result->status !== pdf::GSPATH_OK) {
+            $statusstring = get_string('test_' . $result->status, 'assignfeedback_editpdf');
+            throw new moodle_exception('pathtogserror', 'assignfeedback_editpdf', '', $statusstring, $result->status);
+        }
+
         $cm = get_coursemodule_from_instance('assign', $submission->assignment, 0, false, MUST_EXIST);
         $context = context_module::instance($cm->id);
         $assign = new assign($context, null, null);
@@ -65,6 +74,15 @@ class convert_submission extends adhoc_task {
         foreach ($users as $userid) {
             mtrace('Converting submission for user id ' . $userid);
 
+            // If the assignment is not vieweable, we should not try to convert the documents
+            // for this submission, as it will cause the adhoc task to fail with a permission
+            // error.
+            //
+            // Comments on MDL-56810 indicate that submission conversion should not be attempted
+            // if the submission is not viewable due to the user not being enrolled.
+            if (!$assign->can_view_submission($userid)) {
+                continue;
+            }
             // Note: Before MDL-71468, the scheduled task version of this
             // task would stop attempting to poll the conversion after a
             // configured number of attempts were made to poll it, see:

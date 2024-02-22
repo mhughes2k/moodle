@@ -78,7 +78,8 @@ class visibility implements named_templatable, renderable {
         }
         $format = $this->format;
         // In rare legacy cases, the section could be stealth (orphaned) but they are not editable.
-        if (!$format->show_editor()) {
+        if (!$format->show_editor()
+            || !has_capability('moodle/course:activityvisibility', $this->mod->context)) {
             return $this->build_static_data($output);
         } else {
             return $this->build_editor_data($output);
@@ -128,15 +129,17 @@ class visibility implements named_templatable, renderable {
         \renderer_base $output,
         choicelist $choice,
     ): stdClass {
-        $selected = $choice->get_selected_value();
-        $icon = $this->get_icon($selected);
         $badgetext = $output->sr_text(get_string('availability'));
-        if ($selected === 'hide') {
+
+        if (!$this->mod->visible) {
             $badgetext .= get_string('hiddenfromstudents');
-        } else if ($selected === 'stealth') {
+            $icon = $this->get_icon('hide');
+        } else if ($this->mod->is_stealth()) {
             $badgetext .= get_string('hiddenoncoursepage');
+            $icon = $this->get_icon('stealth');
         } else {
-            $badgetext .= get_string("availability_{$selected}", 'core_courseformat');
+            $badgetext .= get_string("availability_show", 'core_courseformat');
+            $icon = $this->get_icon('show');
         }
         $dropdown = new status(
             $output->render($icon) . ' ' . $badgetext,
@@ -155,15 +158,27 @@ class visibility implements named_templatable, renderable {
      */
     public function get_choice_list(): choicelist {
         $choice = $this->create_choice_list();
-        if (!$this->mod->visible) {
-            $selected = 'hide';
-        } else if ($this->mod->is_stealth()) {
-            $selected = 'stealth';
-        } else {
-            $selected = 'show';
-        }
-        $choice->set_selected_value($selected);
+        $choice->set_selected_value($this->get_selected_choice_value());
         return $choice;
+    }
+
+    /**
+     * Get the selected choice value depending on the course, section and stealth settings.
+     * @return string
+     */
+    protected function get_selected_choice_value(): string {
+        if (!$this->mod->visible) {
+            return 'hide';
+        }
+        if (!$this->mod->is_stealth()) {
+            return 'show';
+        }
+        if (!$this->section->visible) {
+            // All visible activities in a hidden sections are considered stealth
+            // but they don't use the stealth attribute for it. It is just implicit.
+            return 'show';
+        }
+        return 'stealth';
     }
 
     /**

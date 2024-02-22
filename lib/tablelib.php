@@ -220,10 +220,10 @@ class flexible_table {
      * for you (even if the param is '', which means no download this time.
      * Also you can call this method with no params to get the current set
      * download type.
-     * @param string $download dataformat type. One of csv, xhtml, ods, etc
+     * @param string|null $download type of dataformat for export.
      * @param string $filename filename for downloads without file extension.
      * @param string $sheettitle title for downloaded data.
-     * @return string download dataformat type. One of csv, xhtml, ods, etc
+     * @return string download dataformat type.
      */
     function is_downloading($download = null, $filename='', $sheettitle='') {
         if ($download!==null) {
@@ -932,9 +932,6 @@ class flexible_table {
             }
             if (!isset($options->newlines)) {
                 $options->newlines = false;
-            }
-            if (!isset($options->smiley)) {
-                $options->smiley = false;
             }
             if (!isset($options->filter)) {
                 $options->filter = false;

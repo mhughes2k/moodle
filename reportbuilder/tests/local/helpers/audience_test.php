@@ -155,6 +155,15 @@ class audience_test extends advanced_testcase {
         // User2 can access report1 and report2.
         $reports = audience::get_allowed_reports((int) $user2->id);
         $this->assertEqualsCanonicalizing([$report1->get('id'), $report2->get('id')], $reports);
+
+        // Purge cache, to ensure allowed reports are re-calculated.
+        audience::purge_caches();
+
+        // Now delete one of our users, ensure they no longer have any allowed reports.
+        delete_user($user2);
+
+        $reports = audience::get_allowed_reports((int) $user2->id);
+        $this->assertEmpty($reports);
     }
 
     /**
@@ -258,16 +267,6 @@ class audience_test extends advanced_testcase {
         $this->setUser($usertwo);
         $usertworeport = $generator->create_report(['name' => 'User two report', 'source' => users::class]);
 
-        // Admin user sees all reports.
-        $this->setAdminUser();
-        [$where, $params] = audience::user_reports_list_access_sql('r');
-        $reports = $DB->get_fieldset_sql("SELECT r.id FROM {reportbuilder_report} r WHERE {$where}", $params);
-        $this->assertEqualsCanonicalizing([
-            $useradminreport->get('id'),
-            $useronereport->get('id'),
-            $usertworeport->get('id'),
-        ], $reports);
-
         // User one sees only the report they created.
         [$where, $params] = audience::user_reports_list_access_sql('r', (int) $userone->id);
         $reports = $DB->get_fieldset_sql("SELECT r.id FROM {reportbuilder_report} r WHERE {$where}", $params);
@@ -287,6 +286,49 @@ class audience_test extends advanced_testcase {
         [$where, $params] = audience::user_reports_list_access_sql('r', (int) $userfour->id);
         $reports = $DB->get_fieldset_sql("SELECT r.id FROM {reportbuilder_report} r WHERE {$where}", $params);
         $this->assertEmpty($reports);
+    }
+
+    /**
+     * Data provider for {@see test_user_reports_list_access_sql_with_capability}
+     *
+     * @return array[]
+     */
+    public static function user_reports_list_access_sql_with_capability_provider(): array {
+        return [
+            ['moodle/reportbuilder:editall'],
+            ['moodle/reportbuilder:viewall'],
+        ];
+    }
+
+    /**
+     * Test retrieving list of reports that user can access observes capability to view all reports
+     *
+     * @param string $capability
+     *
+     * @dataProvider user_reports_list_access_sql_with_capability_provider
+     */
+    public function test_user_reports_list_access_sql_with_capability(string $capability): void {
+        global $DB;
+
+        $this->resetAfterTest();
+
+        // Admin creates a report, no audience.
+        $this->setAdminUser();
+
+        /** @var core_reportbuilder_generator $generator */
+        $generator = $this->getDataGenerator()->get_plugin_generator('core_reportbuilder');
+        $report = $generator->create_report(['name' => 'Admin report', 'source' => users::class]);
+
+        // Switch to new user, assign capability.
+        $user = $this->getDataGenerator()->create_user();
+        $this->setUser($user);
+
+        $userrole = $DB->get_field('role', 'id', ['shortname' => 'user']);
+        assign_capability($capability, CAP_ALLOW, $userrole, context_system::instance());
+
+        [$where, $params] = audience::user_reports_list_access_sql('r');
+        $reports = $DB->get_fieldset_sql("SELECT r.id FROM {reportbuilder_report} r WHERE {$where}", $params);
+        $this->assertEquals([$report->get('id')], $reports);
     }
 
     /**

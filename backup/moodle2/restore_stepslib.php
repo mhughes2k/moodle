@@ -1629,6 +1629,8 @@ class restore_section_structure_step extends restore_structure_step {
                             $data, true);
                 }
             }
+            $section->component = $data->component ?? null;
+            $section->itemid = $data->itemid ?? null;
             $newitemid = $DB->insert_record('course_sections', $section);
             $section->id = $newitemid;
 
@@ -4442,7 +4444,13 @@ class restore_block_instance_structure_step extends restore_structure_step {
         // Let's look for anything within configdata neededing processing
         // (nulls and uses of legacy file.php)
         if ($attrstotransform = $this->task->get_configdata_encoded_attributes()) {
-            $configdata = (array) unserialize_object(base64_decode($data->configdata));
+            $configdata = array_filter(
+                (array) unserialize_object(base64_decode($data->configdata)),
+                static function($value): bool {
+                    return !($value instanceof __PHP_Incomplete_Class);
+                }
+            );
+
             foreach ($configdata as $attribute => $value) {
                 if (in_array($attribute, $attrstotransform)) {
                     $configdata[$attribute] = $this->contentprocessor->process_cdata($value);

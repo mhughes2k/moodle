@@ -315,6 +315,7 @@ $CFG->admin = 'admin';
 //         '/dataroot/' => $CFG->dataroot,
 //         '/cachedir/' => '/var/www/moodle/cache',    // for custom $CFG->cachedir locations
 //         '/localcachedir/' => '/var/local/cache',    // for custom $CFG->localcachedir locations
+//         '/localrequestdir/' => '/tmp',              // for custom $CFG->localrequestdir locations
 //         '/tempdir/'  => '/var/www/moodle/temp',     // for custom $CFG->tempdir locations
 //         '/filedir'   => '/var/www/moodle/filedir',  // for custom $CFG->filedir locations
 //     );
@@ -779,6 +780,23 @@ $CFG->admin = 'admin';
 // @ini_set('display_errors', '1');    // NOT FOR PRODUCTION SERVERS!
 // $CFG->debug = (E_ALL | E_STRICT);   // === DEBUG_DEVELOPER - NOT FOR PRODUCTION SERVERS!
 // $CFG->debugdisplay = 1;             // NOT FOR PRODUCTION SERVERS!
+//
+// Display exceptions using the 'pretty' Whoops! utility.
+// This is only used when the following conditions are met:
+// - Composer dependencies are installed
+// - $CFG->debug and $CFG->debugdisplay are set
+// - the request is not a CLI, or AJAX request
+//
+// To further control this, the debug_developer_use_pretty_exceptions setting can be set to false.
+// $CFG->debug_developer_use_pretty_exceptions = true;
+//
+// The Whoops! UI can also provide a link to open files in  your preferred editor.
+// You can set your preferred editor by setting:
+// $CFG->debug_developer_editor = 'vscode';
+//
+// See https://github.com/filp/whoops/blob/master/docs/Open%20Files%20In%20An%20Editor.md for more information on
+// supported editors.
+// If your editor is not listed you can provide a callback as documented.
 //
 // You can specify a comma separated list of user ids that that always see
 // debug messages, this overrides the debug flag in $CFG->debug and $CFG->debugdisplay

@@ -23,6 +23,7 @@ use context_helper;
 use lang_string;
 use stdClass;
 use core_reportbuilder\local\entities\base;
+use core_reportbuilder\local\filters\boolean_select;
 use core_reportbuilder\local\filters\date;
 use core_reportbuilder\local\filters\select;
 use core_reportbuilder\local\filters\text;
@@ -41,14 +42,14 @@ use core_reportbuilder\local\report\filter;
 class cohort extends base {
 
     /**
-     * Database tables that this entity uses and their default aliases
+     * Database tables that this entity uses
      *
-     * @return array
+     * @return string[]
      */
-    protected function get_default_table_aliases(): array {
+    protected function get_default_tables(): array {
         return [
-            'cohort' => 'c',
-            'context' => 'chctx',
+            'cohort',
+            'context',
         ];
     }
 
@@ -324,6 +325,16 @@ class cohort extends base {
             new lang_string('description'),
             $this->get_entity_name(),
             $DB->sql_cast_to_char("{$tablealias}.description")
+        ))
+            ->add_joins($this->get_joins());
+
+        // Visible filter.
+        $filters[] = (new filter(
+            boolean_select::class,
+            'visible',
+            new lang_string('visible', 'core_cohort'),
+            $this->get_entity_name(),
+            "{$tablealias}.visible"
         ))
             ->add_joins($this->get_joins());
 

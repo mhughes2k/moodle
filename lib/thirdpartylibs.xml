@@ -4,7 +4,7 @@
     <location>adodb</location>
     <name>AdoDB</name>
     <description>Database abstraction library for MySQL, PostgreSQL, MSSQL, Oracle, Interbase, Foxpro, Access, ADO, Sybase, DB2 and ODBC.</description>
-    <version>5.22.5</version>
+    <version>5.22.7</version>
     <license>BSD/LGPL</license>
     <licenseversion>3-Clause/2.1+</licenseversion>
     <repository>https://github.com/ADOdb/ADOdb</repository>
@@ -82,7 +82,7 @@
     <location>minify/matthiasmullie-minify</location>
     <name>MatthiasMullie\Minify</name>
     <description>CSS &amp; JavaScript minifier, in PHP</description>
-    <version>1.3.70</version>
+    <version>1.3.71</version>
     <license>MIT</license>
     <repository>https://github.com/matthiasmullie/minify</repository>
     <customised/>
@@ -175,12 +175,13 @@
     <location>tcpdf</location>
     <name>TCPDF</name>
     <description>Class to generate PDF files</description>
-    <version>6.6.2</version>
+    <version>6.6.5</version>
     <license>LGPL</license>
-    <licenseversion>3.0-only</licenseversion>
+    <licenseversion>3.0-or-later</licenseversion>
     <repository>https://github.com/tecnickcom/TCPDF</repository>
     <copyrights>
       <copyright>Olivier PLATHEY</copyright>
+      <copyright>Nicola Asuni</copyright>
     </copyrights>
     <customised/>
   </library>
@@ -366,7 +367,7 @@ All rights reserved.</copyright>
     <location>scssphp</location>
     <name>scssphp</name>
     <description>scssphp is a compiler for SCSS written in PHP.</description>
-    <version>1.11.0</version>
+    <version>1.12.1</version>
     <license>MIT</license>
     <repository>https://github.com/scssphp/scssphp/</repository>
     <copyrights>
@@ -501,6 +502,17 @@ All rights reserved.</copyright>
       <copyright>2016 Federico Zivolo and contributors</copyright>
     </copyrights>
   </library>
+    <library>
+    <location>amd/src/popper2.js</location>
+    <name>Popper.js</name>
+    <description>A kickass library used to created Poppers in web applications.</description>
+    <version>v2.11.8</version>
+    <license>MIT</license>
+    <repository>https://github.com/floating-ui/floating-ui</repository>
+    <copyrights>
+      <copyright>2016 Federico Zivolo and contributors</copyright>
+    </copyrights>
+  </library>
   <library>
     <location>geopattern-php</location>
     <name>GeoPattern</name>
@@ -606,6 +618,14 @@ All rights reserved.</copyright>
     </copyrights>
   </library>
   <library>
+    <location>psr/container</location>
+    <name>container</name>
+    <description>Common Container Interface (PHP FIG PSR-11).</description>
+    <version>2.0.2</version>
+    <license>MIT</license>
+    <repository>https://github.com/php-fig/container</repository>
+  </library>
+  <library>
     <location>psr/http-client</location>
     <name>http-client</name>
     <description>Provides an abstraction that describe the components of a HTTP Client.</description>
@@ -704,5 +724,46 @@ All rights reserved.</copyright>
       <version>2.0.1</version>
       <license>MIT</license>
       <repository>https://github.com/lbuchs/WebAuthn</repository>
+  </library>
+  <library>
+    <location>aws-sdk</location>
+    <name>AWS SDK for PHP</name>
+    <description>The AWS SDK for PHP library</description>
+    <version>3.277.11</version>
+    <license>Apache</license>
+    <licenseversion>2.0</licenseversion>
+    <repository>https://github.com/aws/aws-sdk-php</repository>
+  </library>
+  <library>
+    <location>jmespath</location>
+    <name>JMESPath</name>
+    <description>The JMESPath library</description>
+    <version>2.6.1</version>
+    <license>MIT</license>
+    <repository>https://github.com/jmespath/jmespath.php</repository>
+    <copyrights>
+      <copyright>2014 Michael Dowling, https://github.com/mtdowling</copyright>
+    </copyrights>
+  </library>
+  <library>
+      <location>laravel/serializable-closure</location>
+      <name>Serializable Closure</name>
+      <version>1.3.2</version>
+      <license>MIT</license>
+      <repository>https://github.com/laravel/serializable-closure</repository>
+  </library>
+  <library>
+      <location>php-di/php-di</location>
+      <name>PHP Dependency Injector</name>
+      <version>7.0.6</version>
+      <license>MIT</license>
+      <repository>https://github.com/PHP-DI/PHP-DI</repository>
+  </library>
+  <library>
+      <location>php-di/invoker</location>
+      <name>PHP DI Invoker</name>
+      <version>2.3.4</version>
+      <license>MIT</license>
+      <repository>https://github.com/php-di/invoker</repository>
   </library>
 </libraries>

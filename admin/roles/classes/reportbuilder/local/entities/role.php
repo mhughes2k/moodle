@@ -34,14 +34,14 @@ use core_reportbuilder\local\report\{column, filter};
 class role extends base {
 
     /**
-     * Database tables that this entity uses and their default aliases
+     * Database tables that this entity uses
      *
-     * @return array
+     * @return string[]
      */
-    protected function get_default_table_aliases(): array {
+    protected function get_default_tables(): array {
         return [
-            'context' => 'rctx',
-            'role' => 'r',
+            'context',
+            'role',
         ];
     }
 
@@ -97,7 +97,7 @@ class role extends base {
             ->set_type(column::TYPE_TEXT)
             ->add_fields("{$rolealias}.name, {$rolealias}.shortname, {$rolealias}.id, {$contextalias}.id AS contextid")
             ->add_fields(context_helper::get_preload_record_columns_sql($contextalias))
-            ->set_is_sortable(true)
+            ->set_is_sortable(true, ["CASE WHEN {$rolealias}.name = '' THEN {$rolealias}.shortname ELSE {$rolealias}.name END"])
             ->set_callback(static function($name, stdClass $role): string {
                 if ($name === null) {
                     return '';

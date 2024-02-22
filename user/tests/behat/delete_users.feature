@@ -100,10 +100,7 @@ Feature: Deleting users
     And I press "Add to selection"
     Then I should see "User One"
     And I navigate to "Users > Accounts > Browse list of users" in site administration
-    And I set the following fields to these values:
-      | username | user1 |
-    And I press "Add filter"
-    And I click on "Delete" "link"
-    And I press "Delete"
+    And I press "Delete" action in the "User One" report row
+    And I click on "Delete" "button" in the "Delete user" "dialogue"
     And I navigate to "Users > Accounts > Bulk user actions" in site administration
     Then I should not see "User One"

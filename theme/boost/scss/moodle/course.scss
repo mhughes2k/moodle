@@ -7,11 +7,6 @@
     clear: both;
 }
 
-.section-modchooser {
-    clear: both;
-    margin-top: map-get($spacers, 1);
-}
-
 .block_tree .tree_item.branch {
     margin-left: 8px;
 }
@@ -35,22 +30,6 @@
     margin-left: .2em;
 }
 
-.sitetopic ul.section {
-    margin: 0;
-}
-
-body:not(.editing)  .sitetopic ul.section {
-    padding-left: 0;
-    .label .mod-indent-outer {
-        padding-left: 0;
-    }
-}
-
-@include media-breakpoint-up(sm) {
-    .course-content ul.section {
-        margin: $spacer;
-    }
-}
 .section {
     .side {
         &.left {
@@ -70,9 +49,6 @@ body:not(.editing)  .sitetopic ul.section {
     }
 
     .activity {
-        list-style: none;
-        padding: map-get($spacers, 1) 0;
-
         .spinner {
             left: 100%;
             position: absolute;
@@ -180,12 +156,6 @@ body:not(.editing)  .sitetopic ul.section {
             .activityinstance {
                 padding-right: 200px;
             }
-            .editing_move {
-                position: absolute;
-                display: flex;
-                left: 5px;
-                top: 5px;
-            }
             .mod-indent-outer {
                 /**
                  * Add appropriate padding such that nothing overlaps the
@@ -194,12 +164,6 @@ body:not(.editing)  .sitetopic ul.section {
                 padding-left: 2rem;
             }
         }
-    }
-    .activity .editing_move_activity {
-        position: absolute;
-        display: flex;
-        left: 5px;
-        top: 5px;
     }
     // Remove old spinners if the reactive state is ready.
     .course-content .stateready .section .spinner {
@@ -375,20 +339,8 @@ body:not(.editing)  .sitetopic ul.section {
     margin: 2px 5px 2px 5px;
 }
 
-.course-content .section-summary .section-summary-activities .activity-count {
-    color: $text-muted;
-    font-size: $font-size-sm;
-    margin: 3px;
-    white-space: nowrap;
-    display: inline-block;
-}
-
 .course-content .section-summary .summary {
     margin-top: 5px;
-}
-
-.course-content .single-section {
-    margin-top: 1em;
 }
 
 .course-content .single-section .section-navigation {
@@ -472,6 +424,11 @@ body:not(.editing)  .sitetopic ul.section {
             width: auto;
         }
     }
+}
+
+.course-content .single-section ul.topics li.section,
+.course-content .single-section ul.weeks li.section {
+    padding-top: 0;
 }
 
 @include media-breakpoint-down(sm) {
@@ -594,22 +551,9 @@ body:not(.editing)  .sitetopic ul.section {
     margin-right: 5px;
 }
 
-.path-site li.activity > div:not(.activity-item),
-.path-course-view li.activity > div:not(.activity-item) {
-    position: relative;
-    padding: 0 16px 0 0; /* to accommodate the floated completion icon with highlighting */
-}
-
 .path-course-view li.activity span.autocompletion img {
     vertical-align: text-bottom;
     margin-left: 0;
-}
-
-.path-course-view li.activity form.togglecompletion .btn {
-    padding: 0;
-}
-.path-course-view li.activity form.togglecompletion img {
-    max-width: none; /* The width is 0 so ensure we don't end up with a relative max-width */
 }
 
 .path-course-view {
@@ -622,23 +566,13 @@ body:not(.editing)  .sitetopic ul.section {
     }
 }
 
-.path-course-view li.activity form.togglecompletion .ajaxworking {
-    width: 16px;
-    height: 16px;
-    position: absolute;
-    right: 22px;
-    top: 3px;
-    background: url([[pix:i/ajaxloader]]) no-repeat;
-}
-
 li.section.hidden span.commands a.editing_hide,
 li.section.hidden span.commands a.editing_show {
     cursor: default;
 }
 
-.single-section h3.sectionname {
-    text-align: center;
-    clear: both;
+.single-section-page .header-action {
+    display: inline-block;
 }
 
 input.titleeditor {
@@ -662,39 +596,6 @@ span.editinstructions {
         theme-color-level('info', $alert-border-level),
         theme-color-level('info', $alert-color-level)
     );
-}
-
-/* Course drag and drop upload styles */
-#dndupload-status {
-    position: fixed;
-    left: 0;
-    width: 40%;
-    margin: 0 30%;
-    padding: 6px;
-    text-align: center;
-    z-index: 1; // Required in order to have this above relatively positioned course content@mixin
-    border: $alert-border-width solid transparent;
-
-    @include alert-variant(
-        theme-color-level('info', $alert-bg-level),
-        theme-color-level('info', $alert-border-level),
-        theme-color-level('info', $alert-color-level)
-    );
-}
-
-.dndupload-preview {
-    padding: $modal-inner-padding;
-    background-color: $primary;
-    color: $white;
-    text-align: center;
-    font-size: $font-size-lg;
-    max-width: 600px;
-    margin: 0 auto;
-    @include border-radius();
-}
-
-.dndupload-hidden {
-    display: none;
 }
 
 /* COURSES LISTINGS AND COURSE SUMMARY */
@@ -1286,7 +1187,7 @@ $activity-add-hover: theme-color-level('primary', -10) !default;
         &.btn-#{$color} {
             $bg-color: theme-color-level($color, $alert-bg-level);
             @include button-variant($bg-color, $bg-color, $value);
-            color: $value;
+            color: theme-color-level($color, $alert-color-level);
             &:hover {
                 color: color-yiq($value);
             }
@@ -1363,11 +1264,20 @@ $activity-add-hover: theme-color-level('primary', -10) !default;
 
 .course-section {
     list-style: none;
-    padding-left: 0;
-    border-bottom: $border-width solid $border-color;
+    padding: map-get($spacers, 3);
+    margin-top: map-get($spacers, 3);
+    border: $border-width solid $border-color;
+    @include border-radius($activity-item-border-radius);
 
-    &:last-child:not(.section-summary) {
-        border-bottom: 0;
+    &.hidden {
+        background-color: $gray-100;
+    }
+
+    .sectionname > a {
+        color: $gray-900;
+        &:hover {
+            text-decoration: none;
+        }
     }
 
     .sectionbadges .badge {
@@ -1400,9 +1310,7 @@ $activity-add-hover: theme-color-level('primary', -10) !default;
         @include border-radius($activity-item-border-radius);
         .editavailability {
             a {
-                @include border-radius(0.5rem);
-                color: $body-color;
-                text-decoration: none;
+                @include border-radius();
                 font-weight: bold;
                 &:hover {
                     background-color: $gray-400;
@@ -1415,6 +1323,13 @@ $activity-add-hover: theme-color-level('primary', -10) !default;
         }
     }
 
+    // Override '.btn.btn-icon' styles from buttons.scss to make action menu buttons smaller.
+    .action-menu .btn.btn-icon {
+        height: map-get($iconsizes, 5);
+        width: map-get($iconsizes, 5);
+        @include border-radius();
+    }
+
     &.section-summary {
         padding-left: map-get($spacers, 3);
         padding-right: map-get($spacers, 3);
@@ -1425,42 +1340,39 @@ $activity-add-hover: theme-color-level('primary', -10) !default;
         }
     }
 
-    .section-summary-activities .activity-count {
-        color: $text-muted;
-        font-size: $font-size-sm;
-        margin: 3px;
-        white-space: nowrap;
-        display: inline-block;
+    .section-summary-activities {
+        .icon {
+            width: inherit;
+            color: $primary;
+        }
     }
 
-    // Legacy dndupload classes. Can be removed in 4.4 as part of MDL-77124.
-    &.dndupload-dropzone {
-        border: 2px dashed $primary;
-        padding-left: 2px;
-        padding-right: 2px;
-        position: relative;
+    .section-summary-activities + .section {
+        border-top: $border-width solid $border-color;
+        margin-top: map-get($spacers, 3) !important;  // stylelint-disable-line declaration-no-important
+        padding-top: map-get($spacers, 3) !important; // stylelint-disable-line declaration-no-important
+    }
 
-        .dndupload-preview-overlay {
-            background-color: $white;
-            opacity: 0.8;
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-        }
+    .section_goto .icon {
+        font-size: $font-size-lg;
+        color: $primary;
+    }
+}
 
-        .dndupload-preview-wrapper {
-            position: absolute;
-            top: 0;
-            padding: 2rem;
-            width: 100%;
+/* Single section page specific styles */
+
+.single-section {
+    // Revert main section's styles.
+    > ul > .course-section {
+        padding: 0;
+        border: none;
+        &.hidden {
+            background-color: inherit;
         }
     }
 }
 
 /* Re-style ordered list in course content */
-
 .course-content .activity-altcontent {
     ul {
         list-style: disc;
@@ -1475,18 +1387,20 @@ $activity-add-hover: theme-color-level('primary', -10) !default;
 
 /* Activity cards */
 
+.activity {
+    list-style: none;
+    position: relative;
+}
+
 .activity-item {
     position: relative;
     @include border-radius($activity-item-border-radius);
-
     &:not(.activityinline) {
-        border: $border-width solid $border-color;
-        padding: map-get($spacers, 3);
+        padding: .75rem;
     }
     &.activityinline {
-        padding: map-get($spacers, 3) 0;
+        padding: .75rem 0;
     }
-
     &.hiddenactivity {
         background-color: $gray-100;
         .activityiconcontainer,
@@ -1502,12 +1416,12 @@ $activity-add-hover: theme-color-level('primary', -10) !default;
         grid-template-columns: min-content 1fr min-content min-content min-content;
         grid-template-rows: 1fr repeat(5, min-content);
         grid-template-areas:
-            "icon          name          groupmode      completion    actions"
-            "icon          visibility    groupmode      completion    actions"
-            "icon          dates         groupmode      completion    actions"
-            "altcontent    altcontent    altcontent     altcontent    altcontent"
-            "afterlink     afterlink     afterlink      afterlink     afterlink"
-            "availability  availability  availability   availability  availability";
+            "icon   name          groupmode      completion    actions"
+            "icon   visibility    groupmode      completion    actions"
+            "icon   dates         groupmode      completion    actions"
+            "icon   altcontent    altcontent     altcontent    altcontent"
+            "icon   afterlink     afterlink      afterlink     afterlink"
+            "icon   availability  availability   availability  availability";
         @include media-breakpoint-down(xs) {
             grid-template-columns: min-content 1fr min-content min-content min-content;
             grid-template-rows: 1fr repeat(4, min-content);
@@ -1524,7 +1438,7 @@ $activity-add-hover: theme-color-level('primary', -10) !default;
     }
     // Activity card specific grid layout for activities without name.
     .activity-grid.noname-grid {
-        grid-template-columns: min-content min-content 1fr min-content;
+        grid-template-columns: min-content 1fr min-content min-content;
         grid-template-areas:
             "visibility    groupmode        completion    actions"
             "altcontent    altcontent       altcontent    altcontent"
@@ -1546,12 +1460,6 @@ $activity-add-hover: theme-color-level('primary', -10) !default;
         grid-area: actions;
         .actions {
             position: relative;
-        }
-        // Override '.btn.btn-icon' styles from buttons.scss to make action menu buttons smaller.
-        .action-menu .btn.btn-icon {
-            height: map-get($iconsizes, 5);
-            width: map-get($iconsizes, 5);
-            @include border-radius();
         }
     }
 
@@ -1702,12 +1610,6 @@ $activity-add-hover: theme-color-level('primary', -10) !default;
     .no-overflow {
         width: 100%;
     }
-
-    @include media-breakpoint-up(md) {
-        &:not(.activityinline) {
-            padding: map-get($spacers, 3);
-        }
-    }
 }
 
 /* Activity card in editing mode */
@@ -1744,9 +1646,11 @@ $activity-add-hover: theme-color-level('primary', -10) !default;
 
 .activity {
     div.divider {
+        position: absolute;
+        width: 100%;
         height: 2rem;
-        margin-top: -1.25rem;
-        margin-bottom: -0.75rem;
+        margin-top: -1rem;
+        margin-bottom: -1rem;
         z-index: 5;
         button {
             border-radius: 100%;
@@ -1815,5 +1719,18 @@ $activity-add-hover: theme-color-level('primary', -10) !default;
     .activityicon {
         width: 32px;
         height: 32px;
+    }
+}
+
+/* Home page course specific styles */
+
+.sitetopic {
+    // Hide the first activity top border.
+    .activity:first-of-type hr {
+        display: none;
+    }
+    .section {
+        margin-bottom: map-get($spacers, 4);
+        @include border-radius();
     }
 }

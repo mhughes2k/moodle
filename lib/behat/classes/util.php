@@ -429,6 +429,9 @@ class behat_util extends testing_util {
         core_courseformat\base::reset_course_cache(0);
         get_fast_modinfo(0, 0, true);
 
+        // Reset the DI container.
+        \core\di::reset_container();
+
         // Inform data generator.
         self::get_data_generator()->reset();
 
@@ -512,10 +515,12 @@ class behat_util extends testing_util {
         $siteinfo = parent::get_site_info();
 
         $accessibility = empty(behat_config_manager::get_behat_run_config_value('axe')) ? 'No' : 'Yes';
+        $scssdeprecations = empty(behat_config_manager::get_behat_run_config_value('scss-deprecations')) ? 'No' : 'Yes';
 
         $siteinfo .= <<<EOF
 Run optional tests:
 - Accessibility: {$accessibility}
+- SCSS deprecations: {$scssdeprecations}
 
 EOF;
 

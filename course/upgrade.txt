@@ -1,6 +1,28 @@
 This files describes API changes in /course/*,
 information provided here is intended especially for developers.
 
+=== 4.4 ===
+* The following behat steps are now deprecated and replaced by new ones with no Javascript dependencies:
+  - I add a ":activityname" to section ":sectionnum"
+  - I add a ":activityname" to section ":sectionnum and I fill the form with:"
+  The new steps are:
+  - I add a :activityname to section :sectionnum using the activity chooser
+  - I add a :activitypluginname activity to course :coursefullname section :sectionnum
+  - I add a :activitypluginname activity to course :coursefullname section :sectionnum and I fill the form with:
+* set_coursemodule_visible() has a new $rebuildcache parameter. If this is being called multiple times in the same request,
+  consider passing `false` for this parameter and rebuilding the cache once after all the course modules have been updated.
+  See course_update_section() for an example.
+* The external function core_course::get_courses_by_field now returns the communication tool configuration for the course.
+  - communicationroomname: the room name
+  - communicationroomurl: the tool url
+* The following previously deprecated methods have been removed and can no longer be used:
+  - `course_purge_section_cache`
+  - `course_purge_module_cache`
+  - `get_array_of_activities`
+* New format actions classes. Those classes will eventually replace all course/lib.php content editing functions.
+  All new methods are distributed in three classes formats can extend. Method can be accessed using static
+  methods (see doc block of core_courseformat\formatactions for more information).
+
 === 4.3 ===
 * The `core_course_renderer::course_section_cm_completion` method has been removed, and can no longer be used
 * External function core_course_external::get_course_contents() now returns a new field activitybadge with the data to display

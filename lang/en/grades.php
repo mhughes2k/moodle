@@ -187,9 +187,11 @@ $string['errorgradevaluenonnumeric'] = 'Received non-numeric for low or high gra
 $string['errornocalculationallowed'] = 'Calculations are not allowed for this item';
 $string['errornocategorisedid'] = 'Could not get an uncategorised id!';
 $string['errornocourse'] = 'Could not get course information';
+$string['erroroverweight'] = 'Weight total exceeds 100%.';
 $string['errorreprintheadersnonnumeric'] = 'Received non-numeric value for reprint-headers';
 $string['errorsavegrade'] = 'Could not save grade, sorry.';
 $string['errorsettinggrade'] = 'Error saving "{$a->itemname}" grade for userid {$a->userid}';
+$string['errorunderweight'] = 'Weight total is less than 100%.';
 $string['errorupdatinggradecategoryaggregateonlygraded'] = 'Error updating the "Aggregate only non-empty grades" setting of grade category ID {$a->id}';
 $string['errorupdatinggradecategoryaggregateoutcomes'] = 'Error updating the "Include outcomes in aggregation" setting of grade category ID {$a->id}';
 $string['errorupdatinggradecategoryaggregation'] = 'Error updating the aggregation type of grade category ID {$a->id}';
@@ -257,7 +259,6 @@ $string['forstudents'] = 'For students';
 $string['full'] = 'Full';
 $string['fullmode'] = 'Show grades and totals';
 $string['generalsettings'] = 'General settings';
-$string['grade'] = 'Grade';
 $string['grade_help'] = 'The grade to award the student for their work.';
 $string['gradeadministration'] = 'Grade administration';
 $string['gradealreadyupdated'] = '{$a} grades have not been imported because the grades in the import file are older than in the grader report. To proceed with the grade import anyway, use the force import option.';
@@ -366,6 +367,7 @@ $string['gradetype_help'] = 'There are 4 grade types:
 
 Only value and scale grade types may be aggregated. The grade type for an activity-based grade item is set on the activity settings page.';
 $string['gradevaluetoobig'] = 'One of the grade values is larger than the allowed grade maximum of {$a}';
+$string['gradevaluetoosmall'] = 'One of the grade values is smaller than the allowed grade minimum of {$a}';
 $string['gradeview'] = 'View grade';
 $string['gradewasmodifiedduringediting'] = 'The grade entered for {$a->itemname} for {$a->username} was ignored because it was more recently updated by someone else.';
 $string['gradeweighthelp'] = 'Grade weight help';
@@ -543,7 +545,8 @@ $string['modgradetypenone'] = 'None';
 $string['modgradetypepoint'] = 'Point';
 $string['modgradetypescale'] = 'Scale';
 $string['morethanmax'] = 'The grade entered for {$a->itemname} for {$a->username} is more than the maximum allowed';
-$string['moveselectedto'] = 'Move selected items to';
+$string['movesitems'] = 'Move items';
+$string['moveselectedto'] = 'Move selected items to:';
 $string['movingelement'] = 'Moving {$a}';
 $string['multfactor'] = 'Multiplicator';
 $string['multfactorvalue'] = 'Multiplicator value for {$a}';
@@ -920,3 +923,6 @@ $string['showcalculations'] = 'Show calculations';
 $string['showcalculations_help'] = 'If enabled, when editing, a calculator icon is shown for each grade item and category with a visual indicator that a grade item is calculated.';
 $string['studentsperpage'] = 'Students per page';
 $string['studentsperpage_help'] = 'This setting determines the number of students displayed per page in the grader report.';
+
+// Deprecated since Moodle 4.4.
+$string['grade'] = 'Grade';

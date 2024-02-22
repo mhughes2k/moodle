@@ -82,7 +82,7 @@ class duration extends base {
         $mform->hideIf("{$this->name}_value", "{$this->name}_operator", 'eq', self::DURATION_ANY);
 
         // Unit.
-        $unitlabel = get_string('filterdurationunit', 'core_reportbuilder', $this->get_header());
+        $unitlabel = get_string('filterfieldunit', 'core_reportbuilder', $this->get_header());
         $units = [
             1 => get_string('filterdateseconds', 'core_reportbuilder'),
             MINSECS => get_string('filterdateminutes', 'core_reportbuilder'),
@@ -96,7 +96,8 @@ class duration extends base {
         $mform->setDefault("{$this->name}_unit", 1);
         $mform->hideIf("{$this->name}_unit", "{$this->name}_operator", 'eq', self::DURATION_ANY);
 
-        $mform->addGroup($elements, "{$this->name}_group", '', '', false);
+        $mform->addGroup($elements, "{$this->name}_group", $this->get_header(), '', false)
+            ->setHiddenLabel(true);
     }
 
     /**

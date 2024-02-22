@@ -2049,16 +2049,19 @@ class html_writer {
      * @param int $currenttime A default timestamp in GMT
      * @param int $step minute spacing
      * @param array $attributes - html select element attributes
-     * @return HTML fragment
+     * @param float|int|string $timezone the timezone to use to calculate the time
+     *        {@link https://moodledev.io/docs/apis/subsystems/time#timezone}
+     * @return string HTML fragment
      */
-    public static function select_time($type, $name, $currenttime = 0, $step = 5, array $attributes = null) {
+    public static function select_time($type, $name, $currenttime = 0, $step = 5, array $attributes = null, $timezone = 99) {
         global $OUTPUT;
 
         if (!$currenttime) {
             $currenttime = time();
         }
         $calendartype = \core_calendar\type_factory::get_calendar_instance();
-        $currentdate = $calendartype->timestamp_to_date_array($currenttime);
+        $currentdate = $calendartype->timestamp_to_date_array($currenttime, $timezone);
+
         $userdatetype = $type;
         $timeunits = array();
 
@@ -3808,7 +3811,7 @@ class custom_menu_item implements renderable, templatable {
  * of custom_menu_item nodes that can be rendered by the core renderer.
  *
  * To configure the custom menu:
- *     Settings: Administration > Appearance > Themes > Theme settings
+ *     Settings: Administration > Appearance > Advanced theme settings
  *
  * @copyright 2010 Sam Hemelryk
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -4954,6 +4957,8 @@ class action_menu_link extends action_link implements renderable {
 
     /**
      * The number of instances of this action menu link (and its subclasses).
+     *
+     * @deprecated since Moodle 4.4.
      * @var int
      */
     protected static $instance = 1;
@@ -4982,7 +4987,6 @@ class action_menu_link extends action_link implements renderable {
      */
     public function export_for_template(renderer_base $output) {
         $data = parent::export_for_template($output);
-        $data->instance = self::$instance++;
 
         // Ignore what the parent did with the attributes, except for ID and class.
         $data->attributes = [];
@@ -5238,7 +5242,7 @@ class progress_bar implements renderable, templatable {
         $this->percent = $percent;
         $this->lastupdate = microtime(true);
 
-        echo $OUTPUT->render_progress_bar_update($this->html_id, sprintf("%.1f", $this->percent), $msg, $estimatemsg);
+        echo $OUTPUT->render_progress_bar_update($this->html_id, $this->percent, $msg, $estimatemsg);
         flush();
     }
 

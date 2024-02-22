@@ -77,11 +77,8 @@ Feature: Bulk enrolments
     And I set the field "Available" to "Student 2"
     And I press "Add to selection"
     And I navigate to "Users > Accounts > Browse list of users" in site administration
-    And I set the following fields to these values:
-      | username | student1 |
-    And I press "Add filter"
-    And I click on "Delete" "link"
-    And I press "Delete"
+    And I press "Delete" action in the "Student 1" report row
+    And I click on "Delete" "button" in the "Delete user" "dialogue"
     And I navigate to "Users > Accounts > Bulk user actions" in site administration
     And I set the field "id_action" to "Add to cohort"
     And I press "Go"

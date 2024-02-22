@@ -29,6 +29,7 @@ require_once($CFG->dirroot . '/course/lib.php');
  * @package    format_weeks
  * @copyright  2015 Marina Glancy
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @covers     \format_weeks
  */
 class format_weeks_test extends \advanced_testcase {
 
@@ -221,21 +222,21 @@ class format_weeks_test extends \advanced_testcase {
         $courseform = new \testable_course_edit_form(null, $args);
         $courseform->definition_after_data();
 
-        // format_weeks::get_section_dates is adding 2h to avoid DST problems, we need to replicate it here.
-        $enddate = $params['startdate'] + (WEEKSECS * $params['numsections']) + 7200;
+        // Calculate the expected end date.
+        $enddate = $params['startdate'] + (WEEKSECS * $params['numsections']);
 
         $weeksformat = course_get_format($course->id);
         $this->assertEquals($enddate, $weeksformat->get_default_course_enddate($courseform->get_quick_form()));
     }
 
     /**
-     * Test for get_view_url() to ensure that the url is only given for the correct cases
+     * Test for get_view_url().
+     *
+     * @covers ::get_view_url
      */
-    public function test_get_view_url() {
+    public function test_get_view_url(): void {
         global $CFG;
         $this->resetAfterTest();
-
-        $linkcoursesections = $CFG->linkcoursesections;
 
         // Generate a course with two sections (0 and 1) and two modules.
         $generator = $this->getDataGenerator();
@@ -247,22 +248,34 @@ class format_weeks_test extends \advanced_testcase {
         $format->update_course_format_options($data);
 
         // In page.
-        $CFG->linkcoursesections = 0;
-        $this->assertNotEmpty($format->get_view_url(null));
-        $this->assertNotEmpty($format->get_view_url(0));
-        $this->assertNotEmpty($format->get_view_url(1));
-        $CFG->linkcoursesections = 1;
         $this->assertNotEmpty($format->get_view_url(null));
         $this->assertNotEmpty($format->get_view_url(0));
         $this->assertNotEmpty($format->get_view_url(1));
 
         // Navigation.
-        $CFG->linkcoursesections = 0;
-        $this->assertNull($format->get_view_url(1, ['navigation' => 1]));
-        $this->assertNull($format->get_view_url(0, ['navigation' => 1]));
-        $CFG->linkcoursesections = 1;
-        $this->assertNotEmpty($format->get_view_url(1, ['navigation' => 1]));
-        $this->assertNotEmpty($format->get_view_url(0, ['navigation' => 1]));
+        $this->assertStringContainsString('course/view.php', $format->get_view_url(0));
+        $this->assertStringContainsString('course/view.php', $format->get_view_url(1));
+        $this->assertStringContainsString('course/section.php', $format->get_view_url(0, ['navigation' => 1]));
+        $this->assertStringContainsString('course/section.php', $format->get_view_url(1, ['navigation' => 1]));
+        // When sr parameter is defined, the section.php page should be returned.
+        $this->assertStringContainsString('course/section.php', $format->get_view_url(0, ['sr' => 1]));
+        $this->assertStringContainsString('course/section.php', $format->get_view_url(1, ['sr' => 1]));
+        $this->assertStringContainsString('course/section.php', $format->get_view_url(0, ['sr' => 0]));
+        $this->assertStringContainsString('course/section.php', $format->get_view_url(1, ['sr' => 0]));
     }
 
+    /**
+     * Test get_required_jsfiles().
+     *
+     * @covers ::get_required_jsfiles
+     */
+    public function test_get_required_jsfiles(): void {
+        $this->resetAfterTest();
+
+        $generator = $this->getDataGenerator();
+
+        $course = $generator->create_course(['format' => 'weeks']);
+        $format = course_get_format($course);
+        $this->assertEmpty($format->get_required_jsfiles());
+    }
 }

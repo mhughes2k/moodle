@@ -238,7 +238,13 @@ abstract class data_controller {
      */
     protected function is_unique($value) : bool {
         global $DB;
+
+        // Ensure the "value" datafield can be safely compared across all databases.
         $datafield = $this->datafield();
+        if ($datafield === 'value') {
+            $datafield = $DB->sql_cast_to_char($datafield);
+        }
+
         $where = "fieldid = ? AND {$datafield} = ?";
         $params = [$this->get_field()->get('id'), $value];
         if ($this->get('id')) {
@@ -348,7 +354,10 @@ abstract class data_controller {
         } else if ($this->datafield() === 'decvalue') {
             return (float)$value;
         } else if ($this->datafield() === 'value') {
-            return format_text($value, $this->get('valueformat'), ['context' => $this->get_context()]);
+            return format_text($value, $this->get('valueformat'), [
+                'context' => $this->get_context(),
+                'trusted' => $this->get('valuetrust'),
+            ]);
         } else {
             return format_string($value, true, ['context' => $this->get_context()]);
         }

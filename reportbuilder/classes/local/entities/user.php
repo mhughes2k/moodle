@@ -21,6 +21,7 @@ namespace core_reportbuilder\local\entities;
 use context_helper;
 use context_system;
 use context_user;
+use core\context;
 use core_component;
 use html_writer;
 use lang_string;
@@ -49,16 +50,16 @@ use core_reportbuilder\local\report\filter;
 class user extends base {
 
     /**
-     * Database tables that this entity uses and their default aliases
+     * Database tables that this entity uses
      *
-     * @return array
+     * @return string[]
      */
-    protected function get_default_table_aliases(): array {
+    protected function get_default_tables(): array {
         return [
-            'user' => 'u',
-            'context' => 'uctx',
-            'tag_instance' => 'uti',
-            'tag' => 'ut',
+            'user',
+            'context',
+            'tag_instance',
+            'tag',
         ];
     }
 
@@ -124,6 +125,19 @@ class user extends base {
     }
 
     /**
+     * Returns columns that correspond to the site configured identity fields
+     *
+     * @param context $context
+     * @param string[] $excluding
+     * @return column[]
+     */
+    public function get_identity_columns(context $context, array $excluding = []): array {
+        $identityfields = fields::for_identity($context)->excluding(...$excluding)->get_required_fields();
+
+        return array_map([$this, 'get_identity_column'], $identityfields);
+    }
+
+    /**
      * Returns filter that corresponds to the given identity field, profile field identifiers will be converted to those
      * used by the {@see user_profile_fields} helper
      *
@@ -136,6 +150,19 @@ class user extends base {
         }
 
         return $this->get_filter($identityfield);
+    }
+
+    /**
+     * Returns filters that correspond to the site configured identity fields
+     *
+     * @param context $context
+     * @param string[] $excluding
+     * @return filter[]
+     */
+    public function get_identity_filters(context $context, array $excluding = []): array {
+        $identityfields = fields::for_identity($context)->excluding(...$excluding)->get_required_fields();
+
+        return array_map([$this, 'get_identity_filter'], $identityfields);
     }
 
     /**
@@ -372,7 +399,8 @@ class user extends base {
 
         // Create a dummy user object containing all name fields.
         $dummyuser = (object) array_combine($namefields, $namefields);
-        $dummyfullname = fullname($dummyuser, true);
+        $viewfullnames = has_capability('moodle/site:viewfullnames', context_system::instance());
+        $dummyfullname = fullname($dummyuser, $viewfullnames);
 
         // Extract any name fields from the fullname format in the order that they appear.
         $matchednames = array_values(order_in_string($namefields, $dummyfullname));
@@ -417,6 +445,8 @@ class user extends base {
             'username' => new lang_string('username'),
             'moodlenetprofile' => new lang_string('moodlenetprofile', 'user'),
             'timecreated' => new lang_string('timecreated', 'core_reportbuilder'),
+            'timemodified' => new lang_string('timemodified', 'core_reportbuilder'),
+            'lastip' => new lang_string('lastip'),
         ];
     }
 
@@ -437,6 +467,7 @@ class user extends base {
                 break;
             case 'lastaccess':
             case 'timecreated':
+            case 'timemodified':
                 $fieldtype = column::TYPE_TIMESTAMP;
                 break;
             default:

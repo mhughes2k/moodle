@@ -16,6 +16,9 @@
 
 namespace enrol_self;
 
+use context_course;
+use enrol_self_plugin;
+
 defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
@@ -29,6 +32,7 @@ require_once($CFG->dirroot.'/enrol/self/locallib.php');
  * @category   phpunit
  * @copyright  2012 Petr Skoda {@link http://skodak.org}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @coversDefaultClass \enrol_self_plugin
  */
 class self_test extends \advanced_testcase {
 
@@ -762,6 +766,44 @@ class self_test extends \advanced_testcase {
     }
 
     /**
+     * Test custom validation of instance data for group enrolment key
+     *
+     * @covers ::edit_instance_validation
+     */
+    public function test_edit_instance_validation_group_enrolment_key(): void {
+        global $DB;
+
+        $this->resetAfterTest();
+
+        $course = $this->getDataGenerator()->create_course();
+        $context = context_course::instance($course->id);
+
+        /** @var enrol_self_plugin $plugin */
+        $plugin = enrol_get_plugin('self');
+
+        $instance = $DB->get_record('enrol', ['courseid' => $course->id, 'enrol' => $plugin->get_name()], '*', MUST_EXIST);
+
+        // Enable group enrolment keys.
+        $errors = $plugin->edit_instance_validation([
+            'customint1' => 1,
+            'password' => 'cat',
+        ] + (array) $instance, [], $instance, $context);
+
+        $this->assertEmpty($errors);
+
+        // Now create a group with the same enrolment key we want to use.
+        $this->getDataGenerator()->create_group(['courseid' => $course->id, 'enrolmentkey' => 'cat']);
+
+        $errors = $plugin->edit_instance_validation([
+            'customint1' => 1,
+            'password' => 'cat',
+        ] + (array) $instance, [], $instance, $context);
+
+        $this->assertArrayHasKey('password', $errors);
+        $this->assertEquals('This enrolment key is already used as a group enrolment key.', $errors['password']);
+    }
+
+    /**
      * Test enrol_self_check_group_enrolment_key
      */
     public function test_enrol_self_check_group_enrolment_key() {
@@ -919,4 +961,32 @@ class self_test extends \advanced_testcase {
         // Self enrol has 2 enrol actions -- edit and unenrol.
         $this->assertCount(2, $actions);
     }
+
+    /**
+     * Test the behaviour of find_instance().
+     *
+     * @covers ::find_instance
+     */
+    public function test_find_instance() {
+        global $DB;
+        $this->resetAfterTest();
+
+        $cat = $this->getDataGenerator()->create_category();
+        // When we create a course, a self enrolment instance is also created.
+        $course = $this->getDataGenerator()->create_course(['category' => $cat->id, 'shortname' => 'ANON']);
+
+        $teacherrole = $DB->get_record('role', ['shortname' => 'teacher']);
+        $selfplugin = enrol_get_plugin('self');
+
+        $instanceid1 = $DB->get_record('enrol', ['courseid' => $course->id, 'enrol' => 'self']);
+
+        // Let's add a second instance.
+        $instanceid2 = $selfplugin->add_instance($course, ['roleid' => $teacherrole->id]);
+
+        $enrolmentdata = [];
+        // The first instance should be returned - due to sorting in enrol_get_instances().
+        $actual = $selfplugin->find_instance($enrolmentdata, $course->id);
+        $this->assertEquals($instanceid1->id, $actual->id);
+    }
+
 }

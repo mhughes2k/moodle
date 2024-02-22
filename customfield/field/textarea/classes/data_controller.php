@@ -88,22 +88,33 @@ class data_controller extends \core_customfield\data_controller {
         if (!property_exists($datanew, $fieldname)) {
             return;
         }
+
+        // Normalise form data, for cases it's come from an external source.
         $fromform = $datanew->$fieldname;
+        if (!is_array($fromform)) {
+            $fromform = ['text' => $fromform];
+            $fromform['format'] = $this->get('id') ? $this->get('valueformat') :
+                $this->get_field()->get_configdata_property('defaultvalueformat');
+        }
 
         if (!$this->get('id')) {
             $this->data->set('value', '');
             $this->data->set('valueformat', FORMAT_MOODLE);
+            $this->data->set('valuetrust', false);
             $this->save();
         }
 
         if (array_key_exists('text', $fromform)) {
             $textoptions = $this->value_editor_options();
+            $context = $textoptions['context'];
+
             $data = (object) ['field_editor' => $fromform];
-            $data = file_postupdate_standard_editor($data, 'field', $textoptions, $textoptions['context'],
+            $data = file_postupdate_standard_editor($data, 'field', $textoptions, $context,
                 'customfield_textarea', 'value', $this->get('id'));
+
             $this->data->set('value', $data->field);
             $this->data->set('valueformat', $data->fieldformat);
-
+            $this->data->set('valuetrust', trusttext_trusted($context));
             $this->save();
         }
     }
@@ -118,22 +129,46 @@ class data_controller extends \core_customfield\data_controller {
      */
     public function instance_form_before_set_data(\stdClass $instance) {
         $textoptions = $this->value_editor_options();
+        $context = $textoptions['context'];
         if ($this->get('id')) {
             $text = $this->get('value');
             $format = $this->get('valueformat');
-            $temp = (object)['field' => $text, 'fieldformat' => $format];
-            file_prepare_standard_editor($temp, 'field', $textoptions, $textoptions['context'], 'customfield_textarea',
+            $temp = (object) ['field' => $text, 'fieldformat' => $format, 'fieldtrust' => trusttext_trusted($context)];
+            file_prepare_standard_editor($temp, 'field', $textoptions, $context, 'customfield_textarea',
                 'value', $this->get('id'));
             $value = $temp->field_editor;
         } else {
             $text = $this->get_field()->get_configdata_property('defaultvalue');
             $format = $this->get_field()->get_configdata_property('defaultvalueformat');
-            $temp = (object)['field' => $text, 'fieldformat' => $format];
-            file_prepare_standard_editor($temp, 'field', $textoptions, $textoptions['context'], 'customfield_textarea',
+            $temp = (object) ['field' => $text, 'fieldformat' => $format, 'fieldtrust' => trusttext_trusted($context)];
+            file_prepare_standard_editor($temp, 'field', $textoptions, $context, 'customfield_textarea',
                 'defaultvalue', $this->get_field()->get('id'));
             $value = $temp->field_editor;
         }
         $instance->{$this->get_form_element_name()} = $value;
+    }
+
+    /**
+     * Checks if the value is empty, overriding the base method to ensure it's the "text" element of our value being compared
+     *
+     * @param mixed $value
+     * @return bool
+     */
+    protected function is_empty($value): bool {
+        if (is_array($value)) {
+            $value = $value['text'];
+        }
+        return html_is_blank($value);
+    }
+
+    /**
+     * Checks if the value is unique, overriding the base method to ensure it's the "text" element of our value being compared
+     *
+     * @param mixed $value
+     * @return bool
+     */
+    protected function is_unique($value): bool {
+        return parent::is_unique($value['text']);
     }
 
     /**
@@ -166,22 +201,25 @@ class data_controller extends \core_customfield\data_controller {
         require_once($CFG->libdir . '/filelib.php');
 
         $value = $this->get_value();
-        if ($this->is_empty($value)) {
-            return null;
-        }
 
         if ($dataid = $this->get('id')) {
             $context = $this->get_context();
             $processed = file_rewrite_pluginfile_urls($value, 'pluginfile.php',
                 $context->id, 'customfield_textarea', 'value', $dataid);
-            $value = format_text($processed, $this->get('valueformat'), ['context' => $context]);
+            $value = format_text($processed, $this->get('valueformat'), [
+                'context' => $context,
+                'trusted' => $this->get('valuetrust'),
+            ]);
         } else {
-            $fieldid = $this->get_field()->get('id');
-            $configcontext = $this->get_field()->get_handler()->get_configuration_context();
+            $field = $this->get_field();
+
+            $context = $field->get_handler()->get_configuration_context();
             $processed = file_rewrite_pluginfile_urls($value, 'pluginfile.php',
-                $configcontext->id, 'customfield_textarea', 'defaultvalue', $fieldid);
-            $valueformat = $this->get_field()->get_configdata_property('defaultvalueformat');
-            $value = format_text($processed, $valueformat, ['context' => $configcontext]);
+                $context->id, 'customfield_textarea', 'defaultvalue', $field->get('id'));
+            $value = format_text($processed, $field->get_configdata_property('defaultvalueformat'), [
+                'context' => $context,
+                'trusted' => true,
+            ]);
         }
 
         return $value;

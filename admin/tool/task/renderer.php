@@ -82,7 +82,7 @@ class tool_task_renderer extends plugin_renderer_base {
                 );
                 $classcell = new html_table_cell($classcontent);
                 $classcell->header = true;
-                $classcell->class = "task-class-summary text-ltr";
+                $classcell->attributes['class'] = "task-class-summary text-ltr";
 
                 $duecontent = $stats['due'];
                 if ($canruntasks && ($stats['due'] > 0 || $stats['failed'] > 0)) {
@@ -119,7 +119,9 @@ class tool_task_renderer extends plugin_renderer_base {
 
                 // Prepares the next run time cell contents.
                 $nextrun = '';
-                if ($stats['due'] > 0) {
+                if ($stats['stop']) {
+                    $nextrun = get_string('never', 'admin');
+                } else if ($stats['due'] > 0) {
                     $nextrun = get_string('asap', 'tool_task');
                 } else if ($stats['nextruntime']) {
                     $nextrun = userdate($stats['nextruntime']);
@@ -166,7 +168,7 @@ class tool_task_renderer extends plugin_renderer_base {
         // Main tasks table.
         $table = $this->generate_adhoc_tasks_simple_table($tasks, $canruntasks);
 
-        $table->caption = "$classname "
+        $table->caption = s($classname) . " "
             . get_string($failedonly ? 'adhoctasksfailed' : 'adhoctasks', 'tool_task');
         $table->head[3] .= " $failedorall"; // Spice up faildelay heading.
 
@@ -271,7 +273,11 @@ class tool_task_renderer extends plugin_renderer_base {
             if (!$started) {
                 $nextruntime = $task->get_next_run_time();
                 $due = $nextruntime < $now;
-                $nextrun = $due ? userdate($nextruntime) : get_string('asap', 'tool_task');
+                if ($task->get_attempts_available() > 0) {
+                    $nextrun = $due ? userdate($nextruntime) : get_string('asap', 'tool_task');
+                } else {
+                    $nextrun = get_string('never', 'admin');
+                }
 
                 if ($wantruntasks && ($faildelay || $due)) {
                     $nextrun .= ' '.html_writer::div(
@@ -462,7 +468,7 @@ class tool_task_renderer extends plugin_renderer_base {
         $componentname = $plugininfo->displayname;
         if ($plugininfo->is_enabled() === false) {
             $componentname .= ' ' . html_writer::span(
-                            get_string('disabled', 'tool_task'), 'badge badge-secondary');
+                            get_string('disabled', 'tool_task'), 'badge bg-secondary text-dark');
         }
         $componentname .= "\n" . html_writer::span($plugininfo->component, 'task-class text-ltr');
 

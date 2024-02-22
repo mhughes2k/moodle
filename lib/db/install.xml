@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="lib/db" VERSION="20230826" COMMENT="XMLDB file for core Moodle tables"
+<XMLDB PATH="lib/db" VERSION="20240123" COMMENT="XMLDB file for core Moodle tables"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../lib/xmldb/xmldb.xsd"
 >
@@ -221,6 +221,7 @@
     <TABLE NAME="communication" COMMENT="Communication records">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="contextid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="The id of the context that this communication instance relates to"/>
         <FIELD NAME="instanceid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="ID of the instance where the communication is a part of"/>
         <FIELD NAME="component" TYPE="char" LENGTH="100" NOTNULL="true" SEQUENCE="false" COMMENT="Component of the instance where the communication room is a part of"/>
         <FIELD NAME="instancetype" TYPE="char" LENGTH="100" NOTNULL="true" SEQUENCE="false" COMMENT="The type of the instance for the given component"/>
@@ -232,6 +233,7 @@
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="contextid" TYPE="foreign" FIELDS="contextid" REFTABLE="context" REFFIELDS="id"/>
       </KEYS>
     </TABLE>
     <TABLE NAME="communication_user" COMMENT="Communication user records mapping">
@@ -384,6 +386,8 @@
         <FIELD NAME="sequence" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="visible" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" SEQUENCE="false"/>
         <FIELD NAME="availability" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Availability restrictions for viewing this section, in JSON format. Null if no restrictions."/>
+        <FIELD NAME="component" TYPE="char" LENGTH="100" NOTNULL="false" SEQUENCE="false" COMMENT="The delegate component of this section if any"/>
+        <FIELD NAME="itemid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="The optional item id delegate component can use to identify its instance"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Time at which the course section was last changed."/>
       </FIELDS>
       <KEYS>
@@ -752,6 +756,8 @@
       </KEYS>
       <INDEXES>
         <INDEX NAME="useridfrom" UNIQUE="false" FIELDS="useridfrom" COMMENT="The useridfrom would normally be a foreign key to the users table. But it can also contain some extra negative values with special semantics (-10 or -20 for no-reply or support user). Therefore we can't make it a foreign key and the index must be created explicitly."/>
+        <INDEX NAME="timecreated" UNIQUE="false" FIELDS="timecreated" COMMENT="Index on timecreated to speed up deletion of expired notifications."/>
+        <INDEX NAME="timeread" UNIQUE="false" FIELDS="timeread" COMMENT="Index on timeread to speed up deletion of read notifications."/>
       </INDEXES>
     </TABLE>
     <TABLE NAME="message_contacts" COMMENT="Maintains lists of contacts between users">
@@ -3503,6 +3509,7 @@
         <FIELD NAME="timestarted" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Time when the task was started"/>
         <FIELD NAME="hostname" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="Hostname where the task is running"/>
         <FIELD NAME="pid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="PHP process ID that is running the task"/>
+        <FIELD NAME="attemptsavailable" TYPE="int" LENGTH="1" NOTNULL="false" SEQUENCE="false" COMMENT="The remaining attempts for this task"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
@@ -4325,6 +4332,7 @@
         <FIELD NAME="charvalue" TYPE="char" LENGTH="1333" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="value" TYPE="text" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="valueformat" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="valuetrust" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="contextid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>

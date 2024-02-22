@@ -1495,7 +1495,6 @@ function forum_count_discussion_replies($forumid, $forumsort = "", $limit = -1, 
  * @global object
  * @global object
  * @global object
- * @staticvar array $cache
  * @param object $forum
  * @param object $cm
  * @param object $course
@@ -1504,13 +1503,21 @@ function forum_count_discussion_replies($forumid, $forumsort = "", $limit = -1, 
 function forum_count_discussions($forum, $cm, $course) {
     global $CFG, $DB, $USER;
 
-    static $cache = array();
+    $cache = cache::make('mod_forum', 'forum_count_discussions');
+    $cachedcounts = $cache->get($course->id);
+    if ($cachedcounts === false) {
+        $cachedcounts = [];
+    }
 
     $now = floor(time() / 60) * 60; // DB Cache Friendly.
 
     $params = array($course->id);
 
-    if (!isset($cache[$course->id])) {
+    if (!isset($cachedcounts[$forum->id])) {
+        // Initialize the cachedcounts for this forum id to 0 by default. After the
+        // database query, if there are discussions then it should update the count.
+        $cachedcounts[$forum->id] = 0;
+
         if (!empty($CFG->forum_enabletimedposts)) {
             $timedsql = "AND d.timestart < ? AND (d.timeend = 0 OR d.timeend > ?)";
             $params[] = $now;
@@ -1528,26 +1535,24 @@ function forum_count_discussions($forum, $cm, $course) {
 
         if ($counts = $DB->get_records_sql($sql, $params)) {
             foreach ($counts as $count) {
-                $counts[$count->id] = $count->dcount;
+                $cachedcounts[$count->id] = $count->dcount;
             }
-            $cache[$course->id] = $counts;
-        } else {
-            $cache[$course->id] = array();
-        }
-    }
 
-    if (empty($cache[$course->id][$forum->id])) {
-        return 0;
+            $cache->set($course->id, $cachedcounts);
+        } else {
+            $cache->set($course->id, $cachedcounts);
+            return $cachedcounts[$forum->id];
+        }
     }
 
     $groupmode = groups_get_activity_groupmode($cm, $course);
 
     if ($groupmode != SEPARATEGROUPS) {
-        return $cache[$course->id][$forum->id];
+        return $cachedcounts[$forum->id];
     }
 
     if (has_capability('moodle/site:accessallgroups', context_module::instance($cm->id))) {
-        return $cache[$course->id][$forum->id];
+        return $cachedcounts[$forum->id];
     }
 
     require_once($CFG->dirroot.'/course/lib.php');
@@ -2095,7 +2100,8 @@ function forum_get_course_forum($courseid, $type) {
             $forum->name  = get_string("namenews", "forum");
             $forum->intro = get_string("intronews", "forum");
             $forum->introformat = FORMAT_HTML;
-            $forum->forcesubscribe = FORUM_FORCESUBSCRIBE;
+            $forum->forcesubscribe = $CFG->forum_announcementsubscription;
+            $forum->maxattachments = $CFG->forum_announcementmaxattachments;
             $forum->assessed = 0;
             if ($courseid == SITEID) {
                 $forum->name  = get_string("sitenews");
@@ -3113,6 +3119,9 @@ function forum_add_discussion($discussion, $mform=null, $unused=null, $userid=nu
         forum_trigger_content_uploaded_event($post, $cm, 'forum_add_discussion');
     }
 
+    // Clear the discussion count cache just in case it's in the same request.
+    \cache_helper::purge_by_event('changesinforumdiscussions');
+
     return $post->discussion;
 }
 
@@ -3172,6 +3181,9 @@ function forum_delete_discussion($discussion, $fulldelete, $course, $cm, $forum)
     $event = \mod_forum\event\discussion_deleted::create($params);
     $event->add_record_snapshot('forum_discussions', $discussion);
     $event->trigger();
+
+    // Clear the discussion count cache just in case it's in the same request.
+    \cache_helper::purge_by_event('changesinforumdiscussions');
 
     return $result;
 }

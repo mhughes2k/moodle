@@ -1,6 +1,11 @@
 This file describes API changes in /theme/boost
 information provided here is intended especially for theme designers.
 
+=== 4.4 ===
+* Bootstrap badge color helper clases (badge-[primary|secondary|...]) are no longer used, use bg-[primary|secondary|...] instead.
+* Bootstrap badge-pill is no longer used, use rounded-pill instead.
+* The bootstrap ´.media´ helper class has been replaced with utility classes (´d-flex´, ´flex-shrink-´, ´flex-grow-´, ...)
+
 === 4.3 ===
 * The $activity-iconcontainer-height and $activity-iconcontainer-width variables have been changed from 50px to 52px.
 * New SCSS mixin optional_animate to animate an element unless if the user has reduced motion in their preferences.
@@ -15,7 +20,7 @@ information provided here is intended especially for theme designers.
   Call this and output it into your templates.
 * In order to view additional custom nodes, leverage the 'get_overflow_menu_data' which returns url_select if there are nodes available.
 * In order for existing themes to leverage the changes in the Boost theme, it is recommended to follow the guidelines in the 4.0 docs
-  https://docs.moodle.org/dev/Moodle_4.0_developer_update
+  https://moodledev.io/docs/4.1/devupdate
 
 === 3.7 ===
 

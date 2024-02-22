@@ -181,10 +181,10 @@ class renderer_base {
     public function render_from_template($templatename, $context) {
         $mustache = $this->get_mustache();
 
-        try {
+        if ($mustache->hasHelper('uniqid')) {
             // Grab a copy of the existing helper to be restored later.
             $uniqidhelper = $mustache->getHelper('uniqid');
-        } catch (Mustache_Exception_UnknownHelperException $e) {
+        } else {
             // Helper doesn't exist.
             $uniqidhelper = null;
         }
@@ -600,6 +600,12 @@ class core_renderer extends renderer_base {
     /** @var custom_menu_item language The language menu if created */
     protected $language = null;
 
+    /** @var string The current selector for an element being streamed into */
+    protected $currentselector = '';
+
+    /** @var string The current element tag which is being streamed into */
+    protected $currentelement = '';
+
     /**
      * Constructor
      *
@@ -696,12 +702,11 @@ class core_renderer extends renderer_base {
 
         // Give plugins an opportunity to add any head elements. The callback
         // must always return a string containing valid html head content.
-        $pluginswithfunction = get_plugins_with_function('before_standard_html_head', 'lib.php');
-        foreach ($pluginswithfunction as $plugins) {
-            foreach ($plugins as $function) {
-                $output .= $function();
-            }
-        }
+
+        $hook = new \core\hook\output\standard_head_html_prepend();
+        \core\hook\manager::get_instance()->dispatch($hook);
+        $hook->process_legacy_callbacks();
+        $output .= $hook->get_output();
 
         // Allow a url_rewrite plugin to setup any dynamic head content.
         if (isset($CFG->urlrewriteclass) && !isset($CFG->upgraderunning)) {
@@ -1489,7 +1494,7 @@ class core_renderer extends renderer_base {
      * @return string HTML fragment
      */
     public function footer() {
-        global $CFG, $DB;
+        global $CFG, $DB, $PERF;
 
         $output = '';
 
@@ -1519,6 +1524,7 @@ class core_renderer extends renderer_base {
                 if (NO_OUTPUT_BUFFERING) {
                     // If the output buffer was off then we render a placeholder and stream the
                     // performance debugging into it at the very end in the shutdown handler.
+                    $PERF->perfdebugdeferred = true;
                     $performanceinfo .= html_writer::tag('div',
                         get_string('perfdebugdeferred', 'admin'),
                         [
@@ -1548,6 +1554,20 @@ class core_renderer extends renderer_base {
         $footer = str_replace($this->unique_end_html_token, $this->page->requires->get_end_code(), $footer);
 
         $this->page->set_state(moodle_page::STATE_DONE);
+
+        // Here we remove the closing body and html tags and store them to be added back
+        // in the shutdown handler so we can have valid html with streaming script tags
+        // which are rendered after the visible footer.
+        $tags = '';
+        preg_match('#\<\/body>#i', $footer, $matches);
+        $tags .= $matches[0];
+        $footer = str_replace($matches[0], '', $footer);
+
+        preg_match('#\<\/html>#i', $footer, $matches);
+        $tags .= $matches[0];
+        $footer = str_replace($matches[0], '', $footer);
+
+        $CFG->closingtags = $tags;
 
         return $output . $footer;
     }
@@ -1813,6 +1833,59 @@ class core_renderer extends renderer_base {
         $context = $menu->export_for_template($this);
 
         return $this->render_from_template('core/action_menu', $context);
+    }
+
+    /**
+     * Renders a full check API result including summary and details
+     *
+     * @param core\check\check $check the check that was run to get details from
+     * @param core\check\result $result the result of a check
+     * @param bool $includedetails if true, details are included as well
+     * @return string rendered html
+     */
+    protected function render_check_full_result(core\check\check $check, core\check\result $result, bool $includedetails): string {
+        // Initially render just badge itself.
+        $renderedresult = $this->render_from_template($result->get_template_name(), $result->export_for_template($this));
+
+        // Add summary.
+        $renderedresult .= ' ' . $result->get_summary();
+
+        // Wrap in notificaiton.
+        $notificationmap = [
+            \core\check\result::NA => \core\output\notification::NOTIFY_INFO,
+            \core\check\result::OK => \core\output\notification::NOTIFY_SUCCESS,
+            \core\check\result::INFO => \core\output\notification::NOTIFY_INFO,
+            \core\check\result::UNKNOWN => \core\output\notification::NOTIFY_WARNING,
+            \core\check\result::WARNING => \core\output\notification::NOTIFY_WARNING,
+            \core\check\result::ERROR => \core\output\notification::NOTIFY_ERROR,
+            \core\check\result::CRITICAL => \core\output\notification::NOTIFY_ERROR,
+        ];
+
+        // Get type, or default to error.
+        $notificationtype = $notificationmap[$result->get_status()] ?? \core\output\notification::NOTIFY_ERROR;
+        $renderedresult = $this->notification($renderedresult, $notificationtype, false);
+
+        // If adding details, add on new line.
+        if ($includedetails) {
+            $renderedresult .= $result->get_details();
+        }
+
+        // Add the action link.
+        $renderedresult .= $this->render_action_link($check->get_action_link());
+
+        return $renderedresult;
+    }
+
+    /**
+     * Renders a full check API result including summary and details
+     *
+     * @param core\check\check $check the check that was run to get details from
+     * @param core\check\result $result the result of a check
+     * @param bool $includedetails if details should be included
+     * @return string HTML fragment
+     */
+    public function check_full_result(core\check\check $check, core\check\result $result, bool $includedetails = false) {
+        return $this->render_check_full_result($check, $result, $includedetails);
     }
 
     /**
@@ -2710,8 +2783,12 @@ class core_renderer extends renderer_base {
 
         // Get the image html output first, auto generated based on initials if one isn't already set.
         if ($user->picture == 0 && empty($CFG->enablegravatar) && !defined('BEHAT_SITE_RUNNING')) {
-            $output = html_writer::tag('span', mb_substr($user->firstname, 0, 1) . mb_substr($user->lastname, 0, 1),
-                ['class' => 'userinitials size-' . $size]);
+            $initials = \core_user::get_initials($user);
+            // Don't modify in corner cases where neither the firstname nor the lastname appears.
+            $output = html_writer::tag(
+                'span', $initials,
+                ['class' => 'userinitials size-' . $size]
+            );
         } else {
             $output = html_writer::empty_tag('img', $attributes);
         }
@@ -3826,8 +3903,7 @@ EOD;
     /**
      * Returns the custom menu if one has been set
      *
-     * A custom menu can be configured by browsing to
-     *    Settings: Administration > Appearance > Themes > Theme settings
+     * A custom menu can be configured by browsing to a theme's settings page
      * and then configuring the custommenu config setting as described.
      *
      * Theme developers: DO NOT OVERRIDE! Please override function
@@ -4363,7 +4439,12 @@ EOD;
         global $COURSE;
         $url = '';
         if ($COURSE->id !== SITEID) {
-            $comm = \core_communication\api::load_by_instance('core_course', 'coursecommunication', $COURSE->id);
+            $comm = \core_communication\api::load_by_instance(
+                context: \core\context\course::instance($COURSE->id),
+                component: 'core_course',
+                instancetype: 'coursecommunication',
+                instanceid: $COURSE->id,
+            );
             $url = $comm->get_communication_room_url();
         }
 
@@ -5110,7 +5191,12 @@ EOD;
      * @return string ascii fragment
      */
     public function render_progress_bar_update(string $id, float $percent, string $msg, string $estimate) : string {
-        return html_writer::script(js_writer::function_call('updateProgressBar', [$id, $percent, $msg, $estimate]));
+        return html_writer::script(js_writer::function_call('updateProgressBar', [
+            $id,
+            round($percent, 1),
+            $msg,
+            $estimate,
+        ]));
     }
 
     /**
@@ -5213,11 +5299,9 @@ EOD;
      *
      * @param string $selector where new content should be appended
      * @param string $element which contains the streamed content
+     * @return string html to be written
      */
     public function select_element_for_append(string $selector = '#region-main [role=main]', string $element = 'div') {
-
-        static $currentselector = '';
-        static $currentelement = '';
 
         if (!CLI_SCRIPT && !NO_OUTPUT_BUFFERING) {
             throw new coding_exception('select_element_for_append used in a non-CLI script without setting NO_OUTPUT_BUFFERING.',
@@ -5225,24 +5309,36 @@ EOD;
         }
 
         // We are already streaming into this element so don't change anything.
-        if ($currentselector === $selector && $currentelement === $element) {
+        if ($this->currentselector === $selector && $this->currentelement === $element) {
             return;
         }
 
-        $html = '';
+        // If we have a streaming element close it before starting a new one.
+        $html = $this->close_element_for_append();
 
-        // We have a streaming element so close it before starting a new one.
-        if ($currentselector !== '') {
-            $html .= html_writer::end_tag($currentelement);
-        }
-
-        $currentselector = $selector;
-        $currentelement = $element;
+        $this->currentselector = $selector;
+        $this->currentelement = $element;
 
         // Create an unclosed element for the streamed content to append into.
         $id = uniqid();
         $html .= html_writer::start_tag($element, ['id' => $id]);
         $html .= html_writer::tag('script', "document.querySelector('$selector').append(document.getElementById('$id'))");
+        $html .= "\n";
+        return $html;
+    }
+
+    /**
+     * This closes any opened stream elements
+     *
+     * @return string html to be written
+     */
+    public function close_element_for_append() {
+        $html = '';
+        if ($this->currentselector !== '') {
+            $html .= html_writer::end_tag($this->currentelement);
+            $html .= "\n";
+            $this->currentelement = '';
+        }
         return $html;
     }
 
@@ -5259,6 +5355,7 @@ EOD;
      * @param string $selector where new content should be replaced
      * @param string $html A chunk of well formed html
      * @param bool $outer Wether it replaces the innerHTML or the outerHTML
+     * @return string html to be written
      */
     public function select_element_for_replace(string $selector, string $html, bool $outer = false) {
 
@@ -5271,6 +5368,7 @@ EOD;
         $html = addslashes_js($html);
         $property = $outer ? 'outerHTML' : 'innerHTML';
         $output = html_writer::tag('script', "document.querySelector('$selector').$property = '$html';");
+        $output .= "\n";
         return $output;
     }
 }

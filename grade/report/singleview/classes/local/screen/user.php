@@ -102,7 +102,7 @@ class user extends tablelike implements selectable_items {
     public function init($selfitemisempty = false) {
 
         if (!$selfitemisempty) {
-            $validusers = get_gradable_users($this->courseid, $this->groupid);
+            $validusers = \grade_report::get_gradable_users($this->courseid, $this->groupid);
             if (!isset($validusers[$this->itemid])) {
                 // If the passed user id is not valid, show the first user from the list instead.
                 $this->item = reset($validusers);
@@ -151,7 +151,7 @@ class user extends tablelike implements selectable_items {
             get_string('assessmentname', 'gradereport_singleview'),
             '', // For filter icon.
             get_string('gradecategory', 'grades'),
-            get_string('grade', 'grades'),
+            get_string('gradenoun'),
             get_string('range', 'grades'),
             get_string('feedback', 'grades'),
             get_string('override', 'gradereport_singleview'),
@@ -190,13 +190,13 @@ class user extends tablelike implements selectable_items {
         $gradetreeitem['object'] = $item;
         $gradetreeitem['userid'] = $this->item->id;
 
-        $itemname = $this->structure->get_element_header($gradetreeitem, true, false, false, false, true);
+        $itemname = \grade_helper::get_element_header($gradetreeitem, true, false, false, false, true);
         $grade->label = $item->get_name();
 
         $formatteddefinition = $this->format_definition($grade);
 
         $itemicon = html_writer::div($this->format_icon($item), 'mr-1');
-        $itemtype = \html_writer::span($this->structure->get_element_type_string($gradetreeitem),
+        $itemtype = \html_writer::span(\grade_helper::get_element_type_string($gradetreeitem),
             'd-block text-uppercase small dimmed_text');
         // If a behat test site is running avoid outputting the information about the type of the grade item.
         // This additional information currently causes issues in behat particularly with the existing xpath used to
@@ -251,7 +251,7 @@ class user extends tablelike implements selectable_items {
      */
     private function format_icon($item): string {
         $element = ['type' => 'item', 'object' => $item];
-        return $this->structure->get_element_icon($element);
+        return \grade_helper::get_element_icon($element);
     }
 
     /**
@@ -313,7 +313,9 @@ class user extends tablelike implements selectable_items {
      * @return string
      */
     public function heading(): string {
-        return get_string('gradeuser', 'gradereport_singleview', fullname($this->item));
+        global $PAGE;
+        $headinglangstring = $PAGE->user_is_editing() ? 'gradeuseredit' : 'gradeuser';
+        return get_string($headinglangstring, 'gradereport_singleview', fullname($this->item));
     }
 
     /**

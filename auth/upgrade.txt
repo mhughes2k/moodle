@@ -1,6 +1,10 @@
 This files describes API changes in /auth/* - plugins,
 information provided here is intended especially for developers.
 
+=== 4.4 ===
+
+* A sesskey is no longer passed to the auth/test_settings.php page so it can no longer be required in test_settings().
+
 === 4.2 ===
 * Support for configuration with the deprecated auth_config.php file has been removed.
 * The moodle-auth-passwordunmask YUI module has been removed. Any uses should be replaced with core_form/passwordunmask.
@@ -25,7 +29,7 @@ information provided here is intended especially for developers.
 * The auth_db and auth_ldap plugins' implementations of update_user_record() have been removed and both now
   call the new implementation added in the base class.
 * Self registration plugins should use core_privacy\local\sitepolicy\manager instead of directly checking
-  $CFG->sitepolicy , especially in custom signup forms. See https://docs.moodle.org/dev/Site_policy_handler
+  $CFG->sitepolicy , especially in custom signup forms.
 
 === 3.3 ===
 

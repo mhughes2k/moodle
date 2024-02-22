@@ -284,10 +284,10 @@ export default class Drawers {
         }
 
         if (this.drawerNode.classList.contains(CLASSES.SHOW)) {
-            this.openDrawer({focusOnCloseButton: false});
+            this.openDrawer({focusOnCloseButton: false, setUserPref: false});
         } else if (this.drawerNode.dataset.forceopen == 1) {
             if (!isSmall()) {
-                this.openDrawer({focusOnCloseButton: false});
+                this.openDrawer({focusOnCloseButton: false, setUserPref: false});
             }
         } else {
             Aria.hide(this.drawerNode);
@@ -414,8 +414,9 @@ export default class Drawers {
      *
      * @param {object} args
      * @param {boolean} [args.focusOnCloseButton=true] Whether to alter page focus when opening the drawer
+     * @param {boolean} [args.setUserPref=true] Whether to store the opened drawer state as a user preference
      */
-    openDrawer({focusOnCloseButton = true} = {}) {
+    openDrawer({focusOnCloseButton = true, setUserPref = true} = {}) {
 
         const pendingPromise = new Pending('theme_boost/drawers:open');
         const showEvent = this.dispatchEvent(Drawers.eventTypes.drawerShow, true);
@@ -439,7 +440,7 @@ export default class Drawers {
         this.drawerNode.classList.add(CLASSES.SHOW);
 
         const preference = this.drawerNode.dataset.preference;
-        if (preference && !isSmall() && (this.drawerNode.dataset.forceopen != 1)) {
+        if (preference && !isSmall() && (this.drawerNode.dataset.forceopen != 1) && setUserPref) {
             setUserPreference(preference, true);
         }
 
@@ -581,8 +582,9 @@ export default class Drawers {
             direction = 1;
             scrollThreshold = THRESHOLD;
         }
-        if (scrollPosition > scrollThreshold) {
-            displace = drawrWidth + THRESHOLD;
+        // LTR scroll is positive while RTL scroll is negative.
+        if (Math.abs(scrollPosition) > scrollThreshold) {
+            displace = Math.sign(scrollPosition) * (drawrWidth + THRESHOLD);
         }
         displace *= direction;
         const transform = `translateX(${displace}px)`;
@@ -598,19 +600,38 @@ export default class Drawers {
      * @param {HTMLElement} currentFocus
      */
     preventOverlap(currentFocus) {
-        if (!this.isOpen) {
+        // Start position drawer (aka. left drawer) will never overlap with the page content.
+        if (!this.isOpen || this.drawerNode.dataset?.state === 'show-drawer-left') {
             return;
         }
         const drawrWidth = this.drawerNode.offsetWidth;
         const element = currentFocus.getBoundingClientRect();
-        const drawer = this.boundingRect;
-        const overlapping = (
-            (element.right + THRESHOLD) > drawer.left &&
-            (element.left - THRESHOLD) < drawer.right
+
+        // The this.boundingRect is calculated only once and it is reliable
+        // for horizontal overlapping (which is the most common). However,
+        // it is not reliable for vertical overlapping because the drawer
+        // height can be changed by other elements like sticky footer.
+        // To prevent recalculating the boundingRect on every
+        // focusin event, we use horizontal overlapping as first fast check.
+        let overlapping = (
+            (element.right + THRESHOLD) > this.boundingRect.left &&
+            (element.left - THRESHOLD) < this.boundingRect.right
         );
         if (overlapping) {
+            const currentBoundingRect = this.drawerNode.getBoundingClientRect();
+            overlapping = (
+                (element.bottom) > currentBoundingRect.top &&
+                (element.top) < currentBoundingRect.bottom
+            );
+        }
+
+        if (overlapping) {
             // Force drawer to displace out of the page.
-            this.displace(drawrWidth + 1);
+            let displaceOut = drawrWidth + 1;
+            if (window.right_to_left()) {
+                displaceOut *= -1;
+            }
+            this.displace(displaceOut);
         } else {
             // Reset drawer displacement.
             this.displace(window.scrollX);

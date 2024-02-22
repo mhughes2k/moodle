@@ -284,46 +284,10 @@ class manager {
     }
 
     /**
-     * Gets the available completion tabs for the current course and user.
-     *
      * @deprecated since Moodle 4.0
-     * @param stdClass|int $courseorid the course object or id.
-     * @return tabobject[]
      */
-    public static function get_available_completion_tabs($courseorid) {
-        debugging('get_available_completion_tabs() has been deprecated. Please use ' .
-            'core_completion\manager::get_available_completion_options() instead.', DEBUG_DEVELOPER);
-
-        $tabs = [];
-
-        $courseid = is_object($courseorid) ? $courseorid->id : $courseorid;
-        $coursecontext = context_course::instance($courseid);
-
-        if (has_capability('moodle/course:update', $coursecontext)) {
-            $tabs[] = new tabobject(
-                'completion',
-                new moodle_url('/course/completion.php', ['id' => $courseid]),
-                new lang_string('coursecompletion', 'completion')
-            );
-        }
-
-        if (has_capability('moodle/course:manageactivities', $coursecontext)) {
-            $tabs[] = new tabobject(
-                'defaultcompletion',
-                new moodle_url('/course/defaultcompletion.php', ['id' => $courseid]),
-                new lang_string('defaultcompletion', 'completion')
-            );
-        }
-
-        if (self::can_edit_bulk_completion($courseorid)) {
-            $tabs[] = new tabobject(
-                'bulkcompletion',
-                new moodle_url('/course/bulkcompletion.php', ['id' => $courseid]),
-                new lang_string('bulkactivitycompletion', 'completion')
-            );
-        }
-
-        return $tabs;
+    public static function get_available_completion_tabs() {
+        throw new \coding_exception(__FUNCTION__ . '() has been removed.');
     }
 
     /**
@@ -528,7 +492,7 @@ class manager {
             $data['customrules'] = $customdata ? json_encode($customdata) : null;
             $defaults['customrules'] = null;
         }
-        $data = array_intersect_key($data, $defaults);
+        $data = array_merge($defaults, $data);
 
         // Get names of the affected modules.
         list($modidssql, $params) = $DB->get_in_or_equal($modids);

@@ -14,6 +14,16 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 import ajax from 'core/ajax';
+import {getString} from "core/str";
+import log from 'core/log';
+import SRLogger from "core/local/reactive/srlogger";
+
+/**
+ * Flag to determine whether the screen reader-only logger has already been set, so we only need to set it once.
+ *
+ * @type {boolean}
+ */
+let isLoggerSet = false;
 
 /**
  * Default mutation manager
@@ -65,6 +75,11 @@ export default class {
      * @param {number} targetCmId optional target cm id (for moving actions)
      */
     async _sectionBasicAction(stateManager, action, sectionIds, targetSectionId, targetCmId) {
+        const logEntry = this._getLoggerEntry(stateManager, action, sectionIds, {
+            targetSectionId,
+            targetCmId,
+            itemType: 'section',
+        });
         const course = stateManager.get('course');
         this.sectionLock(stateManager, sectionIds, true);
         const updates = await this._callEditWebservice(
@@ -77,6 +92,7 @@ export default class {
         this.bulkReset(stateManager);
         stateManager.processUpdates(updates);
         this.sectionLock(stateManager, sectionIds, false);
+        stateManager.addLoggerEntry(await logEntry);
     }
 
     /**
@@ -88,6 +104,11 @@ export default class {
      * @param {number} targetCmId optional target cm id (for moving actions)
      */
     async _cmBasicAction(stateManager, action, cmIds, targetSectionId, targetCmId) {
+        const logEntry = this._getLoggerEntry(stateManager, action, cmIds, {
+            targetSectionId,
+            targetCmId,
+            itemType: 'cm',
+        });
         const course = stateManager.get('course');
         this.cmLock(stateManager, cmIds, true);
         const updates = await this._callEditWebservice(
@@ -100,6 +121,56 @@ export default class {
         this.bulkReset(stateManager);
         stateManager.processUpdates(updates);
         this.cmLock(stateManager, cmIds, false);
+        stateManager.addLoggerEntry(await logEntry);
+    }
+
+    /**
+     * Get log entry for the current action.
+     * @param {StateManager} stateManager the current state manager
+     * @param {string} action the action name
+     * @param {int[]|null} itemIds the element ids
+     * @param {Object|undefined} data extra params for the log entry
+     * @param {string|undefined} data.itemType the element type (will be taken from action if none)
+     * @param {int|null|undefined} data.targetSectionId the target section id
+     * @param {int|null|undefined} data.targetCmId the target cm id
+     * @param {String|null|undefined} data.component optional component (for format plugins)
+     * @return {Object} the log entry
+     */
+    async _getLoggerEntry(stateManager, action, itemIds, data = {}) {
+        if (!isLoggerSet) {
+            // In case the logger has not been set from init(), ensure we set the logger.
+            stateManager.setLogger(new SRLogger());
+            isLoggerSet = true;
+        }
+        const feedbackParams = {
+            action,
+            itemType: data.itemType ?? action.split('_')[0],
+        };
+        let batch = '';
+        if (itemIds.length > 1) {
+            feedbackParams.count = itemIds.length;
+            batch = '_batch';
+        } else if (itemIds.length === 1) {
+            const itemInfo = stateManager.get(feedbackParams.itemType, itemIds[0]);
+            feedbackParams.name = itemInfo.title ?? itemInfo.name;
+            // Apply shortener for modules like label.
+        }
+        if (data.targetSectionId) {
+            feedbackParams.targetSectionName = stateManager.get('section', data.targetSectionId).title;
+        }
+        if (data.targetCmId) {
+            feedbackParams.targetCmName = stateManager.get('cm', data.targetCmId).name;
+        }
+
+        const message = await getString(
+            `${action.toLowerCase()}_feedback${batch}`,
+            data.component ?? 'core_courseformat',
+            feedbackParams
+        );
+
+        return {
+            feedbackMessage: message,
+        };
     }
 
     /**
@@ -110,10 +181,13 @@ export default class {
      * @param {StateManager} stateManager the state manager
      */
     init(stateManager) {
-        // Add a method to prepare the fields when some update is comming from the server.
+        // Add a method to prepare the fields when some update is coming from the server.
         stateManager.addUpdateTypes({
             prepareFields: this._prepareFields,
         });
+        // Use the screen reader-only logger (SRLogger) to handle the feedback messages from the mutations.
+        stateManager.setLogger(new SRLogger());
+        isLoggerSet = true;
     }
 
     /**
@@ -185,6 +259,7 @@ export default class {
      * @param {number|undefined} targetCmId the target course module id
      */
     async cmDuplicate(stateManager, cmIds, targetSectionId, targetCmId) {
+        const logEntry = this._getLoggerEntry(stateManager, 'cm_duplicate', cmIds);
         const course = stateManager.get('course');
         // Lock all target sections.
         const sectionIds = new Set();
@@ -203,6 +278,7 @@ export default class {
         stateManager.processUpdates(updates);
 
         this.sectionLock(stateManager, Array.from(sectionIds), false);
+        stateManager.addLoggerEntry(await logEntry);
     }
 
     /**
@@ -235,11 +311,14 @@ export default class {
     /**
      * Move course modules to specific course location.
      *
+     * @deprecated since Moodle 4.4 MDL-77038.
+     * @todo MDL-80116 This will be deleted in Moodle 4.8.
      * @param {StateManager} stateManager the current state manager
      * @param {array} sectionIds the list of section ids to move
      * @param {number} targetSectionId the target section id
      */
     async sectionMove(stateManager, sectionIds, targetSectionId) {
+        log.debug('sectionMove() is deprecated. Use sectionMoveAfter() instead');
         if (!targetSectionId) {
             throw new Error(`Mutation sectionMove requires targetSectionId`);
         }

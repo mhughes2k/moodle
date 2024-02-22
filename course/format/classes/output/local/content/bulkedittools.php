@@ -83,7 +83,7 @@ class bulkedittools implements named_templatable, renderable {
      * @return array of edit control items
      */
     protected function cm_control_items(): array {
-        global $USER;
+        global $CFG, $USER;
         $format = $this->format;
         $context = $format->get_context();
         $user = $USER;
@@ -133,7 +133,7 @@ class bulkedittools implements named_templatable, renderable {
         }
 
         $usercanshare = utilities::can_user_share($context, $user->id, 'course');
-        if ($usercanshare) {
+        if ($CFG->enablesharingtomoodlenet && $usercanshare) {
             $controls['sharetomoodlenet'] = [
                 'id' => 'cmShareToMoodleNet',
                 'icon' => 'i/share',
@@ -159,7 +159,7 @@ class bulkedittools implements named_templatable, renderable {
         global $USER;
         $format = $this->format;
         $context = $format->get_context();
-        $sectionreturn = $format->get_section_number();
+        $sectionreturn = $format->get_sectionnum();
         $user = $USER;
 
         $controls = [];

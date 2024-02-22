@@ -18,7 +18,7 @@
  * This file is executed right after the install.xml
  *
  * For more information, take a look to the documentation available:
- *     - Upgrade API: {@link http://docs.moodle.org/dev/Upgrade_API}
+ *     - Upgrade API: {@link https://moodledev.io/docs/guides/upgrade}
  *
  * @package   core_install
  * @category  upgrade
@@ -42,7 +42,7 @@ defined('MOODLE_INTERNAL') || die();
  *
  * All plugins within Moodle (modules, blocks, reports...) support the existence of
  * their own install.php file, using the "Frankenstyle" component name as
- * defined at {@link http://docs.moodle.org/dev/Frankenstyle}, for example:
+ * defined at {@link https://moodledev.io/general/development/policies/codingstyle/frankenstyle}, for example:
  *     - {@link xmldb_page_install()}. (modules don't require the plugintype ("mod_") to be used.
  *     - {@link xmldb_enrol_meta_install()}.
  *     - {@link xmldb_workshopform_accumulative_install()}.
@@ -135,6 +135,7 @@ function xmldb_main_install() {
         'upgrade_extracreditweightsstepignored' => 1, // New installs should not run this upgrade step.
         'upgrade_calculatedgradeitemsignored' => 1, // New installs should not run this upgrade step.
         'upgrade_letterboundarycourses' => 1, // New installs should not run this upgrade step.
+        'format_plugins_sortorder' => 'topics,weeks,singleactivity,social', // Default order for course format plugins.
     );
     foreach($defaults as $key => $value) {
         set_config($key, $value);

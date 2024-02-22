@@ -20,13 +20,15 @@ namespace core_files\reportbuilder\local\entities;
 
 use context;
 use context_helper;
+use core_collator;
+use core_filetypes;
+use html_writer;
 use lang_string;
 use license_manager;
-use html_writer;
 use stdClass;
 use core_reportbuilder\local\entities\base;
 use core_reportbuilder\local\helpers\format;
-use core_reportbuilder\local\filters\{boolean_select, date, number, select, text};
+use core_reportbuilder\local\filters\{boolean_select, date, filesize, select, text};
 use core_reportbuilder\local\report\{column, filter};
 
 /**
@@ -39,14 +41,14 @@ use core_reportbuilder\local\report\{column, filter};
 class file extends base {
 
     /**
-     * Database tables that this entity uses and their default aliases
+     * Database tables that this entity uses
      *
-     * @return array
+     * @return string[]
      */
-    protected function get_default_table_aliases(): array {
+    protected function get_default_tables(): array {
         return [
-            'files' => 'f',
-            'context' => 'fctx',
+            'files',
+            'context',
         ];
     }
 
@@ -154,6 +156,36 @@ class file extends base {
                 }
 
                 return get_mimetype_description($fileinfo->mimetype);
+            });
+
+        // Icon.
+        $columns[] = (new column(
+            'icon',
+            new lang_string('icon'),
+            $this->get_entity_name()
+        ))
+            ->add_joins($this->get_joins())
+            ->set_type(column::TYPE_TEXT)
+            ->add_field("{$filesalias}.mimetype")
+            ->add_field("CASE WHEN {$filesalias}.filename = '.' THEN 1 ELSE 0 END", 'directory')
+            ->set_disabled_aggregation_all()
+            ->add_callback(static function($mimetype, stdClass $fileinfo): string {
+                global $CFG, $OUTPUT;
+                require_once("{$CFG->libdir}/filelib.php");
+
+                if ($fileinfo->mimetype === null && !$fileinfo->directory) {
+                    return '';
+                }
+
+                if ($fileinfo->directory) {
+                    $icon = file_folder_icon();
+                    $description = get_string('directory');
+                } else {
+                    $icon = file_file_icon($fileinfo);
+                    $description = get_mimetype_description($fileinfo->mimetype);
+                }
+
+                return $OUTPUT->pix_icon($icon, $description, 'moodle', ['class' => 'iconsize-medium']);
             });
 
         // Author.
@@ -334,19 +366,34 @@ class file extends base {
 
         // Size.
         $filters[] = (new filter(
-            number::class,
+            filesize::class,
             'size',
             new lang_string('size'),
             $this->get_entity_name(),
             "{$filesalias}.filesize"
         ))
+            ->add_joins($this->get_joins());
+
+        // Type.
+        $filters[] = (new filter(
+            select::class,
+            'type',
+            new lang_string('type', 'core_repository'),
+            $this->get_entity_name(),
+            "{$filesalias}.mimetype"
+        ))
             ->add_joins($this->get_joins())
-            ->set_limited_operators([
-                number::ANY_VALUE,
-                number::LESS_THAN,
-                number::GREATER_THAN,
-                number::RANGE,
-            ]);
+            ->set_options_callback(static function(): array {
+                $mimetypenames = array_column(core_filetypes::get_types(), 'type');
+
+                // Convert the names into a map of name => description.
+                $mimetypes = array_combine($mimetypenames, array_map(static function(string $mimetype): string {
+                    return get_mimetype_description($mimetype);
+                }, $mimetypenames));
+
+                core_collator::asort($mimetypes);
+                return $mimetypes;
+            });
 
         // License (consider null = 'unknown/license not specified' for filtering purposes).
         $filters[] = (new filter(

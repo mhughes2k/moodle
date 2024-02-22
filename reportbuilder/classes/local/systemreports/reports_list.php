@@ -151,7 +151,7 @@ class reports_list extends system_report {
             ->add_callback(function(string $value, stdClass $row) {
                 if (!$this->report_source_valid($value)) {
                     // Add danger badge if report source is not valid (either it's missing, or has errors).
-                    return html_writer::span(get_string('errorsourceinvalid', 'core_reportbuilder'), 'badge badge-danger');
+                    return html_writer::span(get_string('errorsourceinvalid', 'core_reportbuilder'), 'badge bg-danger text-white');
                 }
 
                 return call_user_func([$value, 'get_name']);
@@ -281,7 +281,12 @@ class reports_list extends system_report {
         $this->add_action((new action(
             new moodle_url('#'),
             new pix_icon('t/delete', ''),
-            ['data-action' => 'report-delete', 'data-report-id' => ':id', 'data-report-name' => ':name'],
+            [
+                'data-action' => 'report-delete',
+                'data-report-id' => ':id',
+                'data-report-name' => ':name',
+                'class' => 'text-danger',
+            ],
             false,
             new lang_string('deletereport', 'core_reportbuilder')
         ))

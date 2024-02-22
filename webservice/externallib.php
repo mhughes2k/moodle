@@ -172,6 +172,12 @@ class core_webservice_external extends \core_external\external_api {
             'name' => 'mnet_dispatcher_mode',
             'value' => ($CFG->mnet_dispatcher_mode == 'strict') ? 1 : 0
         );
+        // Competencies.
+        $enablecompetencies = get_config('core_competency', 'enabled');
+        $siteinfo['advancedfeatures'][] = [
+            'name' => 'enablecompetencies',
+            'value' => (!empty($enablecompetencies)) ? 1 : 0,
+        ];
 
         // User can manage own files.
         $siteinfo['usercanmanageownfiles'] = has_capability('moodle/user:manageownfiles', $context);
@@ -209,6 +215,8 @@ class core_webservice_external extends \core_external\external_api {
             // For performance, only when enabled.
             $siteinfo['usersessionscount'] = $DB->count_records('sessions', ['userid' => $USER->id]);
         }
+
+        $siteinfo['policyagreed'] = $USER->policyagreed;
 
         return $siteinfo;
     }
@@ -282,6 +290,7 @@ class core_webservice_external extends \core_external\external_api {
                 'limitconcurrentlogins' => new external_value(PARAM_INT, 'Number of concurrent sessions allowed', VALUE_OPTIONAL),
                 'usersessionscount' => new external_value(PARAM_INT, 'Number of active sessions for current user.
                     Only returned when limitconcurrentlogins is used.', VALUE_OPTIONAL),
+                'policyagreed' => new external_value(PARAM_INT, 'Whether user accepted all the policies.', VALUE_OPTIONAL),
             )
         );
     }

@@ -189,7 +189,7 @@ $string['completionminattempts'] = 'Minimum attempts';
 $string['completionminattemptsdesc'] = 'Minimum number of attempts required: {$a}';
 $string['completionminattemptserror'] = 'Minimum number of attempts must be lower or equal to attempts allowed.';
 $string['completionpassorattemptsexhausteddesc'] = 'Student must achieve a passing grade, or exhaust all available attempts to complete this activity';
-$string['completionattemptsexhausted'] = 'Passing grade and all available attempts completed';
+$string['completionattemptsexhausted'] = 'Passing grade or all available attempts completed';
 $string['completionattemptsexhausted_help'] = 'Mark quiz complete when the student has exhausted the maximum number of attempts.';
 $string['configadaptive'] = 'If you choose Yes for this option then the student will be allowed multiple responses to a question even within the same attempt at the quiz.';
 $string['configattemptsallowed'] = 'Restriction on the number of attempts students are allowed at the quiz.';
@@ -429,7 +429,6 @@ $string['graceperiod_help'] = 'If what to do when the time expires is set to \'T
 $string['graceperiodmin'] = 'Last submission grace period';
 $string['graceperiodmin_desc'] = 'There is a potential problem right at the end of the quiz. On the one hand, we want to let students continue working right up until the last second - with the help of the timer that automatically submits the quiz when time runs out. On the other hand, the server may then be overloaded, and take some time to get to process the responses. Therefore, we will accept responses for up to this long after time expires, so they are not penalised for the server being slow. However, the student could cheat and get this many seconds to answer the quiz. You have to make a trade-off based on how much you trust the performance of your server during quizzes.';
 $string['graceperiodtoosmall'] = 'The grace period must be more than {$a}.';
-$string['grade'] = 'Grade';
 $string['gradeall'] = 'Grade all';
 $string['gradeaverage'] = 'Average grade';
 $string['gradeboundary'] = 'Grade boundary';
@@ -520,7 +519,7 @@ $string['manualgradequestion'] = 'Manually grade question {$a->question} in {$a-
 $string['mark'] = 'Submit';
 $string['markall'] = 'Submit page';
 $string['marks'] = 'Marks';
-$string['marks_help'] = 'The numerical marks for each question, and the overall attempt score.';
+$string['marks_help'] = 'The mark obtained for each question and the overall attempt score. You can only select Marks if Maximum marks is selected.';
 $string['match'] = 'Matching';
 $string['matchanswer'] = 'Matching answer';
 $string['matchanswerno'] = 'Matching answer {$a}';
@@ -530,14 +529,8 @@ $string['messageprovider:attempt_grading_complete'] = 'Notification that your at
 $string['messageprovider:submission'] = 'Notification of your students\' quiz submissions';
 $string['max'] = 'Max';
 $string['maxmark'] = 'Maximum mark';
-$string['maxmarks'] = 'Max Marks';
-$string['maxmarks_help'] = 'Max marks determines whether the grade information are hidden or how it is displayed:
-
-* To hide the grade information completely, do not tick this checkbox (Marks checkbox is disabled automatically).
-
-* To show Max marks only: tick this checkbox and not the Marks checkbox.
-
-* To show both Max marks and Marks, tick this checkbox as well as the Marks checkbox.';
+$string['maxmarks'] = 'Maximum marks';
+$string['maxmarks_help'] = 'The maximum mark available for each question.';
 
 $string['min'] = 'Min';
 $string['minutes'] = 'Minutes';
@@ -1096,3 +1089,5 @@ $string['basicideasofquiz'] = 'The basic ideas of quiz-making';
 // Deprecated since Moodle 4.3.
 $string['completionminattemptsgroup'] = 'Require attempts';
 
+// Deprecated since Moodle 4.4.
+$string['grade'] = 'Grade';

@@ -23,9 +23,9 @@
  * install or upgrade operation. All plugins support this.
  *
  * For more information, take a look to the documentation available:
- *     - Webservices API: {@link http://docs.moodle.org/dev/Web_services_API}
- *     - External API: {@link http://docs.moodle.org/dev/External_functions_API}
- *     - Upgrade API: {@link http://docs.moodle.org/dev/Upgrade_API}
+ *     - Webservices API: {@link https://moodledev.io/docs/apis/subsystems/external/writing-a-service}
+ *     - External API: {@link https://moodledev.io/docs/apis/subsystems/external/functions}
+ *     - Upgrade API: {@link https://moodledev.io/docs/guides/upgrade}
  *
  * @package    core_webservice
  * @category   webservice
@@ -228,6 +228,7 @@ $functions = array(
         'capabilities' => 'moodle/calendar:manageentries, moodle/calendar:manageownentries, moodle/calendar:managegroupentries',
         'ajax' => true,
         'services' => array(MOODLE_OFFICIAL_MOBILE_SERVICE),
+        'readonlysession' => true,
     ),
     'core_calendar_get_action_events_by_course' => array(
         'classname' => 'core_calendar_external',
@@ -304,6 +305,13 @@ $functions = array(
         'description' => 'Delete the calendar subscription',
         'type' => 'write',
         'ajax' => true
+    ],
+    'core_check_get_result_admintree' => [
+        'classname' => 'core\check\external\get_result_admintree',
+        'description' => 'Executes a check stored in the admin tree and returns the result',
+        'type' => 'read',
+        'ajax' => true,
+        'readonlysession' => true,
     ],
     'core_cohort_add_cohort_members' => array(
         'classname' => 'core_cohort_external',
@@ -669,6 +677,7 @@ $functions = array(
         'type' => 'read',
         'ajax' => true,
         'services' => array(MOODLE_OFFICIAL_MOBILE_SERVICE),
+        'readonlysession' => true,
     ),
     'core_course_get_recent_courses' => array(
         'classname' => 'core_course_external',
@@ -1004,6 +1013,19 @@ $functions = array(
     'core_grades_get_gradeitems' => [
         'classname' => 'core_grades\external\get_gradeitems',
         'description' => 'Get the gradeitems for a course',
+        'type' => 'read',
+        'ajax' => true,
+        'services' => [MOODLE_OFFICIAL_MOBILE_SERVICE],
+    ],
+    'core_grades_get_grade_tree' => [
+        'classname' => 'core_grades\external\get_grade_tree',
+        'description' => 'Get the grade tree structure for a course',
+        'type' => 'read',
+        'ajax' => true,
+    ],
+    'core_grades_get_gradable_users' => [
+        'classname' => 'core_grades\external\get_gradable_users',
+        'description' => 'Returns the gradable users in a course',
         'type' => 'read',
         'ajax' => true,
         'services' => [MOODLE_OFFICIAL_MOBILE_SERVICE],
@@ -1471,6 +1493,7 @@ $functions = array(
         'capabilities' => 'moodle/site:sendmessage',
         'ajax' => true,
         'services' => array(MOODLE_OFFICIAL_MOBILE_SERVICE),
+        'readonlysession' => true,
     ),
     'core_message_send_messages_to_conversation' => array(
         'classname' => 'core_message_external',

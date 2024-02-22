@@ -86,26 +86,22 @@ class content implements named_templatable, renderable {
         global $PAGE;
         $format = $this->format;
 
-        // Most formats uses section 0 as a separate section so we remove from the list.
         $sections = $this->export_sections($output);
         $initialsection = '';
-        if (!empty($sections)) {
-            $initialsection = array_shift($sections);
-        }
 
         $data = (object)[
             'title' => $format->page_title(), // This method should be in the course_format class.
             'initialsection' => $initialsection,
             'sections' => $sections,
             'format' => $format->get_format(),
-            'sectionreturn' => 0,
+            'sectionreturn' => null,
         ];
 
         // The single section format has extra navigation.
-        $singlesection = $this->format->get_section_number();
-        if ($singlesection) {
+        if ($this->format->get_sectionid()) {
+            $singlesectionnum = $this->format->get_sectionnum();
             if (!$PAGE->theme->usescourseindex) {
-                $sectionnavigation = new $this->sectionnavigationclass($format, $singlesection);
+                $sectionnavigation = new $this->sectionnavigationclass($format, $singlesectionnum);
                 $data->sectionnavigation = $sectionnavigation->export_for_template($output);
 
                 $sectionselector = new $this->sectionselectorclass($format, $sectionnavigation);
@@ -113,7 +109,7 @@ class content implements named_templatable, renderable {
             }
             $data->hasnavigation = true;
             $data->singlesection = array_shift($data->sections);
-            $data->sectionreturn = $singlesection;
+            $data->sectionreturn = $singlesectionnum;
         }
 
         if ($this->hasaddsection) {
@@ -185,14 +181,12 @@ class content implements named_templatable, renderable {
      * @return section_info[] an array of section_info to display
      */
     private function get_sections_to_display(course_modinfo $modinfo): array {
-        $singlesection = $this->format->get_section_number();
-        if ($singlesection) {
+        $singlesectionid = $this->format->get_sectionid();
+        if ($singlesectionid) {
             return [
-                $modinfo->get_section_info(0),
-                $modinfo->get_section_info($singlesection),
+                $modinfo->get_section_info_by_id($singlesectionid),
             ];
         }
-
-        return $modinfo->get_section_info_all();
+        return $modinfo->get_listed_section_info_all();
     }
 }

@@ -65,7 +65,7 @@ $string['completion_setby:manual:markdone'] = '{$a->activityname} is marked by {
 $string['completionrequirements'] = 'Completion requirements for {$a}';
 $string['courseaccess'] = 'Course access';
 $string['coursealreadyfinished'] = 'Course already finished';
-$string['coursecommunication_desc'] = 'The default communication service for new courses. Existing courses will not have any default provider selected.';
+$string['coursecommunication_desc'] = 'The default communication service for new courses. Existing courses will not have any provider selected by default.';
 $string['coursecontentnotification'] = 'Send content change notification';
 $string['coursecontentnotifnew'] = '{$a->coursename} new content';
 $string['coursecontentnotifnewbody'] = '<p>{$a->moduletypename} <a href="{$a->link}">{$a->modulename}</a> is new in the course <a href="{$a->courselink}">{$a->coursename}</a>.</p><p><a href="{$a->notificationpreferenceslink}">Change your notification preferences</a></p>';
@@ -162,6 +162,8 @@ $string['targetlabelstudentgradetopassno'] = 'Student who is likely to meet the 
 $string['targetlabelstudentgradetopassyes'] = 'Student at risk of not meeting the minimum grade to pass the course.';
 $string['targetlabelteachingyes'] = 'Users with teaching capabilities who have access to the course';
 $string['targetlabelteachingno'] = 'Courses at risk of not starting';
+$string['totalactivities'] = 'Activities: {$a}';
+$string['gotosection'] = 'Go to section {$a}';
 
 // Deprecated since Moodle 4.3.
 $string['aria:courseimage'] = 'Course image';

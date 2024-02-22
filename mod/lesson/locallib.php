@@ -323,7 +323,7 @@ function lesson_grade($lesson, $ntries, $userid = 0) {
                 $attempt = end($attempts);
                 // If essay question, handle it, otherwise add to score
                 if ($page->requires_manual_grading()) {
-                    $useranswerobj = unserialize($attempt->useranswer);
+                    $useranswerobj = unserialize_object($attempt->useranswer);
                     if (isset($useranswerobj->score)) {
                         $earned += $useranswerobj->score;
                     }
@@ -565,37 +565,6 @@ function lesson_menu_block_contents($cmid, $lesson) {
     $bc->content = $content;
 
     return $bc;
-}
-
-/**
- * Adds header buttons to the page for the lesson
- *
- * @deprecated since Moodle 4.0 in favour of tertiary navigation.
- * @todo MDL-73545 This will be deleted in Moodle 4.4
- * @param object $cm
- * @param object $context
- * @param bool $extraeditbuttons
- * @param int $lessonpageid
- */
-function lesson_add_header_buttons($cm, $context, $extraeditbuttons=false, $lessonpageid=null) {
-    global $CFG, $PAGE, $OUTPUT;
-
-    debugging('lesson_add_header_buttons() is deprecated in favour of tertiary navigation.', DEBUG_DEVELOPER);
-
-    if (has_capability('mod/lesson:edit', $context) && $extraeditbuttons) {
-        if ($lessonpageid === null) {
-            throw new \moodle_exception('invalidpageid', 'lesson');
-        }
-        if (!empty($lessonpageid) && $lessonpageid != LESSON_EOL) {
-            $url = new moodle_url('/mod/lesson/editpage.php', array(
-                'id'       => $cm->id,
-                'pageid'   => $lessonpageid,
-                'edit'     => 1,
-                'returnto' => $PAGE->url->out_as_local_url(false)
-            ));
-            $PAGE->set_button($OUTPUT->single_button($url, get_string('editpagecontent', 'lesson')));
-        }
-    }
 }
 
 /**
@@ -2919,11 +2888,11 @@ class lesson extends lesson_base {
 
         if ($dependentlesson = $DB->get_record('lesson', array('id' => $this->properties->dependency))) {
             // Lesson exists, so we can proceed.
-            $conditions = unserialize($this->properties->conditions);
+            $conditions = unserialize_object($this->properties->conditions);
             // Assume false for all.
             $errors = array();
             // Check for the timespent condition.
-            if ($conditions->timespent) {
+            if (!empty($conditions->timespent)) {
                 $timespent = false;
                 if ($attempttimes = $DB->get_records('lesson_timer', array("userid" => $USER->id, "lessonid" => $dependentlesson->id))) {
                     // Go through all the times and test to see if any of them satisfy the condition.
@@ -2939,7 +2908,7 @@ class lesson extends lesson_base {
                 }
             }
             // Check for the gradebetterthan condition.
-            if ($conditions->gradebetterthan) {
+            if (!empty($conditions->gradebetterthan)) {
                 $gradebetterthan = false;
                 if ($studentgrades = $DB->get_records('lesson_grades', array("userid" => $USER->id, "lessonid" => $dependentlesson->id))) {
                     // Go through all the grades and test to see if any of them satisfy the condition.
@@ -2954,7 +2923,7 @@ class lesson extends lesson_base {
                 }
             }
             // Check for the completed condition.
-            if ($conditions->completed) {
+            if (!empty($conditions->completed)) {
                 if (!$DB->count_records('lesson_grades', array('userid' => $USER->id, 'lessonid' => $dependentlesson->id))) {
                     $errors[] = get_string('completederror', 'lesson');
                 }
@@ -4303,12 +4272,16 @@ abstract class lesson_page extends lesson_base {
                 } else if (!$result->isessayquestion) {
                     $class .= ' incorrect'; // CSS over-ride this if they exist (!important).
                 }
-                $options = new stdClass;
-                $options->noclean = true;
-                $options->para = true;
-                $options->overflowdiv = true;
-                $options->context = $context;
-                $options->attemptid = isset($attempt) ? $attempt->id : null;
+
+                $options = [
+                    'noclean' =>  true,
+                    'para' =>  true,
+                    'overflowdiv' =>  true,
+                    'context' =>  $context,
+                ];
+                $answeroptions = (object) array_merge($options, [
+                    'attemptid' => $attempt->id ?? null,
+                ]);
 
                 $result->feedback .= $OUTPUT->box(format_text($this->get_contents(), $this->properties->contentsformat, $options),
                         'generalbox boxaligncenter py-3');
@@ -4325,7 +4298,7 @@ abstract class lesson_page extends lesson_base {
 
                     foreach ($studentanswerresponse as $answer => $response) {
                         // Add a table row containing the answer.
-                        $studentanswer = $this->format_answer($answer, $context, $result->studentanswerformat, $options);
+                        $studentanswer = $this->format_answer($answer, $context, $result->studentanswerformat, $answeroptions);
                         $table->data[] = array($studentanswer);
                         // If the response exists, add a table row containing the response. If not, add en empty row.
                         if (!empty(trim($response))) {
@@ -4340,7 +4313,7 @@ abstract class lesson_page extends lesson_base {
                     }
                 } else {
                     // Add a table row containing the answer.
-                    $studentanswer = $this->format_answer($result->studentanswer, $context, $result->studentanswerformat, $options);
+                    $studentanswer = $this->format_answer($result->studentanswer, $context, $result->studentanswerformat, $answeroptions);
                     $table->data[] = array($studentanswer);
                     // If the response exists, add a table row containing the response. If not, add en empty row.
                     if (!empty(trim($result->response))) {
@@ -4370,7 +4343,6 @@ abstract class lesson_page extends lesson_base {
      * @return string Returns formatted string
      */
     public function format_answer($answer, $context, $answerformat, $options = []) {
-
         if (is_object($options)) {
             $options = (array) $options;
         }
@@ -4382,6 +4354,9 @@ abstract class lesson_page extends lesson_base {
         if (empty($options['para'])) {
             $options['para'] = true;
         }
+
+        // The attemptid is used by some plugins but is not a valid argument to format_text.
+        unset($options['attemptid']);
 
         return format_text($answer, $answerformat, $options);
     }

@@ -50,6 +50,17 @@ class manager {
     const ADHOC_TASK_QUEUE_MODE_FILLING = 1;
 
     /**
+     * @var int Used to set the retention period for adhoc tasks that have failed and to be cleaned up.
+     * The number is in week unit. The default value is 4 weeks.
+     */
+    const ADHOC_TASK_FAILED_RETENTION = 4 * WEEKSECS;
+
+    /**
+     * @var int Used for max retry.
+     */
+    const MAX_RETRY = 9;
+
+    /**
      * @var array A cached queue of adhoc tasks
      */
     public static $miniqueue;
@@ -229,6 +240,11 @@ class manager {
             $record->nextruntime = time() - 1;
         }
 
+        // Check if the task is allowed to be retried or not.
+        $record->attemptsavailable = $task->retry_until_success() ? self::MAX_RETRY : 1;
+        // Set the time the task was created.
+        $record->timecreated = time();
+
         // Check if the same task is already scheduled.
         if ($checkforexisting && self::task_is_scheduled($task)) {
             return false;
@@ -307,10 +323,10 @@ class manager {
         $record->faildelay = $task->get_fail_delay();
         $record->customdata = $task->get_custom_data_as_string();
         $record->userid = $task->get_userid();
-        $record->timecreated = time();
         $record->timestarted = $task->get_timestarted();
         $record->hostname = $task->get_hostname();
         $record->pid = $task->get_pid();
+        $record->attemptsavailable = $task->get_attempts_available();
 
         return $record;
     }
@@ -356,6 +372,9 @@ class manager {
         }
         if (isset($record->pid)) {
             $task->set_pid($record->pid);
+        }
+        if (isset($record->attemptsavailable)) {
+            $task->set_attempts_available($record->attemptsavailable);
         }
 
         return $task;
@@ -530,6 +549,7 @@ class manager {
                     'failed' => 0,
                     'running' => 0,
                     'due' => 0,
+                    'stop' => false,
                 ];
             }
 
@@ -549,6 +569,11 @@ class manager {
                 if ($nextruntime <= $now) {
                     $classsummary['due']++;
                 }
+            }
+
+            // Mark the task as stopped if it has no attempts available.
+            if (isset($r->attemptsavailable) && $r->attemptsavailable == 0) {
+                $classsummary['stop'] = true;
             }
 
             $summary[$r->component][$r->classname] = $classsummary;
@@ -778,6 +803,7 @@ class manager {
             'SELECT classname, COALESCE(COUNT(*), 0) running, MIN(timestarted) earliest
                FROM {task_adhoc}
               WHERE timestarted IS NOT NULL
+                    AND (attemptsavailable > 0 OR attemptsavailable IS NULL)
                     AND nextruntime < :timestart
            GROUP BY classname
            ORDER BY running ASC, earliest DESC',
@@ -932,10 +958,12 @@ class manager {
                        SELECT classname, COUNT(*) running, MIN(timestarted) earliest
                          FROM {task_adhoc} run
                         WHERE timestarted IS NOT NULL
+                              AND (attemptsavailable > 0 OR attemptsavailable IS NULL)
                      GROUP BY classname
                    ) run ON run.classname = q.classname
              WHERE nextruntime < :timestart
-                   AND q.timestarted IS NULL " .
+                   AND q.timestarted IS NULL
+                   AND (q.attemptsavailable > 0 OR q.attemptsavailable IS NULL) " .
             (!empty($pertasksql) ? "AND (" . $pertasksql . ") " : "") .
             ($runmax ? "AND (COALESCE(run.running, 0)) < :runmax " : "") .
          "ORDER BY COALESCE(run.running, 0) ASC, run.earliest DESC, q.nextruntime ASC, q.id ASC",
@@ -1106,6 +1134,9 @@ class manager {
         $task->set_pid();
         $task->set_next_run_time(time() + $delay);
         $task->set_fail_delay($delay);
+        if ($task->get_attempts_available() > 0) {
+            $task->set_attempts_available($task->get_attempts_available() - 1);
+        }
         $record = self::record_from_adhoc_task($task);
         $DB->update_record('task_adhoc', $record);
 
@@ -1516,10 +1547,38 @@ class manager {
             $command = "{$phpbinary} {$scriptpath} {$taskarg}";
 
             // Execute it.
-            passthru($command);
+            self::passthru_via_mtrace($command);
         }
 
         return true;
+    }
+
+    /**
+     * This behaves similar to passthru but filters every line via
+     * the mtrace function so it can be post processed.
+     *
+     * @param string $command to run
+     * @return void
+     */
+    public static function passthru_via_mtrace(string $command) {
+        $descriptorspec = [
+            0 => ['pipe', 'r'], // STDIN.
+            1 => ['pipe', 'w'], // STDOUT.
+            2 => ['pipe', 'w'], // STDERR.
+        ];
+        flush();
+        $process = proc_open($command, $descriptorspec, $pipes, realpath('./'));
+        if (is_resource($process)) {
+            while ($s = fgets($pipes[1])) {
+                mtrace($s, '');
+                flush();
+            }
+        }
+
+        fclose($pipes[0]);
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+        proc_close($process);
     }
 
     /**
@@ -1586,7 +1645,7 @@ class manager {
         }
 
         // Execute it.
-        passthru($command);
+        self::passthru_via_mtrace($command);
     }
 
     /**
@@ -1675,5 +1734,19 @@ class manager {
         }
 
         return null;
+    }
+
+    /**
+     * Clean up failed adhoc tasks.
+     */
+    public static function clean_failed_adhoc_tasks(): void {
+        global $CFG, $DB;
+        $difftime = !empty($CFG->task_adhoc_failed_retention) ?
+            $CFG->task_adhoc_failed_retention : static::ADHOC_TASK_FAILED_RETENTION;
+        $DB->delete_records_select(
+            table: 'task_adhoc',
+            select: 'attemptsavailable = 0 AND timestarted < :time',
+            params: ['time' => time() - $difftime],
+        );
     }
 }

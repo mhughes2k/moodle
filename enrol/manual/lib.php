@@ -655,6 +655,40 @@ class enrol_manual_plugin extends enrol_plugin {
         return true;
     }
 
+    /**
+     * Finds matching instances for a given course.
+     *
+     * @param array $enrolmentdata enrolment data.
+     * @param int $courseid Course ID.
+     * @return stdClass|null Matching instance
+     */
+    public function find_instance(array $enrolmentdata, int $courseid) : ?stdClass {
+
+        $instances = enrol_get_instances($courseid, false);
+        $instance = null;
+        foreach ($instances as $i) {
+            if ($i->enrol == 'manual') {
+                // There can be only one manual enrol instance so find first available.
+                $instance = $i;
+                break;
+            }
+        }
+        return $instance;
+    }
+
+    /**
+     * Fill custom fields data for a given enrolment plugin.
+     *
+     * @param array $enrolmentdata enrolment data.
+     * @param int $courseid Course ID.
+     * @return array Updated enrolment data with custom fields info.
+     */
+    public function fill_enrol_custom_fields(array $enrolmentdata, int $courseid): array {
+        return $enrolmentdata + [
+            'expirynotify' => 0,
+            'expirythreshold' => 0,
+        ];
+    }
 }
 
 /**

@@ -1783,9 +1783,11 @@ function enrol_get_course_by_user_enrolment_id($ueid) {
  * @param bool $onlyactive consider only active enrolments in enabled plugins and time restrictions
  * @param array $usersfilter Limit the results obtained to this list of user ids. $uefilter compatibility not guaranteed.
  * @param array $uefilter Limit the results obtained to this list of user enrolment ids. $usersfilter compatibility not guaranteed.
+ * @param array $usergroups Limit the results of users to the ones that belong to one of the submitted group ids.
  * @return stdClass[]
  */
-function enrol_get_course_users($courseid = false, $onlyactive = false, $usersfilter = array(), $uefilter = array()) {
+function enrol_get_course_users($courseid = false, $onlyactive = false, $usersfilter = [], $uefilter = [],
+                                $usergroups = []) {
     global $DB;
 
     if (!$courseid && !$usersfilter && !$uefilter) {
@@ -1826,6 +1828,16 @@ function enrol_get_course_users($courseid = false, $onlyactive = false, $usersfi
         list($uesql, $ueparams) = $DB->get_in_or_equal($uefilter, SQL_PARAMS_NAMED);
         $conditions[] = "ue.id $uesql";
         $params = $params + $ueparams;
+    }
+
+    // Only select enrolled users that belong to a specific group(s).
+    if (!empty($usergroups)) {
+        $usergroups = array_map(function ($item) { // Sanitize groupid to int to be save for sql.
+            return (int)$item;
+        }, $usergroups);
+        list($ugsql, $ugparams) = $DB->get_in_or_equal($usergroups, SQL_PARAMS_NAMED);
+        $conditions[] = 'ue.userid IN (SELECT userid FROM {groups_members} WHERE groupid ' . $ugsql . ')';
+        $params = $params + $ugparams;
     }
 
     return $DB->get_records_sql($sql . ' ' . implode(' AND ', $conditions), $params);
@@ -2162,9 +2174,10 @@ abstract class enrol_plugin {
         // Add users to a communication room.
         if (core_communication\api::is_available()) {
             $communication = \core_communication\api::load_by_instance(
-                'core_course',
-                'coursecommunication',
-                $courseid
+                context: $context,
+                component: 'core_course',
+                instancetype: 'coursecommunication',
+                instanceid: $courseid,
             );
             $communication->add_members_to_room([$userid]);
         }
@@ -2231,10 +2244,12 @@ abstract class enrol_plugin {
         // Add/remove users to/from communication room.
         if (core_communication\api::is_available()) {
             $course = enrol_get_course_by_user_enrolment_id($ue->id);
+            $context = \core\context\course::instance($course->id);
             $communication = \core_communication\api::load_by_instance(
-                'core_course',
-                'coursecommunication',
-                $course->id
+                context: $context,
+                component: 'core_course',
+                instancetype: 'coursecommunication',
+                instanceid: $course->id,
             );
             if (($statusmodified && ((int) $ue->status === 1)) ||
                     ($timeendmodified && $ue->timeend !== 0 && (time() > $ue->timeend))) {
@@ -2350,9 +2365,10 @@ abstract class enrol_plugin {
         // Remove users from a communication room.
         if (core_communication\api::is_available()) {
             $communication = \core_communication\api::load_by_instance(
-                'core_course',
-                'coursecommunication',
-                $courseid
+                context: $context,
+                component: 'core_course',
+                instancetype: 'coursecommunication',
+                instanceid: $courseid,
             );
             $communication->remove_members_from_room([$userid]);
         }
@@ -2691,6 +2707,9 @@ abstract class enrol_plugin {
     /**
      * Check if enrolment plugin is supported in csv course upload.
      *
+     * If supported, plugins are also encouraged to override methods:
+     * {@see self::fill_enrol_custom_fields()}, {@see self::validate_plugin_data_context()}
+     *
      * @return bool
      */
     public function is_csv_upload_supported(): bool {
@@ -2740,9 +2759,10 @@ abstract class enrol_plugin {
         }
 
         $communication = \core_communication\api::load_by_instance(
-            'core_course',
-            'coursecommunication',
-            $courseid
+            context: \core\context\course::instance($courseid),
+            component: 'core_course',
+            instancetype: 'coursecommunication',
+            instanceid: $courseid,
         );
 
         switch ($action) {
@@ -3468,7 +3488,10 @@ abstract class enrol_plugin {
     /**
      * Fill custom fields data for a given enrolment plugin.
      *
-     * @param array $enrolmentdata enrolment data.
+     * For example: resolve linked entities from the idnumbers (cohort, role, group, etc.)
+     * Also fill the default values that are not specified.
+     *
+     * @param array $enrolmentdata enrolment data received in CSV file in tool_uploadcourse
      * @param int $courseid Course ID.
      * @return array Updated enrolment data with custom fields info.
      */
@@ -3497,12 +3520,45 @@ abstract class enrol_plugin {
     /**
      * Check if plugin custom data is allowed in relevant context.
      *
+     * This is called from the tool_uploadcourse if the plugin supports instance creation in
+     * upload course ({@see self::is_csv_upload_supported()})
+     *
+     * The fallback is to call the edit_instance_validation() but it will be better if the plugins
+     * implement this method to return better error messages.
+     *
      * @param array $enrolmentdata enrolment data to validate.
      * @param int|null $courseid Course ID.
      * @return lang_string|null Error
      */
     public function validate_plugin_data_context(array $enrolmentdata, ?int $courseid = null) : ?lang_string {
+        if ($courseid) {
+            $enrolmentdata += ['courseid' => $courseid, 'id' => 0, 'status' => ENROL_INSTANCE_ENABLED];
+            $instance = (object)[
+                'id' => null,
+                'courseid' => $courseid,
+                'status' => $enrolmentdata['status'],
+                'type' => $this->get_name(),
+            ];
+            $formerrors = $this->edit_instance_validation($enrolmentdata, [], $instance, context_course::instance($courseid));
+            if (!empty($formerrors)) {
+                $errors = array_map(fn($key) => "{$key}: {$formerrors[$key]}", array_keys($formerrors));
+                return new lang_string('errorcannotcreateorupdateenrolment', 'tool_uploadcourse', $errors);
+            }
+        }
         return null;
     }
 
+    /**
+     * Finds matching instances for a given course.
+     *
+     * @param array $enrolmentdata enrolment data.
+     * @param int $courseid Course ID.
+     * @return stdClass|null Matching instance
+     */
+    public function find_instance(array $enrolmentdata, int $courseid) : ?stdClass {
+
+        // By default, we assume we can't uniquely identify an instance so better not update any.
+        // Plugins can override this if they can uniquely identify an instance.
+        return null;
+    }
 }
