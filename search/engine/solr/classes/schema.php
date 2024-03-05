@@ -110,7 +110,7 @@ class schema {
      * @return bool
      */
     public function setup($checkexisting = true) {
-        $fields = \search_solr\document::get_default_fields_definition();
+        $fields = \search_solrrag\document::get_default_fields_definition();
 
         // Field id is already there.
         unset($fields['id']);
@@ -223,7 +223,6 @@ class schema {
      */
     protected function validate_fields(&$fields, $requireexisting = false) {
         global $CFG;
-
         foreach ($fields as $fieldname => $data) {
             $url = $this->engine->get_connection_url('/schema/fields/' . $fieldname);
             $results = $this->curl->get($url);
@@ -323,7 +322,7 @@ class schema {
      * @param string $datatype
      * @return string
      */
-    private function doc_field_to_solr_field($datatype) {
+    protected function doc_field_to_solr_field($datatype) {
         $type = $datatype;
 
         $solrversion = $this->engine->get_solr_major_version();

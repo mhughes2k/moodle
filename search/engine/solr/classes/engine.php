@@ -1095,6 +1095,7 @@ class engine extends \core_search\engine {
 
         // A giant block of code that is really just error checking around the curl request.
         try {
+            $requesturl = $url->out(false);
             // We have to post the file directly in binary data (not using multipart) to avoid
             // Solr bug SOLR-15039 which can cause incorrect data when you use multipart upload.
             // Note this loads the whole file into memory; see limit in file_is_indexable().
@@ -1120,6 +1121,10 @@ class engine extends \core_search\engine {
                 // This is a common error, happening whenever a file fails to index for any reason, so we will make it quieter.
                 if (CLI_SCRIPT && !PHPUNIT_TEST) {
                     mtrace($message);
+                    if(debugging()) {
+                        mtrace($requesturl);
+                    }
+                    // Suspiciion that this fails due to the file contents being PDFs.
                 }
             } else {
                 // Check for the expected status field.
@@ -1301,10 +1306,10 @@ class engine extends \core_search\engine {
                 return get_string('minimumsolr4', 'search_solr');
             }
         } catch (\SolrClientException $ex) {
-            debugging('Solr client error: ' . html_to_text($ex->getMessage()), DEBUG_DEVELOPER);
+            debugging('Solr client error: ' . html_to_text($ex->getMessage(). " Server {$this->config->server_hostname}"), DEBUG_DEVELOPER);
             return get_string('engineserverstatus', 'search');
         } catch (\SolrServerException $ex) {
-            debugging('Solr server error: ' . html_to_text($ex->getMessage()), DEBUG_DEVELOPER);
+            debugging('Solr server error: ' . html_to_text($ex->getMessage() . " Server {$this->config->server_hostname}"), DEBUG_DEVELOPER);
             return get_string('engineserverstatus', 'search');
         }
 
