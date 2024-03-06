@@ -187,6 +187,7 @@ class document extends \core_search\document {
      * @return array
      */
     public function export_file_for_engine($file) {
+        debugging('Using solrrag\document');
         $data = $this->export_for_engine();
 
         // Content is index in the main document.
@@ -202,7 +203,7 @@ class document extends \core_search\document {
         $data['solr_fileindexstatus'] = self::INDEXED_FILE_TRUE;
         $data['title'] = $file->get_filename();
         $data['modified'] = self::format_time_for_engine($file->get_timemodified());
-
+        $data['solr_vector'] = 'Hello';
         return $data;
     }
 }
