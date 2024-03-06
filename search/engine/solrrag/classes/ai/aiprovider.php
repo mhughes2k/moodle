@@ -39,14 +39,19 @@ class AIProvider extends persistent {
     }
     public function embed_documents(array $documents) {
         // Go send the documents off to a back end and then return array of each document's vectors.
-        print_r($documents);
-        return [
-            [0.0053587136790156364,
-                -0.0004999046213924885,
-                0.038883671164512634,
-                -0.003001077566295862,
-                -0.00900818221271038]
-        ];
+        // But for the minute generate an array of fake vectors of a specific length.
+        $vectors = [];
+        foreach ($documents as $document) {
+            $vectors[] = $this->fake_vector(1356);
+        }
+        return $vectors;
+    }
+    private function fake_vector($length) {
+        $vector = [];
+        for ($i = 0; $i < $length; $i++) {
+            $vector[] = rand(0, 1);
+        }
+        return $vector;
     }
 
     /**
@@ -54,14 +59,8 @@ class AIProvider extends persistent {
      * @return array
      */
     public function embed_query($document): array {
-        print_r($document);
         // Send document to back end and return the vector
-        return [0.0053587136790156364,
-            -0.0004999046213924885,
-            0.038883671164512634,
-            -0.003001077566295862,
-            -0.00900818221271038
-        ];
+        return $this->fake_vector(1356);
     }
     /**
      * We're overriding this whilst we don't have a real DB table.
