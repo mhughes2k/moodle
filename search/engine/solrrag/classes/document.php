@@ -31,11 +31,15 @@ class document extends \search_solr\document {
             'indexed' => true,
             'mainquery' => true
         ),
-        'solr_vector' => [
-            'type' => 'knn_vector_10',
+        'solr_vector_1356' => [
+            'type' => 'knn_vector_1356', // this field def seems to be related to the size of the LLM embedding too :-(
             'stored' => true,
             'indexed' => true
-
+        ],
+        'solr_vector_3072' => [
+            'type' => 'knn_vector_3072', // this field def seems to be related to the size of the LLM embedding too :-(
+            'stored' => true,
+            'indexed' => true
         ]
     );
 

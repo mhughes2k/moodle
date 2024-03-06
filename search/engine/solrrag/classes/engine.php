@@ -74,16 +74,15 @@ class engine extends \search_solr\engine {
      */
     protected function add_stored_file($document, $storedfile)
     {
+        $embeddings = [];
         $filedoc = $document->export_file_for_engine($storedfile);
         /**
-         * Should we event attempt to get vectors.
+         * Should we even attempt to get vectors.
          */
         if (!is_null($this->embeddingprovider)) {
             // garnish $filedoc with the embedding vector. It would be nice if this could be done
             // via the export_file_for_engine() call above, that has no awareness of the engine.
             $embeddings = $this->embeddingprovider->embed_documents([$filedoc]);
-            $filedoc['solr_vector'] = "[". implode(",", $embeddings[0]) ."]";
-            print_r($filedoc);
         } else {
             // potentially warn that selected provider can't be used for
             // generating embeddings for RAG.
@@ -131,14 +130,18 @@ class engine extends \search_solr\engine {
 
         // This sets the true filename for Tika.
         $url->param('resource.name', $storedfile->get_filename());
-
+        $url->param('extractOnly', "true");
+//        $url->param("xpath", "/xhtml:html/xhtml:body/xhtml:div//node()");
         // A giant block of code that is really just error checking around the curl request.
         try {
             $requesturl = $url->out(false);
+
+            debugging($requesturl);
             // We have to post the file directly in binary data (not using multipart) to avoid
             // Solr bug SOLR-15039 which can cause incorrect data when you use multipart upload.
             // Note this loads the whole file into memory; see limit in file_is_indexable().
-            $result = $curl->post($url->out(false), $storedfile->get_content());
+            $result = $curl->post($requesturl, $storedfile->get_content());
+            //$url->out(false)
 
             $code = $curl->get_errno();
             $info = $curl->get_info();
@@ -175,6 +178,34 @@ class engine extends \search_solr\engine {
                         debugging($message, DEBUG_DEVELOPER);
                     } else {
                         // The document was successfully indexed.
+                        debugging("Got SOLR update/extract response");
+                        preg_match('/<str>(?<Content>.*)<\/str>/imsU', $result, $streamcontent);
+
+                        if ($streamcontent[1]!== 0) {
+                            $xmlcontent =  html_entity_decode($streamcontent[1]);
+                            $xml = simplexml_load_string($xmlcontent);
+                            $filedoc['content'] = (string)$xml->body->asXML();
+                            $metadata = $xml->head->meta;
+                            foreach($metadata as $meta) {
+                                $name = (string)$meta['name'];
+                                $content = (string)$meta['content'];
+                                if ($content != null) {
+                                    $filedoc[$name] = $content;
+                                } else {
+                                    $filedoc[$name] = "";
+
+                                }
+                            }
+                        }
+                        if (count($embeddings) > 0) {
+                            $vector = $embeddings[0];
+                            $vlength = count($vector);
+                            $vectorfield = "solr_vector_" . $vlength;
+                            $filedoc[$vectorfield] = $vector;
+                            debugging("Using vector field $vectorfield");
+                        }
+                        $this->add_solr_document($filedoc);
+                        exit("Goodbye");
                         return;
                     }
                 } else {
@@ -188,14 +219,43 @@ class engine extends \search_solr\engine {
             // There was an error, but we are not tracking per-file success, so we just continue on.
             debugging('Unknown exception while indexing file "' . $storedfile->get_filename() . '".', DEBUG_DEVELOPER);
         }
-
+        
         // If we get here, the document was not indexed due to an error. So we will index just the base info without the file.
         $filedoc['solr_fileindexstatus'] = document::INDEXED_FILE_ERROR;
+
         $this->add_solr_document($filedoc);
 
 
         // It would have been nice to use the underlying solr code, but its too tightly integrated
         // with talking to solr.
         //return parent::add_stored_file($document, $storedfile);
+    }
+
+
+    protected function create_solr_document(array $doc): \SolrInputDocument {
+        $solrdoc = new \SolrInputDocument();
+
+        // Replace underlines in the content with spaces. The reason for this is that for italic
+        // text, content_to_text puts _italic_ underlines. Solr treats underlines as part of the
+        // word, which means that if you search for a word in italic then you can't find it.
+        if (array_key_exists('content', $doc)) {
+            $doc['content'] = self::replace_underlines($doc['content']);
+        }
+
+        // Set all the fields.
+        foreach ($doc as $field => $value) {
+            if (is_null($value)) {
+                continue;
+            }
+            if (is_array($value)) {
+                foreach ($value as $v) {
+                    $solrdoc->addField($field, $v);
+                }
+                continue;
+            }
+            $solrdoc->addField($field, $value);
+        }
+
+        return $solrdoc;
     }
 }

@@ -1,0 +1,2617 @@
+Running full reindex of site
+============================
+Processing area: Text block content
+  No new documents to index.
+Processing area: Courses
+  Processed 5 records containing 5 documents (1 batch), in 0.4 seconds.
+Processing area: Course custom fields
+  No new documents to index.
+Processing area: Course sections
+  No new documents to index.
+Processing area: Messages - received
+  No new documents to index.
+Processing area: Messages - sent
+  No new documents to index.
+Processing area: Course Teacher
+  No new documents to index.
+Processing area: Users
+  Processed 103 records containing 103 documents (2 batches), in 0.5 seconds.
+Processing area: Assignment - activity information
+  Processed 22 records containing 22 documents (1 batch), in 0.2 seconds.
+Processing area: Attendance - activity information
+  Processed 1 records containing 1 documents, in 0.1 seconds.
+Processing area: BigBlueButton - activity information
+  No new documents to index.
+Processing area: BigBlueButton - tags information
+  No new documents to index.
+Processing area: Book - resource information
+  No new documents to index.
+Processing area: Book - chapters
+  No new documents to index.
+Processing area: Chat - activity information
+  No new documents to index.
+Processing area: Choice - activity information
+  No new documents to index.
+Processing area: Database - activity information
+  No new documents to index.
+Processing area: Database - entries
+  No new documents to index.
+Processing area: Feedback - activity information
+  No new documents to index.
+Processing area: Folder
+Array
+(
+    [0] => Array
+        (
+            [areaid] => mod_folder-activity
+            [id] => mod_folder-activity-1-solrfile287
+            [itemid] => 1
+            [title] => Assessment_and_Feedback_Policy.pdf
+            [contextid] => 268
+            [courseid] => 4
+            [owneruserid] => 0
+            [modified] => 2024-03-04T17:17:08Z
+            [type] => 2
+            [solr_filegroupingid] => mod_folder-activity-1
+            [solr_fileid] => 287
+            [solr_filecontenthash] => 6de274633203c03b996b248e841f2a1f17cdb537
+            [solr_fileindexstatus] => 1
+            [solr_vector] => 
+        )
+
+)
+++ http://172.22.0.6:8983/solr/moodle/update/extract?wt=xml&uprefix=ignored_&captureAttr=true&fmap.content=solr_filecontent&fmap.media_white_point=ignored_mwp&fmap.media_black_point=ignored_mbp&fmap.areaid=ignored_areaid&literal.mdltmp_areaid=mod_folder-activity&fmap.mdltmp_areaid=areaid&fmap.id=ignored_id&literal.mdltmp_id=mod_folder-activity-1-solrfile287&fmap.mdltmp_id=id&fmap.itemid=ignored_itemid&literal.mdltmp_itemid=1&fmap.mdltmp_itemid=itemid&fmap.title=ignored_title&literal.mdltmp_title=Assessment_and_Feedback_Policy.pdf&fmap.mdltmp_title=title&fmap.contextid=ignored_contextid&literal.mdltmp_contextid=268&fmap.mdltmp_contextid=contextid&fmap.courseid=ignored_courseid&literal.mdltmp_courseid=4&fmap.mdltmp_courseid=courseid&fmap.owneruserid=ignored_owneruserid&literal.mdltmp_owneruserid=0&fmap.mdltmp_owneruserid=owneruserid&fmap.modified=ignored_modified&literal.mdltmp_modified=2024-03-04T17%3A17%3A08Z&fmap.mdltmp_modified=modified&fmap.type=ignored_type&literal.mdltmp_type=2&fmap.mdltmp_type=type&fmap.solr_filegroupingid=ignored_solr_filegroupingid&literal.mdltmp_solr_filegroupingid=mod_folder-activity-1&fmap.mdltmp_solr_filegroupingid=solr_filegroupingid&fmap.solr_fileid=ignored_solr_fileid&literal.mdltmp_solr_fileid=287&fmap.mdltmp_solr_fileid=solr_fileid&fmap.solr_filecontenthash=ignored_solr_filecontenthash&literal.mdltmp_solr_filecontenthash=6de274633203c03b996b248e841f2a1f17cdb537&fmap.mdltmp_solr_filecontenthash=solr_filecontenthash&fmap.solr_fileindexstatus=ignored_solr_fileindexstatus&literal.mdltmp_solr_fileindexstatus=1&fmap.mdltmp_solr_fileindexstatus=solr_fileindexstatus&fmap.solr_vector=ignored_solr_vector&literal.mdltmp_solr_vector&fmap.mdltmp_solr_vector=solr_vector&resource.name=Assessment_and_Feedback_Policy.pdf&extractOnly=true ++
+* line 142 of /search/engine/solrrag/classes/engine.php: call to debugging()
+* line 970 of /search/engine/solr/classes/engine.php: call to search_solrrag\engine->add_stored_file()
+* line 776 of /search/engine/solr/classes/engine.php: call to search_solr\engine->process_document_files()
+* line 318 of /search/classes/engine.php: call to search_solr\engine->add_document_batch()
+* line 1283 of /search/classes/manager.php: call to core_search\engine->add_documents()
+* line 108 of /search/cli/indexer.php: call to core_search\manager->index()
+++ Got SOLR update/extract response ++
+* line 184 of /search/engine/solrrag/classes/engine.php: call to debugging()
+* line 970 of /search/engine/solr/classes/engine.php: call to search_solrrag\engine->add_stored_file()
+* line 776 of /search/engine/solr/classes/engine.php: call to search_solr\engine->process_document_files()
+* line 318 of /search/classes/engine.php: call to search_solr\engine->add_document_batch()
+* line 1283 of /search/classes/manager.php: call to core_search\engine->add_documents()
+* line 108 of /search/cli/indexer.php: call to core_search\manager->index()
+<?xml version="1.0" encoding="UTF-8"?>
+<response>
+
+<lst name="responseHeader">
+  <int name="status">0</int>
+  <int name="QTime">64</int>
+</lst>
+<str>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;html xmlns="http://www.w3.org/1999/xhtml"&gt;
+&lt;head&gt;
+&lt;meta name="date"
+content="2019-05-29T13:52:29Z"/&gt;
+&lt;meta name="pdf:PDFVersion"
+content="1.5"/&gt;
+&lt;meta name="xmp:CreatorTool"
+            content="Acrobat PDFMaker 15 for Word"/&gt;
+&lt;meta
+name="pdf:docinfo:title"
+            content="Assessment and Feedback Policy"/&gt;
+&lt;meta
+name="Company" content="University of Strathclyde"/&gt;
+&lt;meta
+name="stream_content_type" content="application/json"/&gt;
+&lt;meta
+name="pdf:hasXFA" content="false"/&gt;
+&lt;meta
+name="access_permission:can_print_degraded" content="true"/&gt;
+&lt;meta
+name="subject" content="Version 1.2"/&gt;
+&lt;meta name="language"
+content="EN-GB"/&gt;
+&lt;meta name="dc:format"
+            content="application/pdf; version=1.5"/&gt;
+&lt;meta
+name="pdf:docinfo:creator_tool"
+            content="Acrobat PDFMaker 15 for Word"/&gt;
+&lt;meta
+name="access_permission:fill_in_form" content="true"/&gt;
+&lt;meta
+name="pdf:encrypted" content="false"/&gt;
+&lt;meta name="dc:title"
+            content="Assessment and Feedback Policy"/&gt;
+&lt;meta
+name="xmp:CreateDate" content="2019-05-29T14:52:24Z"/&gt;
+&lt;meta
+name="modified" content="2019-05-29T13:52:29Z"/&gt;
+&lt;meta
+name="pdf:docinfo:custom:SourceModified"
+content="D:20190528113809"/&gt;
+&lt;meta name="cp:subject"
+content="Version 1.2"/&gt;
+&lt;meta name="pdf:docinfo:subject"
+            content="Version 1.2"/&gt;
+&lt;meta
+name="pdf:docinfo:custom:_TemplateID" content="TC017730709991"/&gt;
+&lt;meta
+name="pdf:hasMarkedContent" content="true"/&gt;
+&lt;meta name="xmp:ModifyDate"
+            content="2019-05-29T14:52:29Z"/&gt;
+&lt;meta
+name="pdf:docinfo:creator" content="Ashley"/&gt;
+&lt;meta name="meta:author"
+content="Ashley"/&gt;
+&lt;meta name="meta:creation-date"
+content="2019-05-29T13:52:24Z"/&gt;
+&lt;meta name="created"
+            content="2019-05-29T13:52:24Z"/&gt;
+&lt;meta
+name="access_permission:extract_for_accessibility"
+content="true"/&gt;
+&lt;meta name="Creation-Date"
+content="2019-05-29T13:52:24Z"/&gt;
+&lt;meta name="resourceName"
+            content="Assessment_and_Feedback_Policy.pdf"/&gt;
+&lt;meta
+name="Author" content="Ashley"/&gt;
+&lt;meta name="producer"
+            content="Adobe PDF Library 15.0"/&gt;
+&lt;meta
+name="pdf:docinfo:producer" content="Adobe PDF Library 15.0"/&gt;
+&lt;meta
+name="_TemplateID" content="TC017730709991"/&gt;
+&lt;meta
+name="dc:description" content="Version 1.2"/&gt;
+&lt;meta
+name="access_permission:modify_annotations" content="true"/&gt;
+&lt;meta
+name="dc:creator" content="Ashley"/&gt;
+&lt;meta name="description"
+content="Version 1.2"/&gt;
+&lt;meta name="dcterms:created"
+content="2019-05-29T13:52:24Z"/&gt;
+&lt;meta name="Last-Modified"
+            content="2019-05-29T13:52:29Z"/&gt;
+&lt;meta
+name="dcterms:modified" content="2019-05-29T13:52:29Z"/&gt;
+&lt;meta
+name="xmpMM:DocumentID"
+            content="uuid:19d0024b-2633-4ae5-a2f5-e0f1b491b856"/&gt;
+&lt;meta
+name="Last-Save-Date" content="2019-05-29T13:52:29Z"/&gt;
+&lt;meta
+name="pdf:docinfo:modified" content="2019-05-29T13:52:29Z"/&gt;
+&lt;meta
+name="meta:save-date" content="2019-05-29T13:52:29Z"/&gt;
+&lt;meta
+name="Content-Type" content="application/pdf"/&gt;
+&lt;meta name="stream_size"
+content="101489"/&gt;
+&lt;meta name="xmp:MetadataDate"
+content="2019-05-29T14:52:29Z"/&gt;
+&lt;meta name="X-Parsed-By"
+            content="org.apache.tika.parser.DefaultParser"/&gt;
+&lt;meta
+name="X-Parsed-By"
+            content="org.apache.tika.parser.pdf.PDFParser"/&gt;
+&lt;meta
+name="creator" content="Ashley"/&gt;
+&lt;meta name="dc:language"
+content="EN-GB"/&gt;
+&lt;meta name="pdf:producer"
+            content="Adobe PDF Library 15.0"/&gt;
+&lt;meta
+name="access_permission:assemble_document" content="true"/&gt;
+&lt;meta
+name="xmpTPg:NPages" content="9"/&gt;
+&lt;meta name="pdf:hasXMP"
+            content="true"/&gt;
+&lt;meta
+name="access_permission:extract_content" content="true"/&gt;
+&lt;meta
+name="pdf:docinfo:custom:Company"
+            content="University of Strathclyde"/&gt;
+&lt;meta
+name="access_permission:can_print" content="true"/&gt;
+&lt;meta
+name="SourceModified" content="D:20190528113809"/&gt;
+&lt;meta
+name="access_permission:can_modify" content="true"/&gt;
+&lt;meta
+name="pdf:docinfo:created" content="2019-05-29T13:52:24Z"/&gt;
+&lt;title&gt;Assessment and Feedback Policy&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+        &lt;div class="page"&gt;
+
+&lt;p/&gt;
+&lt;p&gt; 
+&lt;/p&gt;
+&lt;p&gt; 
+&lt;/p&gt;
+&lt;p&gt; 
+&lt;/p&gt;
+&lt;p&gt; ASSESSMENT AND 
+FEEDBACK POLICY 
+&lt;/p&gt;
+&lt;p&gt; 
+&lt;/p&gt;
+&lt;p&gt;Version No. Description Author Approval Effective Date 
+&lt;/p&gt;
+&lt;p&gt;1.2 Assessment and 
+&lt;/p&gt;
+&lt;p&gt;Feedback Policy – 
+&lt;/p&gt;
+&lt;p&gt;applicable to both 
+&lt;/p&gt;
+&lt;p&gt;undergraduate and 
+&lt;/p&gt;
+&lt;p&gt;postgraduate taught 
+&lt;/p&gt;
+&lt;p&gt;courses 
+&lt;/p&gt;
+&lt;p&gt;Assessment 
+&lt;/p&gt;
+&lt;p&gt;and 
+&lt;/p&gt;
+&lt;p&gt;Feedback 
+&lt;/p&gt;
+&lt;p&gt;Working 
+&lt;/p&gt;
+&lt;p&gt;Group 
+&lt;/p&gt;
+&lt;p&gt;Senate From academic 
+&lt;/p&gt;
+&lt;p&gt;year 2019-20 
+&lt;/p&gt;
+&lt;p&gt; Version 1.2 
+&lt;/p&gt;
+&lt;p&gt; 
+ 
+the place of useful learning  
+The University of Strathclyde is a charitable body, registered in 
+Scotland, number SC015263 
+&lt;/p&gt;
+&lt;p&gt; 
+&lt;/p&gt;
+&lt;p&gt; 
+ 
+  &lt;/p&gt;
+&lt;p/&gt;
+&lt;/div&gt;
+&lt;div class="page"&gt;
+
+&lt;p/&gt;
+&lt;p&gt;  Assessment and Feedback Policy 
+&lt;/p&gt;
+&lt;p&gt;   1 
+&lt;/p&gt;
+&lt;p&gt; 
+&lt;/p&gt;
+&lt;p&gt;1. RATIONALE 
+&lt;/p&gt;
+&lt;p&gt;In higher education, “assessment” describes any process that involves the evaluation or 
+appraisal of a student’s knowledge, understanding, skills, attitudes or abilities. In line with the 
+QAA UK Quality Code for Higher Education, assessment is taken to be an integral component 
+of teaching and learning, and serves multiple purposes. In addition to enabling evaluation and 
+measurement of students’ learning, effective assessment shapes and enhances student 
+learning. Assessments should therefore be designed to facilitate students’ attainment of 
+intended learning outcomes, and permit the measurement of such attainments against explicit 
+criteria. A holistic approach to assessment at course level can also support the development of 
+distinctive Strathclyde graduate attributes: graduates that are engaged, enquiring, enterprising, 
+and ethically and globally aware. Recent publications on assessment and feedback in higher 
+education suggest a ‘transformation’ is required to ensure that assessment and feedback 
+practices enable students to develop such attributes and the skills needed to be lifelong 
+learners in the 21st century.1  
+&lt;/p&gt;
+&lt;p&gt;This approach recognises that assessment is central to learning and teaching, and is not 
+designed solely to measure student learning. Also essential to enhancing learning, is the 
+provision of continuous feedback to students on their learning; it is recognised that feedback 
+takes different forms (e.g. replies to posts on a discussion forum), but in relation to assessment, 
+useful feedback is feedback that is specific in informing learners the extent to which they have 
+met published assessment criteria, and explains to them what they need to do to improve. 
+Ensuring feedback is clear, specific, and adopts a supportive tone is most likely to foster 
+student engagement with feedback. The role of feedback in effectively supporting student 
+learning should be recognised at the assessment design stage, where factors such as the 
+timing of the release of feedback and the scheduling of subsequent assessments are 
+considered (particularly where feedback can be used by students to improve the development 
+of future work), as well as the provision of opportunities for students to clarify feedback.  
+&lt;/p&gt;
+&lt;p&gt;The University expects that feedback will normally be returned to students within 15 working 
+days of assessment submission2. The University’s VLE, Myplace, provides a platform for the 
+electronic return of grades and feedback, and where permitted by the nature of an assessment, 
+staff are expected to implement the submission of assessments online through Myplace, in 
+order to promote effectiveness and efficiency in each stage of the assessment and feedback 
+process. In addition, Myplace should be used to manage assessments that are submitted offline 
+in order to implement the Policy and Procedure on Extensions to Coursework Submission and 
+Procedures for the Recording and Publication of Marks. Staff should also be cognisant of 
+specific issues relevant to equality, diversity and inclusion in designing assessments and 
+providing feedback, which may affect particular groups of students.3  
+&lt;/p&gt;
+&lt;p&gt;                                              
+1 For example: Boud, D. &amp;amp; Falachikov, N. (Eds.). (2007). Rethinking Assessment in Higher Education. Oxon: 
+Routledge; Higher Education Academy. (2012). A Marked Improvement. Transforming assessment in higher 
+education. York: The Higher Education Academy; Merry, S., Price, M., Carless, D. &amp;amp; Taras, M. (Eds.). (2013). 
+Reconceptualising Feedback in Higher Education. Developing Dialogue with Students. Oxon: Routledge; 
+Carless, D. (2015). Excellence in university assessment: learning from award-winning practice. London: 
+Routledge. 
+2 Exceptions to this are dissertations or assessments with credit weightings of 40 credits or higher, and where 
+double marking is required. (See the Policy on Moderation and Double Marking).  
+3 Staff are advised to consult the University’s equality impact assessment information where relevant.   &lt;/p&gt;
+&lt;p/&gt;
+&lt;div class="annotation"&gt;
+                &lt;a href="https://www.qaa.ac.uk/quality-code/advice-and-guidance/assessment"&gt;https://www.qaa.ac.uk/quality-code/advice-and-guidance/assessment&lt;/a&gt;
+&lt;/div&gt;
+&lt;div class="annotation"&gt;
+                &lt;a href="https://www.strath.ac.uk/equalitydiversity/eia/"&gt;https://www.strath.ac.uk/equalitydiversity/eia/&lt;/a&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class="page"&gt;
+
+&lt;p/&gt;
+&lt;p&gt;  Assessment and Feedback Policy 
+&lt;/p&gt;
+&lt;p&gt;   2 
+&lt;/p&gt;
+&lt;p&gt; 
+&lt;/p&gt;
+&lt;p&gt;Previous work on assessment at Strathclyde (through the Re-Engineering Assessment 
+Practices4 and Peer Evaluation in Education Review5  projects, together with the work on Peer 
+and Community Personal Development Planning), have emphasised the importance of 
+providing students with opportunities to self- and peer-assess, and for students to develop the 
+capacity to evaluate, reflect on6 and manage their own learning through the effective use of 
+feedback. Published research also highlights the importance of developing students’ 
+understanding of the criteria and standards by which their work is assessed, and suggests that 
+providing students with the opportunity to analyse and discuss the qualities of carefully selected 
+exemplars is an effective learning activity to achieve this7. It is widely recognised that these will, 
+in the long-term, help develop attitudes and skills that foster engagement and independence in 
+learning.  
+ 
+The aim of the current policy is to develop an institution-wide approach to assessment and 
+feedback that enhances the effectiveness of assessment in aiding students to achieve the 
+necessary knowledge and skills described in a class or programme’s intended learning 
+outcomes. The policy is underpinned by principles of assessment and feedback (outlined in 
+section 3) that reflect this aim and a commitment to ensuring our assessment and feedback 
+practices are fair, transparent, and continuously reviewed. In short, to ensure they continue to 
+be fit for purpose. This policy should be adhered to across the University. The implementation 
+of the policy will be monitored by the Quality Assurance Committee. 
+&lt;/p&gt;
+&lt;p&gt; 
+2. SCOPE  
+&lt;/p&gt;
+&lt;p&gt;This policy applies to all undergraduate and postgraduate taught programmes offered by the 
+University. This policy should be read in conjunction with other relevant University policies and 
+procedures. The University website contains policies and procedures on a range of 
+assessment-related matters, including: ensuring equality, guidance for staff on supporting 
+students with a disability, guides for staff marking assessments in undergraduate and 
+postgraduate taught courses, guidance for students and staff on avoiding plagiarism, guidance 
+for staff in dealing with possible cases of plagiarism, policies on classifying honours degrees 
+and other degree awards, and on awarding motivational merit and distinction, guidance on the 
+compensation scheme, the role of external examiners in taught courses, the procedure for 
+dealing with student discipline cases, guidance for staff on the appeals procedure and 
+accounting for students’ personal circumstances. 
+&lt;/p&gt;
+&lt;p&gt; 
+&lt;/p&gt;
+&lt;p&gt; 
+&lt;/p&gt;
+&lt;p&gt; 
+                                              
+4 REAP Project, accessed at http://www.reap.ac.uk/ 
+5 PEER Project, accessed from: http://www.reap.ac.uk/PEER.aspx. The site contains a PEER toolkit 
+containing guidance for staff on using peer review. 
+6 Winstone, N. &amp;amp; Nash. R. (2016). The Developing Engagement with Feedback Toolkit (DEFT). The Higher 
+Education Academy. https://www.heacademy.ac.uk/knowledge-hub/developing-engagement-feedback-toolkit-
+deft 
+7 Carless, D. &amp;amp; Boud, D. (2018): The development of student feedback literacy: enabling uptake of feedback, 
+Assessment &amp;amp; Evaluation in Higher Education, DOI: 10.1080/02602938.2018.1463354 &lt;/p&gt;
+&lt;p/&gt;
+&lt;div class="annotation"&gt;
+                &lt;a href="http://www.strath.ac.uk/staff/policies/academic/"&gt;http://www.strath.ac.uk/staff/policies/academic/&lt;/a&gt;
+&lt;/div&gt;
+&lt;div class="annotation"&gt;
+                &lt;a href="http://www.reap.ac.uk/"&gt;http://www.reap.ac.uk/&lt;/a&gt;
+&lt;/div&gt;
+&lt;div class="annotation"&gt;
+                &lt;a href="http://www.reap.ac.uk/PEER.aspx"&gt;http://www.reap.ac.uk/PEER.aspx&lt;/a&gt;
+&lt;/div&gt;
+&lt;div class="annotation"&gt;
+                &lt;a href="https://www.heacademy.ac.uk/knowledge-hub/developing-engagement-feedback-toolkit-deft"&gt;https://www.heacademy.ac.uk/knowledge-hub/developing-engagement-feedback-toolkit-deft&lt;/a&gt;
+&lt;/div&gt;
+&lt;div class="annotation"&gt;
+                &lt;a href="https://www.heacademy.ac.uk/knowledge-hub/developing-engagement-feedback-toolkit-deft"&gt;https://www.heacademy.ac.uk/knowledge-hub/developing-engagement-feedback-toolkit-deft&lt;/a&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class="page"&gt;
+
+&lt;p/&gt;
+&lt;p&gt;  Assessment and Feedback Policy 
+&lt;/p&gt;
+&lt;p&gt;   3 
+&lt;/p&gt;
+&lt;p&gt; 
+&lt;/p&gt;
+&lt;p&gt;3. ASSESSMENT AND FEEDBACK PRINCIPLES 
+ 
+&lt;/p&gt;
+&lt;p&gt;These principles have been widely consulted on across the University, and must be adhered to 
+throughout the institution.  
+&lt;/p&gt;
+&lt;p&gt;PRINCIPLE 1. ASSESSMENT AND FEEDBACK PRACTICES PROMOTE EFFECTIVE 
+STUDENT LEARNING 
+&lt;/p&gt;
+&lt;p&gt;1.1 Assessment and feedback activities are designed to foster student engagement, to 
+support and measure students’ attainment of knowledge, understanding, and 
+transferable skills.  
+&lt;/p&gt;
+&lt;p&gt;1.2 A range of assessment methods are used, increasing in complexity across a 
+programme, and taking into consideration student and staff workloads. 
+&lt;/p&gt;
+&lt;p&gt;1.3 Assessment and feedback practices align with intended learning outcomes and 
+assessment criteria, and provide opportunities for students to be active participants in 
+the process, including opportunities for students to discuss feedback. 
+&lt;/p&gt;
+&lt;p&gt;1.4 Timely, constructive, and supportive feedback helps students understand the extent to 
+which they have fulfilled the assessment criteria, and supports students to use their 
+feedback in the development of subsequent work.  
+&lt;/p&gt;
+&lt;p&gt;1.5 The timing of assessments and return of feedback should be scheduled to enable 
+students to use feedback to inform their approach to subsequent assessments. The 
+release of feedback should consider the ability of students to gain further feedback and 
+support, and avoid release in close proximity to periods where the university is closed 
+&lt;/p&gt;
+&lt;p&gt;1.6 Where examinations are used, students should receive at least general feedback soon 
+after the examination. Students who wish to view their exam scripts following the 
+provision of general feedback should be facilitated to do so under supervision of staff. 
+&lt;/p&gt;
+&lt;p&gt;PRINCIPLE 2. ASSESSMENT AND FEEDBACK PRACTICES ARE APPROPRIATE, FAIR, 
+AND TRANSPARENT 
+&lt;/p&gt;
+&lt;p&gt;2.1 Assessment tasks are appropriate to disciplinary and/or professional contexts. 
+2.2 Assessment applies rigorous academic standards related to and across, the discipline(s) 
+&lt;/p&gt;
+&lt;p&gt;or professional context and is based on clearly defined assessment criteria. 
+2.3 Assessment grading and feedback is based solely on students’ achievement against 
+&lt;/p&gt;
+&lt;p&gt;criteria and standards. 
+2.4 Assessment and feedback practices are fair, inclusive and accessible to all students. 
+&lt;/p&gt;
+&lt;p&gt;PRINCIPLE 3. ASSESSMENT AND FEEDBACK PRACTICES ARE CLEARLY 
+COMMUNICATED TO STUDENTS AND STAFF 
+&lt;/p&gt;
+&lt;p&gt;3.1 Students must be made aware at the beginning of a class of the details of assessments, 
+including the purpose, weighting, and timing of assessment. 
+&lt;/p&gt;
+&lt;p&gt;3.2 Students must be made aware at the beginning of a class of the nature and timing of 
+feedback. Where unexpected problems cause a delay in the return of feedback within 15 
+working days, an explanation will be provided to students, along with a new date for the 
+return of feedback. 
+&lt;/p&gt;
+&lt;p&gt;3.3 All students and staff are made aware at the start of a class of the criteria and standards 
+used to assess and provide feedback on students’ work. &lt;/p&gt;
+&lt;p/&gt;
+&lt;/div&gt;
+&lt;div class="page"&gt;
+
+&lt;p/&gt;
+&lt;p&gt;  Assessment and Feedback Policy 
+&lt;/p&gt;
+&lt;p&gt;   4 
+&lt;/p&gt;
+&lt;p&gt; 
+&lt;/p&gt;
+&lt;p&gt;3.4 Students must be made aware of relevant policies and procedures around academic 
+honesty in assessment, and of procedures associated with personal circumstances, 
+extensions to the deadlines of coursework, and late submission of coursework. 
+&lt;/p&gt;
+&lt;p&gt;3.5 There are opportunities for students and staff to engage in a dialogue around 
+assessment and feedback, including opportunities for students to clarify feedback. 
+&lt;/p&gt;
+&lt;p&gt;3.6 In each programme the processes for marking, moderation, and feedback are 
+appropriate and fair and are explained to students and staff. 
+&lt;/p&gt;
+&lt;p&gt;PRINCIPLE 4. ASSESSMENT AND FEEDBACK PRACTICES ARE CONTINUOUSLY 
+REVIEWED  
+&lt;/p&gt;
+&lt;p&gt;4.1 The timing of assessment activities at cohort level, including the timing of examinations, 
+are monitored and reviewed, in order to minimise bunching.  
+&lt;/p&gt;
+&lt;p&gt;4.2 Assessment and feedback activities, and the outcomes of assessment, are reviewed via 
+the class and course approval and/or review processes, and external examining 
+processes. 
+&lt;/p&gt;
+&lt;p&gt;4.3 Assessment and feedback activities are continuously reviewed to ensure effective 
+alignment with a programme’s intended learning outcomes and graduate attributes. 
+&lt;/p&gt;
+&lt;p&gt;4.4 Opportunities to develop effective practice and innovation in assessment and feedback 
+are available to all staff involved in assessment. 
+&lt;/p&gt;
+&lt;p&gt; 
+4. ANONYMOUS MARKING 
+&lt;/p&gt;
+&lt;p&gt;4.1 Anonymous marking (when the identity of a student is not known to a marker and/or exam 
+board) will be used for all assessments wherever possible and appropriate, including formal 
+written examinations at both undergraduate and postgraduate levels. 
+&lt;/p&gt;
+&lt;p&gt;4.2 Where anonymous marking is not possible, for example where an alternative method of 
+assessment has been used for a student with a disability, additional scrutiny by a second 
+marker may be appropriate.  
+&lt;/p&gt;
+&lt;p&gt;4.3 Other exceptions will be where the mode of assessment (e.g., presentations or oral 
+examinations) prevents anonymity, or where there is pedagogical justification (e.g., the use 
+of ipsative feedback).  
+&lt;/p&gt;
+&lt;p&gt;4.4 Double marking is effective practice for assessments that are not marked anonymously and 
+for dissertations, or comparable assessments. 
+&lt;/p&gt;
+&lt;p&gt; 
+5. RESPONSIBILITIES FOR IMPLEMENTATION 
+&lt;/p&gt;
+&lt;p&gt;5.1 The University assumes responsibility for:  
+- Providing staff with opportunities to develop effective practice in assessment and 
+&lt;/p&gt;
+&lt;p&gt;feedback through the Organisational Staff and Development Unit (Strathclyde Teaching 
+Excellence Programme) Education Enhancement (the University’s VLE, Myplace offers 
+various tools to support effective practice in assessment and feedback, including 
+handling peer review/assessment activities, online assessment submission and return of 
+feedback, and enabling efficient communication with different student and staff groups; 
+the Sharing Practice in Enhancing Learning and Teaching (SPELT) platform, and &lt;/p&gt;
+&lt;p/&gt;
+&lt;div class="annotation"&gt;
+                &lt;a href="https://www.strath.ac.uk/hr/learninganddevelopment/step/"&gt;https://www.strath.ac.uk/hr/learninganddevelopment/step/&lt;/a&gt;
+&lt;/div&gt;
+&lt;div class="annotation"&gt;
+                &lt;a href="https://www.strath.ac.uk/hr/learninganddevelopment/step/"&gt;https://www.strath.ac.uk/hr/learninganddevelopment/step/&lt;/a&gt;
+&lt;/div&gt;
+&lt;div class="annotation"&gt;
+                &lt;a href="http://spelt.strath.ac.uk/pages/viewpage.action;jsessionid=01EB624BAAB6873613854F3DC2EE7433?pageId=8979188"&gt;http://spelt.strath.ac.uk/pages/viewpage.action;jsessionid=01EB624BAAB6873613854F3DC2EE7433?pageId=8979188&lt;/a&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class="page"&gt;
+
+&lt;p/&gt;
+&lt;p&gt;  Assessment and Feedback Policy 
+&lt;/p&gt;
+&lt;p&gt;   5 
+&lt;/p&gt;
+&lt;p&gt; 
+&lt;/p&gt;
+&lt;p&gt;TESTA), the Disability and Wellbeing Service (for ensuring assessments are accessible 
+to all students), and the Equality and Diversity Office;  
+&lt;/p&gt;
+&lt;p&gt;- Providing adequate resources, including information technology systems, to support 
+effective practice (Information Services Directorate, Student Business, Education 
+Enhancement); and 
+&lt;/p&gt;
+&lt;p&gt;- Monitoring implementation of this policy through the Quality Assurance Committee 
+(Education Enhancement). 
+&lt;/p&gt;
+&lt;p&gt;5.2 Faculties are responsible for: overseeing and receiving reports from programme exam 
+boards; scrutinising external examiners’ reports and responding to them; ensuring 
+consistency in the implementation of this and other related policies across programmes, 
+and sharing effective practice within and between faculties. 
+&lt;/p&gt;
+&lt;p&gt;5.3 Heads of Department/School are responsible for: instructing colleagues within their 
+Department/School to note and adhere to the Assessment and Feedback Policy and 
+Procedures for Recording and Publication of Marks, Procedures on Preparing and 
+Conducting Exams, and other related policies such as the Policy on the Late Submission of 
+Coursework, Policy on Extensions to Coursework Submission, the Policy on Moderation 
+and Double Marking, and Guidance on Marking Assessments in Undergraduate and 
+Postgraduate Taught courses; and for ensuring that marking of assessments is sufficiently 
+resourced to enable feedback to be returned within 15 working days of assessment 
+submission. 
+&lt;/p&gt;
+&lt;p&gt;5.4 Programme Exam Boards are responsible for: making sure assessments across a 
+programme are marked fairly; ensuring university and faculty regulations are adhered to; 
+and responding to points made by External Examiners. 
+&lt;/p&gt;
+&lt;p&gt;5.5 Programme Leaders/Directors are responsible for ensuring a coherent and effective 
+approach to assessment and feedback is taken across a programme of study. This 
+approach will involve:  
+&lt;/p&gt;
+&lt;p&gt;- Ensuring a range of assessment methods are used throughout a programme of study, 
+as appropriate to the discipline; 
+&lt;/p&gt;
+&lt;p&gt;- Monitoring the intensity and equity of assessments across and between programmes, 
+with due consideration to joint honours degrees; 
+&lt;/p&gt;
+&lt;p&gt;- Designing and reviewing the Assessment Schedule and Exam Timetable within a 
+programme and requesting amendments where there is assessment/exam bunching;  
+&lt;/p&gt;
+&lt;p&gt;- Developing effective moderation and/or double marking procedures, in line with the 
+Policy on Moderation and Double Marking;  
+&lt;/p&gt;
+&lt;p&gt;- Ensuring procedures are in place for monitoring students’ use of the Policies and 
+Procedures on Extensions to Coursework Submission and Late Submission of 
+Coursework, as a mechanism for identifying students who may require support; and  
+&lt;/p&gt;
+&lt;p&gt;- Ensuring procedures related to assuring fairness in assessment, such as moderation 
+and the role of External Examiners, are communicated to students. 
+&lt;/p&gt;
+&lt;p&gt;5.6 Year Coordinators and/or Module Coordinators are responsible for:  
+&lt;/p&gt;
+&lt;p&gt;- Having an overview of summative assessment activities within a programme of study to 
+avoid, where possible, a concentration of assessment deadlines, including examinations; &lt;/p&gt;
+&lt;p/&gt;
+&lt;/div&gt;
+&lt;div class="page"&gt;
+
+&lt;p/&gt;
+&lt;p&gt;  Assessment and Feedback Policy 
+&lt;/p&gt;
+&lt;p&gt;   6 
+&lt;/p&gt;
+&lt;p&gt; 
+&lt;/p&gt;
+&lt;p&gt;- Making sure the details of all assessments are provided at the start of a class; 
+- Ensuring assessment criteria that is aligned to intended learning outcomes and the 
+&lt;/p&gt;
+&lt;p&gt;University’s Guidance on Marking Assessments in Undergraduate and Postgraduate 
+Taught programmes, is transparent and made available to students at the start of a 
+class; 
+&lt;/p&gt;
+&lt;p&gt;- Providing opportunities for students to use feedback prior to the submission of any 
+subsequent related assessments;  
+&lt;/p&gt;
+&lt;p&gt;- Working with students to develop effective practice in assessment and feedback, 
+including: providing students with opportunities to develop their understanding of the 
+criteria and standards used to assess their work and supporting students to engage with 
+and use feedback;  
+&lt;/p&gt;
+&lt;p&gt;- Obtaining feedback from students in relation to assessment and feedback for module(s) 
+for which they are responsible, and for communicating any actions on this feedback to 
+students; and 
+&lt;/p&gt;
+&lt;p&gt;- For undertaking effective moderation and/or double marking procedures.  
+&lt;/p&gt;
+&lt;p&gt;5.7 Staff involved in assessing students’ work are responsible for: 
+&lt;/p&gt;
+&lt;p&gt;- Designing assessments that effectively facilitate and measure students’ achievement of 
+intended learning outcomes; 
+&lt;/p&gt;
+&lt;p&gt;- Assessing students’ work according to published assessment criteria which are aligned 
+to intended learning outcomes and the University’s Guidance on Marking Assessments 
+in Undergraduate and Postgraduate Taught programmes;  
+&lt;/p&gt;
+&lt;p&gt;- Providing timely, informative and helpful feedback which enables students to further 
+improve their learning and performance wherever possible;  
+&lt;/p&gt;
+&lt;p&gt;- Informing students when, where and how feedback will be provided; 
+- Engaging in dialogue with students about assessment and feedback; and 
+- Continuously reviewing their approaches to assessment and feedback to reflect effective 
+&lt;/p&gt;
+&lt;p&gt;practice. 
+&lt;/p&gt;
+&lt;p&gt;5.8 Students are expected to be responsible for their own learning through:  
+&lt;/p&gt;
+&lt;p&gt;- Understanding the requirements of individual assessments, and actively engaging with 
+assessment tasks by devoting appropriate time and effort; 
+&lt;/p&gt;
+&lt;p&gt;- Developing an understanding of the relationship between intended learning outcomes 
+and assessment criteria, and standards in their programme of study; 
+&lt;/p&gt;
+&lt;p&gt;- Ensuring their academic work is authentic and honestly produced; 
+- Finding out where, how and when work is submitted and how and when feedback is 
+&lt;/p&gt;
+&lt;p&gt;provided; 
+- Actively engaging, reflecting, and using provided feedback;  
+- Understanding the academic policies and procedures related to assessment and 
+&lt;/p&gt;
+&lt;p&gt;feedback, including Personal Circumstances Procedure, Policy and Procedures for the 
+Late Submission of Coursework, Policy on Moderation and Double Marking, Policy on 
+Extensions to the Submission of Coursework, and Compensation and Motivational Merit; 
+&lt;/p&gt;
+&lt;p&gt;- Seeking academic support when needed, for example, if feedback needs to be clarified; 
+and 
+&lt;/p&gt;
+&lt;p&gt;- Participating in the development of assessment and feedback practices at class and 
+programme levels. &lt;/p&gt;
+&lt;p/&gt;
+&lt;/div&gt;
+&lt;div class="page"&gt;
+
+&lt;p/&gt;
+&lt;p&gt;  Assessment and Feedback Policy 
+&lt;/p&gt;
+&lt;p&gt;   7 
+&lt;/p&gt;
+&lt;p&gt; 
+&lt;/p&gt;
+&lt;p&gt;6. DEFINITIONS OF TERMS 
+ 
+Assessment The process of measuring the performance of students 
+&lt;/p&gt;
+&lt;p&gt;(as in examinations, assignments and other assessable 
+work) that enables students to monitor their progress 
+and contributes to their academic results. 
+ 
+&lt;/p&gt;
+&lt;p&gt;Assessment criteria 
+ 
+&lt;/p&gt;
+&lt;p&gt; 
+&lt;/p&gt;
+&lt;p&gt;Specific criteria against which pieces of work are 
+assessed. An understanding of the criteria must be 
+shared by markers and students. Feedback should 
+relate to these criteria.  
+&lt;/p&gt;
+&lt;p&gt;Assessment bunching The perception of assessments within a programme of 
+study being scheduled too closely together. 
+ 
+&lt;/p&gt;
+&lt;p&gt;Assessment schedule  
+ 
+&lt;/p&gt;
+&lt;p&gt;A timeline of all cohort level assessment. 
+&lt;/p&gt;
+&lt;p&gt;Exam bunching Where the scheduling of two exams falls within a 23 
+hour period.  
+ 
+&lt;/p&gt;
+&lt;p&gt;Feedback Information provided to students on the quality of their 
+performance in relation to assessment criteria, which 
+forms the basis of improved student learning.  
+ 
+&lt;/p&gt;
+&lt;p&gt;Formative assessment   
+ 
+&lt;/p&gt;
+&lt;p&gt;This type of assessment normally has no or low 
+weighting in the final mark for a module or programme. 
+The goal of formative assessment is to provide an 
+opportunity for students to monitor their learning and 
+provide feedback to teachers that can be used to 
+review their teaching. 
+ 
+&lt;/p&gt;
+&lt;p&gt;Graduate attributes Qualities, skills, dispositions, and understanding that 
+students are expected to develop. At Strathclyde these 
+are referred to as the 4 E’s – engaged, enquiring, 
+enterprising and ethically and globally aware. 
+ 
+&lt;/p&gt;
+&lt;p&gt;Intended learning outcomes What the student is expected to be able to do or 
+demonstrate, in terms of particular knowledge, skills 
+and understanding, by the end of a module or 
+programme.  
+ 
+&lt;/p&gt;
+&lt;p&gt;Ipsative feedback 
+ 
+&lt;/p&gt;
+&lt;p&gt;This type of feedback compares a student’s 
+performance on a current assessment with 
+performance on a previous assessment. 
+ 
+&lt;/p&gt;
+&lt;p&gt;Moderation The process of checking that assessment criteria are 
+consistently applied across markers in marking 
+students’ work. 
+ 
+&lt;/p&gt;
+&lt;p&gt;Module The individual components of a programme, normally 
+worth 20 or 10 credits. 
+ 
+&lt;/p&gt;
+&lt;p&gt;Module evaluation The process of obtaining feedback from students on all 
+aspects of teaching, learning, and assessment within a &lt;/p&gt;
+&lt;p/&gt;
+&lt;/div&gt;
+&lt;div class="page"&gt;
+&lt;p/&gt;
+&lt;p&gt;  Assessment and Feedback Policy 
+&lt;/p&gt;
+&lt;p&gt;   8 
+&lt;/p&gt;
+&lt;p&gt; 
+&lt;/p&gt;
+&lt;p&gt;module. 
+ 
+&lt;/p&gt;
+&lt;p&gt;Programme The full degree programme leading to an award. 
+ 
+&lt;/p&gt;
+&lt;p&gt;Seen double marking Where an assessment is independently marked by two 
+markers, but where the second marker has access to 
+the marks or comments of the first marker. 
+ 
+&lt;/p&gt;
+&lt;p&gt;Summative assessment Assessment is summative when the grading of an 
+assessment contributes to the final grade for a class or 
+course. The aim of summative assessment is to 
+evaluate students’ attainment of the intended learning 
+outcomes within a unit of study. 
+ 
+&lt;/p&gt;
+&lt;p&gt;  
+Unseen double marking 
+ 
+&lt;/p&gt;
+&lt;p&gt;Where an assessment is independently marked by two 
+markers who do not have access to the grades or 
+comments of the other marker. 
+ 
+&lt;/p&gt;
+&lt;p&gt;Working days The University’s standard working week is normally 
+Monday to Friday, covering five working days. Fifteen 
+working days would normally equate to 21 calendar 
+days, but may be longer where the period includes 
+University closure days. 
+&lt;/p&gt;
+&lt;p&gt; 
+ &lt;/p&gt;
+&lt;p/&gt;
+&lt;/div&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+</str>
+<lst name="null_metadata">
+  <arr name="date">
+    <str>2019-05-29T13:52:29Z</str>
+  </arr>
+  <arr name="pdf:PDFVersion">
+    <str>1.5</str>
+  </arr>
+  <arr name="xmp:CreatorTool">
+    <str>Acrobat PDFMaker 15 for Word</str>
+  </arr>
+  <arr name="pdf:docinfo:title">
+    <str>Assessment and Feedback Policy</str>
+  </arr>
+  <arr name="Company">
+    <str>University of Strathclyde</str>
+  </arr>
+  <arr name="stream_content_type">
+    <str>application/json</str>
+  </arr>
+  <arr name="pdf:hasXFA">
+    <str>false</str>
+  </arr>
+  <arr name="access_permission:can_print_degraded">
+    <str>true</str>
+  </arr>
+  <arr name="subject">
+    <str>Version 1.2</str>
+  </arr>
+  <arr name="language">
+    <str>EN-GB</str>
+  </arr>
+  <arr name="dc:format">
+    <str>application/pdf; version=1.5</str>
+  </arr>
+  <arr name="pdf:docinfo:creator_tool">
+    <str>Acrobat PDFMaker 15 for Word</str>
+  </arr>
+  <arr name="access_permission:fill_in_form">
+    <str>true</str>
+  </arr>
+  <arr name="pdf:encrypted">
+    <str>false</str>
+  </arr>
+  <arr name="dc:title">
+    <str>Assessment and Feedback Policy</str>
+  </arr>
+  <arr name="xmp:CreateDate">
+    <str>2019-05-29T14:52:24Z</str>
+  </arr>
+  <arr name="modified">
+    <str>2019-05-29T13:52:29Z</str>
+  </arr>
+  <arr name="pdf:docinfo:custom:SourceModified">
+    <str>D:20190528113809</str>
+  </arr>
+  <arr name="cp:subject">
+    <str>Version 1.2</str>
+  </arr>
+  <arr name="pdf:docinfo:subject">
+    <str>Version 1.2</str>
+  </arr>
+  <arr name="pdf:docinfo:custom:_TemplateID">
+    <str>TC017730709991</str>
+  </arr>
+  <arr name="pdf:hasMarkedContent">
+    <str>true</str>
+  </arr>
+  <arr name="xmp:ModifyDate">
+    <str>2019-05-29T14:52:29Z</str>
+  </arr>
+  <arr name="pdf:docinfo:creator">
+    <str>Ashley</str>
+  </arr>
+  <arr name="meta:author">
+    <str>Ashley</str>
+  </arr>
+  <arr name="meta:creation-date">
+    <str>2019-05-29T13:52:24Z</str>
+  </arr>
+  <arr name="created">
+    <str>2019-05-29T13:52:24Z</str>
+  </arr>
+  <arr name="access_permission:extract_for_accessibility">
+    <str>true</str>
+  </arr>
+  <arr name="Creation-Date">
+    <str>2019-05-29T13:52:24Z</str>
+  </arr>
+  <arr name="resourceName">
+    <str>Assessment_and_Feedback_Policy.pdf</str>
+  </arr>
+  <arr name="Author">
+    <str>Ashley</str>
+  </arr>
+  <arr name="producer">
+    <str>Adobe PDF Library 15.0</str>
+  </arr>
+  <arr name="pdf:docinfo:producer">
+    <str>Adobe PDF Library 15.0</str>
+  </arr>
+  <arr name="_TemplateID">
+    <str>TC017730709991</str>
+  </arr>
+  <arr name="pdf:unmappedUnicodeCharsPerPage">
+    <str>0</str>
+    <str>0</str>
+    <str>0</str>
+    <str>0</str>
+    <str>0</str>
+    <str>0</str>
+    <str>0</str>
+    <str>0</str>
+    <str>0</str>
+  </arr>
+  <arr name="dc:description">
+    <str>Version 1.2</str>
+  </arr>
+  <arr name="access_permission:modify_annotations">
+    <str>true</str>
+  </arr>
+  <arr name="dc:creator">
+    <str>Ashley</str>
+  </arr>
+  <arr name="description">
+    <str>Version 1.2</str>
+  </arr>
+  <arr name="dcterms:created">
+    <str>2019-05-29T13:52:24Z</str>
+  </arr>
+  <arr name="Last-Modified">
+    <str>2019-05-29T13:52:29Z</str>
+  </arr>
+  <arr name="dcterms:modified">
+    <str>2019-05-29T13:52:29Z</str>
+  </arr>
+  <arr name="title">
+    <str>Assessment and Feedback Policy</str>
+  </arr>
+  <arr name="xmpMM:DocumentID">
+    <str>uuid:19d0024b-2633-4ae5-a2f5-e0f1b491b856</str>
+  </arr>
+  <arr name="Last-Save-Date">
+    <str>2019-05-29T13:52:29Z</str>
+  </arr>
+  <arr name="pdf:docinfo:modified">
+    <str>2019-05-29T13:52:29Z</str>
+  </arr>
+  <arr name="meta:save-date">
+    <str>2019-05-29T13:52:29Z</str>
+  </arr>
+  <arr name="Content-Type">
+    <str>application/pdf</str>
+  </arr>
+  <arr name="stream_size">
+    <str>101489</str>
+  </arr>
+  <arr name="xmp:MetadataDate">
+    <str>2019-05-29T14:52:29Z</str>
+  </arr>
+  <arr name="X-Parsed-By">
+    <str>org.apache.tika.parser.DefaultParser</str>
+    <str>org.apache.tika.parser.pdf.PDFParser</str>
+  </arr>
+  <arr name="creator">
+    <str>Ashley</str>
+  </arr>
+  <arr name="dc:language">
+    <str>EN-GB</str>
+  </arr>
+  <arr name="pdf:producer">
+    <str>Adobe PDF Library 15.0</str>
+  </arr>
+  <arr name="access_permission:assemble_document">
+    <str>true</str>
+  </arr>
+  <arr name="xmpTPg:NPages">
+    <str>9</str>
+  </arr>
+  <arr name="pdf:hasXMP">
+    <str>true</str>
+  </arr>
+  <arr name="pdf:charsPerPage">
+    <str>407</str>
+    <str>4047</str>
+    <str>3287</str>
+    <str>2892</str>
+    <str>2798</str>
+    <str>3055</str>
+    <str>2950</str>
+    <str>2113</str>
+    <str>932</str>
+  </arr>
+  <arr name="access_permission:extract_content">
+    <str>true</str>
+  </arr>
+  <arr name="pdf:docinfo:custom:Company">
+    <str>University of Strathclyde</str>
+  </arr>
+  <arr name="access_permission:can_print">
+    <str>true</str>
+  </arr>
+  <arr name="SourceModified">
+    <str>D:20190528113809</str>
+  </arr>
+  <arr name="access_permission:can_modify">
+    <str>true</str>
+  </arr>
+  <arr name="pdf:docinfo:created">
+    <str>2019-05-29T13:52:24Z</str>
+  </arr>
+</lst>
+</response>
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;html xmlns="http://www.w3.org/1999/xhtml"&gt;
+&lt;head&gt;
+&lt;meta name="date"
+content="2019-05-29T13:52:29Z"/&gt;
+&lt;meta name="pdf:PDFVersion"
+content="1.5"/&gt;
+&lt;meta name="xmp:CreatorTool"
+            content="Acrobat PDFMaker 15 for Word"/&gt;
+&lt;meta
+name="pdf:docinfo:title"
+            content="Assessment and Feedback Policy"/&gt;
+&lt;meta
+name="Company" content="University of Strathclyde"/&gt;
+&lt;meta
+name="stream_content_type" content="application/json"/&gt;
+&lt;meta
+name="pdf:hasXFA" content="false"/&gt;
+&lt;meta
+name="access_permission:can_print_degraded" content="true"/&gt;
+&lt;meta
+name="subject" content="Version 1.2"/&gt;
+&lt;meta name="language"
+content="EN-GB"/&gt;
+&lt;meta name="dc:format"
+            content="application/pdf; version=1.5"/&gt;
+&lt;meta
+name="pdf:docinfo:creator_tool"
+            content="Acrobat PDFMaker 15 for Word"/&gt;
+&lt;meta
+name="access_permission:fill_in_form" content="true"/&gt;
+&lt;meta
+name="pdf:encrypted" content="false"/&gt;
+&lt;meta name="dc:title"
+            content="Assessment and Feedback Policy"/&gt;
+&lt;meta
+name="xmp:CreateDate" content="2019-05-29T14:52:24Z"/&gt;
+&lt;meta
+name="modified" content="2019-05-29T13:52:29Z"/&gt;
+&lt;meta
+name="pdf:docinfo:custom:SourceModified"
+content="D:20190528113809"/&gt;
+&lt;meta name="cp:subject"
+content="Version 1.2"/&gt;
+&lt;meta name="pdf:docinfo:subject"
+            content="Version 1.2"/&gt;
+&lt;meta
+name="pdf:docinfo:custom:_TemplateID" content="TC017730709991"/&gt;
+&lt;meta
+name="pdf:hasMarkedContent" content="true"/&gt;
+&lt;meta name="xmp:ModifyDate"
+            content="2019-05-29T14:52:29Z"/&gt;
+&lt;meta
+name="pdf:docinfo:creator" content="Ashley"/&gt;
+&lt;meta name="meta:author"
+content="Ashley"/&gt;
+&lt;meta name="meta:creation-date"
+content="2019-05-29T13:52:24Z"/&gt;
+&lt;meta name="created"
+            content="2019-05-29T13:52:24Z"/&gt;
+&lt;meta
+name="access_permission:extract_for_accessibility"
+content="true"/&gt;
+&lt;meta name="Creation-Date"
+content="2019-05-29T13:52:24Z"/&gt;
+&lt;meta name="resourceName"
+            content="Assessment_and_Feedback_Policy.pdf"/&gt;
+&lt;meta
+name="Author" content="Ashley"/&gt;
+&lt;meta name="producer"
+            content="Adobe PDF Library 15.0"/&gt;
+&lt;meta
+name="pdf:docinfo:producer" content="Adobe PDF Library 15.0"/&gt;
+&lt;meta
+name="_TemplateID" content="TC017730709991"/&gt;
+&lt;meta
+name="dc:description" content="Version 1.2"/&gt;
+&lt;meta
+name="access_permission:modify_annotations" content="true"/&gt;
+&lt;meta
+name="dc:creator" content="Ashley"/&gt;
+&lt;meta name="description"
+content="Version 1.2"/&gt;
+&lt;meta name="dcterms:created"
+content="2019-05-29T13:52:24Z"/&gt;
+&lt;meta name="Last-Modified"
+            content="2019-05-29T13:52:29Z"/&gt;
+&lt;meta
+name="dcterms:modified" content="2019-05-29T13:52:29Z"/&gt;
+&lt;meta
+name="xmpMM:DocumentID"
+            content="uuid:19d0024b-2633-4ae5-a2f5-e0f1b491b856"/&gt;
+&lt;meta
+name="Last-Save-Date" content="2019-05-29T13:52:29Z"/&gt;
+&lt;meta
+name="pdf:docinfo:modified" content="2019-05-29T13:52:29Z"/&gt;
+&lt;meta
+name="meta:save-date" content="2019-05-29T13:52:29Z"/&gt;
+&lt;meta
+name="Content-Type" content="application/pdf"/&gt;
+&lt;meta name="stream_size"
+content="101489"/&gt;
+&lt;meta name="xmp:MetadataDate"
+content="2019-05-29T14:52:29Z"/&gt;
+&lt;meta name="X-Parsed-By"
+            content="org.apache.tika.parser.DefaultParser"/&gt;
+&lt;meta
+name="X-Parsed-By"
+            content="org.apache.tika.parser.pdf.PDFParser"/&gt;
+&lt;meta
+name="creator" content="Ashley"/&gt;
+&lt;meta name="dc:language"
+content="EN-GB"/&gt;
+&lt;meta name="pdf:producer"
+            content="Adobe PDF Library 15.0"/&gt;
+&lt;meta
+name="access_permission:assemble_document" content="true"/&gt;
+&lt;meta
+name="xmpTPg:NPages" content="9"/&gt;
+&lt;meta name="pdf:hasXMP"
+            content="true"/&gt;
+&lt;meta
+name="access_permission:extract_content" content="true"/&gt;
+&lt;meta
+name="pdf:docinfo:custom:Company"
+            content="University of Strathclyde"/&gt;
+&lt;meta
+name="access_permission:can_print" content="true"/&gt;
+&lt;meta
+name="SourceModified" content="D:20190528113809"/&gt;
+&lt;meta
+name="access_permission:can_modify" content="true"/&gt;
+&lt;meta
+name="pdf:docinfo:created" content="2019-05-29T13:52:24Z"/&gt;
+&lt;title&gt;Assessment and Feedback Policy&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+        &lt;div class="page"&gt;
+
+&lt;p/&gt;
+&lt;p&gt; 
+&lt;/p&gt;
+&lt;p&gt; 
+&lt;/p&gt;
+&lt;p&gt; 
+&lt;/p&gt;
+&lt;p&gt; ASSESSMENT AND 
+FEEDBACK POLICY 
+&lt;/p&gt;
+&lt;p&gt; 
+&lt;/p&gt;
+&lt;p&gt;Version No. Description Author Approval Effective Date 
+&lt;/p&gt;
+&lt;p&gt;1.2 Assessment and 
+&lt;/p&gt;
+&lt;p&gt;Feedback Policy – 
+&lt;/p&gt;
+&lt;p&gt;applicable to both 
+&lt;/p&gt;
+&lt;p&gt;undergraduate and 
+&lt;/p&gt;
+&lt;p&gt;postgraduate taught 
+&lt;/p&gt;
+&lt;p&gt;courses 
+&lt;/p&gt;
+&lt;p&gt;Assessment 
+&lt;/p&gt;
+&lt;p&gt;and 
+&lt;/p&gt;
+&lt;p&gt;Feedback 
+&lt;/p&gt;
+&lt;p&gt;Working 
+&lt;/p&gt;
+&lt;p&gt;Group 
+&lt;/p&gt;
+&lt;p&gt;Senate From academic 
+&lt;/p&gt;
+&lt;p&gt;year 2019-20 
+&lt;/p&gt;
+&lt;p&gt; Version 1.2 
+&lt;/p&gt;
+&lt;p&gt; 
+ 
+the place of useful learning  
+The University of Strathclyde is a charitable body, registered in 
+Scotland, number SC015263 
+&lt;/p&gt;
+&lt;p&gt; 
+&lt;/p&gt;
+&lt;p&gt; 
+ 
+  &lt;/p&gt;
+&lt;p/&gt;
+&lt;/div&gt;
+&lt;div class="page"&gt;
+
+&lt;p/&gt;
+&lt;p&gt;  Assessment and Feedback Policy 
+&lt;/p&gt;
+&lt;p&gt;   1 
+&lt;/p&gt;
+&lt;p&gt; 
+&lt;/p&gt;
+&lt;p&gt;1. RATIONALE 
+&lt;/p&gt;
+&lt;p&gt;In higher education, “assessment” describes any process that involves the evaluation or 
+appraisal of a student’s knowledge, understanding, skills, attitudes or abilities. In line with the 
+QAA UK Quality Code for Higher Education, assessment is taken to be an integral component 
+of teaching and learning, and serves multiple purposes. In addition to enabling evaluation and 
+measurement of students’ learning, effective assessment shapes and enhances student 
+learning. Assessments should therefore be designed to facilitate students’ attainment of 
+intended learning outcomes, and permit the measurement of such attainments against explicit 
+criteria. A holistic approach to assessment at course level can also support the development of 
+distinctive Strathclyde graduate attributes: graduates that are engaged, enquiring, enterprising, 
+and ethically and globally aware. Recent publications on assessment and feedback in higher 
+education suggest a ‘transformation’ is required to ensure that assessment and feedback 
+practices enable students to develop such attributes and the skills needed to be lifelong 
+learners in the 21st century.1  
+&lt;/p&gt;
+&lt;p&gt;This approach recognises that assessment is central to learning and teaching, and is not 
+designed solely to measure student learning. Also essential to enhancing learning, is the 
+provision of continuous feedback to students on their learning; it is recognised that feedback 
+takes different forms (e.g. replies to posts on a discussion forum), but in relation to assessment, 
+useful feedback is feedback that is specific in informing learners the extent to which they have 
+met published assessment criteria, and explains to them what they need to do to improve. 
+Ensuring feedback is clear, specific, and adopts a supportive tone is most likely to foster 
+student engagement with feedback. The role of feedback in effectively supporting student 
+learning should be recognised at the assessment design stage, where factors such as the 
+timing of the release of feedback and the scheduling of subsequent assessments are 
+considered (particularly where feedback can be used by students to improve the development 
+of future work), as well as the provision of opportunities for students to clarify feedback.  
+&lt;/p&gt;
+&lt;p&gt;The University expects that feedback will normally be returned to students within 15 working 
+days of assessment submission2. The University’s VLE, Myplace, provides a platform for the 
+electronic return of grades and feedback, and where permitted by the nature of an assessment, 
+staff are expected to implement the submission of assessments online through Myplace, in 
+order to promote effectiveness and efficiency in each stage of the assessment and feedback 
+process. In addition, Myplace should be used to manage assessments that are submitted offline 
+in order to implement the Policy and Procedure on Extensions to Coursework Submission and 
+Procedures for the Recording and Publication of Marks. Staff should also be cognisant of 
+specific issues relevant to equality, diversity and inclusion in designing assessments and 
+providing feedback, which may affect particular groups of students.3  
+&lt;/p&gt;
+&lt;p&gt;                                              
+1 For example: Boud, D. &amp;amp; Falachikov, N. (Eds.). (2007). Rethinking Assessment in Higher Education. Oxon: 
+Routledge; Higher Education Academy. (2012). A Marked Improvement. Transforming assessment in higher 
+education. York: The Higher Education Academy; Merry, S., Price, M., Carless, D. &amp;amp; Taras, M. (Eds.). (2013). 
+Reconceptualising Feedback in Higher Education. Developing Dialogue with Students. Oxon: Routledge; 
+Carless, D. (2015). Excellence in university assessment: learning from award-winning practice. London: 
+Routledge. 
+2 Exceptions to this are dissertations or assessments with credit weightings of 40 credits or higher, and where 
+double marking is required. (See the Policy on Moderation and Double Marking).  
+3 Staff are advised to consult the University’s equality impact assessment information where relevant.   &lt;/p&gt;
+&lt;p/&gt;
+&lt;div class="annotation"&gt;
+                &lt;a href="https://www.qaa.ac.uk/quality-code/advice-and-guidance/assessment"&gt;https://www.qaa.ac.uk/quality-code/advice-and-guidance/assessment&lt;/a&gt;
+&lt;/div&gt;
+&lt;div class="annotation"&gt;
+                &lt;a href="https://www.strath.ac.uk/equalitydiversity/eia/"&gt;https://www.strath.ac.uk/equalitydiversity/eia/&lt;/a&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class="page"&gt;
+
+&lt;p/&gt;
+&lt;p&gt;  Assessment and Feedback Policy 
+&lt;/p&gt;
+&lt;p&gt;   2 
+&lt;/p&gt;
+&lt;p&gt; 
+&lt;/p&gt;
+&lt;p&gt;Previous work on assessment at Strathclyde (through the Re-Engineering Assessment 
+Practices4 and Peer Evaluation in Education Review5  projects, together with the work on Peer 
+and Community Personal Development Planning), have emphasised the importance of 
+providing students with opportunities to self- and peer-assess, and for students to develop the 
+capacity to evaluate, reflect on6 and manage their own learning through the effective use of 
+feedback. Published research also highlights the importance of developing students’ 
+understanding of the criteria and standards by which their work is assessed, and suggests that 
+providing students with the opportunity to analyse and discuss the qualities of carefully selected 
+exemplars is an effective learning activity to achieve this7. It is widely recognised that these will, 
+in the long-term, help develop attitudes and skills that foster engagement and independence in 
+learning.  
+ 
+The aim of the current policy is to develop an institution-wide approach to assessment and 
+feedback that enhances the effectiveness of assessment in aiding students to achieve the 
+necessary knowledge and skills described in a class or programme’s intended learning 
+outcomes. The policy is underpinned by principles of assessment and feedback (outlined in 
+section 3) that reflect this aim and a commitment to ensuring our assessment and feedback 
+practices are fair, transparent, and continuously reviewed. In short, to ensure they continue to 
+be fit for purpose. This policy should be adhered to across the University. The implementation 
+of the policy will be monitored by the Quality Assurance Committee. 
+&lt;/p&gt;
+&lt;p&gt; 
+2. SCOPE  
+&lt;/p&gt;
+&lt;p&gt;This policy applies to all undergraduate and postgraduate taught programmes offered by the 
+University. This policy should be read in conjunction with other relevant University policies and 
+procedures. The University website contains policies and procedures on a range of 
+assessment-related matters, including: ensuring equality, guidance for staff on supporting 
+students with a disability, guides for staff marking assessments in undergraduate and 
+postgraduate taught courses, guidance for students and staff on avoiding plagiarism, guidance 
+for staff in dealing with possible cases of plagiarism, policies on classifying honours degrees 
+and other degree awards, and on awarding motivational merit and distinction, guidance on the 
+compensation scheme, the role of external examiners in taught courses, the procedure for 
+dealing with student discipline cases, guidance for staff on the appeals procedure and 
+accounting for students’ personal circumstances. 
+&lt;/p&gt;
+&lt;p&gt; 
+&lt;/p&gt;
+&lt;p&gt; 
+&lt;/p&gt;
+&lt;p&gt; 
+                                              
+4 REAP Project, accessed at http://www.reap.ac.uk/ 
+5 PEER Project, accessed from: http://www.reap.ac.uk/PEER.aspx. The site contains a PEER toolkit 
+containing guidance for staff on using peer review. 
+6 Winstone, N. &amp;amp; Nash. R. (2016). The Developing Engagement with Feedback Toolkit (DEFT). The Higher 
+Education Academy. https://www.heacademy.ac.uk/knowledge-hub/developing-engagement-feedback-toolkit-
+deft 
+7 Carless, D. &amp;amp; Boud, D. (2018): The development of student feedback literacy: enabling uptake of feedback, 
+Assessment &amp;amp; Evaluation in Higher Education, DOI: 10.1080/02602938.2018.1463354 &lt;/p&gt;
+&lt;p/&gt;
+&lt;div class="annotation"&gt;
+                &lt;a href="http://www.strath.ac.uk/staff/policies/academic/"&gt;http://www.strath.ac.uk/staff/policies/academic/&lt;/a&gt;
+&lt;/div&gt;
+&lt;div class="annotation"&gt;
+                &lt;a href="http://www.reap.ac.uk/"&gt;http://www.reap.ac.uk/&lt;/a&gt;
+&lt;/div&gt;
+&lt;div class="annotation"&gt;
+                &lt;a href="http://www.reap.ac.uk/PEER.aspx"&gt;http://www.reap.ac.uk/PEER.aspx&lt;/a&gt;
+&lt;/div&gt;
+&lt;div class="annotation"&gt;
+                &lt;a href="https://www.heacademy.ac.uk/knowledge-hub/developing-engagement-feedback-toolkit-deft"&gt;https://www.heacademy.ac.uk/knowledge-hub/developing-engagement-feedback-toolkit-deft&lt;/a&gt;
+&lt;/div&gt;
+&lt;div class="annotation"&gt;
+                &lt;a href="https://www.heacademy.ac.uk/knowledge-hub/developing-engagement-feedback-toolkit-deft"&gt;https://www.heacademy.ac.uk/knowledge-hub/developing-engagement-feedback-toolkit-deft&lt;/a&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class="page"&gt;
+
+&lt;p/&gt;
+&lt;p&gt;  Assessment and Feedback Policy 
+&lt;/p&gt;
+&lt;p&gt;   3 
+&lt;/p&gt;
+&lt;p&gt; 
+&lt;/p&gt;
+&lt;p&gt;3. ASSESSMENT AND FEEDBACK PRINCIPLES 
+ 
+&lt;/p&gt;
+&lt;p&gt;These principles have been widely consulted on across the University, and must be adhered to 
+throughout the institution.  
+&lt;/p&gt;
+&lt;p&gt;PRINCIPLE 1. ASSESSMENT AND FEEDBACK PRACTICES PROMOTE EFFECTIVE 
+STUDENT LEARNING 
+&lt;/p&gt;
+&lt;p&gt;1.1 Assessment and feedback activities are designed to foster student engagement, to 
+support and measure students’ attainment of knowledge, understanding, and 
+transferable skills.  
+&lt;/p&gt;
+&lt;p&gt;1.2 A range of assessment methods are used, increasing in complexity across a 
+programme, and taking into consideration student and staff workloads. 
+&lt;/p&gt;
+&lt;p&gt;1.3 Assessment and feedback practices align with intended learning outcomes and 
+assessment criteria, and provide opportunities for students to be active participants in 
+the process, including opportunities for students to discuss feedback. 
+&lt;/p&gt;
+&lt;p&gt;1.4 Timely, constructive, and supportive feedback helps students understand the extent to 
+which they have fulfilled the assessment criteria, and supports students to use their 
+feedback in the development of subsequent work.  
+&lt;/p&gt;
+&lt;p&gt;1.5 The timing of assessments and return of feedback should be scheduled to enable 
+students to use feedback to inform their approach to subsequent assessments. The 
+release of feedback should consider the ability of students to gain further feedback and 
+support, and avoid release in close proximity to periods where the university is closed 
+&lt;/p&gt;
+&lt;p&gt;1.6 Where examinations are used, students should receive at least general feedback soon 
+after the examination. Students who wish to view their exam scripts following the 
+provision of general feedback should be facilitated to do so under supervision of staff. 
+&lt;/p&gt;
+&lt;p&gt;PRINCIPLE 2. ASSESSMENT AND FEEDBACK PRACTICES ARE APPROPRIATE, FAIR, 
+AND TRANSPARENT 
+&lt;/p&gt;
+&lt;p&gt;2.1 Assessment tasks are appropriate to disciplinary and/or professional contexts. 
+2.2 Assessment applies rigorous academic standards related to and across, the discipline(s) 
+&lt;/p&gt;
+&lt;p&gt;or professional context and is based on clearly defined assessment criteria. 
+2.3 Assessment grading and feedback is based solely on students’ achievement against 
+&lt;/p&gt;
+&lt;p&gt;criteria and standards. 
+2.4 Assessment and feedback practices are fair, inclusive and accessible to all students. 
+&lt;/p&gt;
+&lt;p&gt;PRINCIPLE 3. ASSESSMENT AND FEEDBACK PRACTICES ARE CLEARLY 
+COMMUNICATED TO STUDENTS AND STAFF 
+&lt;/p&gt;
+&lt;p&gt;3.1 Students must be made aware at the beginning of a class of the details of assessments, 
+including the purpose, weighting, and timing of assessment. 
+&lt;/p&gt;
+&lt;p&gt;3.2 Students must be made aware at the beginning of a class of the nature and timing of 
+feedback. Where unexpected problems cause a delay in the return of feedback within 15 
+working days, an explanation will be provided to students, along with a new date for the 
+return of feedback. 
+&lt;/p&gt;
+&lt;p&gt;3.3 All students and staff are made aware at the start of a class of the criteria and standards 
+used to assess and provide feedback on students’ work. &lt;/p&gt;
+&lt;p/&gt;
+&lt;/div&gt;
+&lt;div class="page"&gt;
+
+&lt;p/&gt;
+&lt;p&gt;  Assessment and Feedback Policy 
+&lt;/p&gt;
+&lt;p&gt;   4 
+&lt;/p&gt;
+&lt;p&gt; 
+&lt;/p&gt;
+&lt;p&gt;3.4 Students must be made aware of relevant policies and procedures around academic 
+honesty in assessment, and of procedures associated with personal circumstances, 
+extensions to the deadlines of coursework, and late submission of coursework. 
+&lt;/p&gt;
+&lt;p&gt;3.5 There are opportunities for students and staff to engage in a dialogue around 
+assessment and feedback, including opportunities for students to clarify feedback. 
+&lt;/p&gt;
+&lt;p&gt;3.6 In each programme the processes for marking, moderation, and feedback are 
+appropriate and fair and are explained to students and staff. 
+&lt;/p&gt;
+&lt;p&gt;PRINCIPLE 4. ASSESSMENT AND FEEDBACK PRACTICES ARE CONTINUOUSLY 
+REVIEWED  
+&lt;/p&gt;
+&lt;p&gt;4.1 The timing of assessment activities at cohort level, including the timing of examinations, 
+are monitored and reviewed, in order to minimise bunching.  
+&lt;/p&gt;
+&lt;p&gt;4.2 Assessment and feedback activities, and the outcomes of assessment, are reviewed via 
+the class and course approval and/or review processes, and external examining 
+processes. 
+&lt;/p&gt;
+&lt;p&gt;4.3 Assessment and feedback activities are continuously reviewed to ensure effective 
+alignment with a programme’s intended learning outcomes and graduate attributes. 
+&lt;/p&gt;
+&lt;p&gt;4.4 Opportunities to develop effective practice and innovation in assessment and feedback 
+are available to all staff involved in assessment. 
+&lt;/p&gt;
+&lt;p&gt; 
+4. ANONYMOUS MARKING 
+&lt;/p&gt;
+&lt;p&gt;4.1 Anonymous marking (when the identity of a student is not known to a marker and/or exam 
+board) will be used for all assessments wherever possible and appropriate, including formal 
+written examinations at both undergraduate and postgraduate levels. 
+&lt;/p&gt;
+&lt;p&gt;4.2 Where anonymous marking is not possible, for example where an alternative method of 
+assessment has been used for a student with a disability, additional scrutiny by a second 
+marker may be appropriate.  
+&lt;/p&gt;
+&lt;p&gt;4.3 Other exceptions will be where the mode of assessment (e.g., presentations or oral 
+examinations) prevents anonymity, or where there is pedagogical justification (e.g., the use 
+of ipsative feedback).  
+&lt;/p&gt;
+&lt;p&gt;4.4 Double marking is effective practice for assessments that are not marked anonymously and 
+for dissertations, or comparable assessments. 
+&lt;/p&gt;
+&lt;p&gt; 
+5. RESPONSIBILITIES FOR IMPLEMENTATION 
+&lt;/p&gt;
+&lt;p&gt;5.1 The University assumes responsibility for:  
+- Providing staff with opportunities to develop effective practice in assessment and 
+&lt;/p&gt;
+&lt;p&gt;feedback through the Organisational Staff and Development Unit (Strathclyde Teaching 
+Excellence Programme) Education Enhancement (the University’s VLE, Myplace offers 
+various tools to support effective practice in assessment and feedback, including 
+handling peer review/assessment activities, online assessment submission and return of 
+feedback, and enabling efficient communication with different student and staff groups; 
+the Sharing Practice in Enhancing Learning and Teaching (SPELT) platform, and &lt;/p&gt;
+&lt;p/&gt;
+&lt;div class="annotation"&gt;
+                &lt;a href="https://www.strath.ac.uk/hr/learninganddevelopment/step/"&gt;https://www.strath.ac.uk/hr/learninganddevelopment/step/&lt;/a&gt;
+&lt;/div&gt;
+&lt;div class="annotation"&gt;
+                &lt;a href="https://www.strath.ac.uk/hr/learninganddevelopment/step/"&gt;https://www.strath.ac.uk/hr/learninganddevelopment/step/&lt;/a&gt;
+&lt;/div&gt;
+&lt;div class="annotation"&gt;
+                &lt;a href="http://spelt.strath.ac.uk/pages/viewpage.action;jsessionid=01EB624BAAB6873613854F3DC2EE7433?pageId=8979188"&gt;http://spelt.strath.ac.uk/pages/viewpage.action;jsessionid=01EB624BAAB6873613854F3DC2EE7433?pageId=8979188&lt;/a&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class="page"&gt;
+
+&lt;p/&gt;
+&lt;p&gt;  Assessment and Feedback Policy 
+&lt;/p&gt;
+&lt;p&gt;   5 
+&lt;/p&gt;
+&lt;p&gt; 
+&lt;/p&gt;
+&lt;p&gt;TESTA), the Disability and Wellbeing Service (for ensuring assessments are accessible 
+to all students), and the Equality and Diversity Office;  
+&lt;/p&gt;
+&lt;p&gt;- Providing adequate resources, including information technology systems, to support 
+effective practice (Information Services Directorate, Student Business, Education 
+Enhancement); and 
+&lt;/p&gt;
+&lt;p&gt;- Monitoring implementation of this policy through the Quality Assurance Committee 
+(Education Enhancement). 
+&lt;/p&gt;
+&lt;p&gt;5.2 Faculties are responsible for: overseeing and receiving reports from programme exam 
+boards; scrutinising external examiners’ reports and responding to them; ensuring 
+consistency in the implementation of this and other related policies across programmes, 
+and sharing effective practice within and between faculties. 
+&lt;/p&gt;
+&lt;p&gt;5.3 Heads of Department/School are responsible for: instructing colleagues within their 
+Department/School to note and adhere to the Assessment and Feedback Policy and 
+Procedures for Recording and Publication of Marks, Procedures on Preparing and 
+Conducting Exams, and other related policies such as the Policy on the Late Submission of 
+Coursework, Policy on Extensions to Coursework Submission, the Policy on Moderation 
+and Double Marking, and Guidance on Marking Assessments in Undergraduate and 
+Postgraduate Taught courses; and for ensuring that marking of assessments is sufficiently 
+resourced to enable feedback to be returned within 15 working days of assessment 
+submission. 
+&lt;/p&gt;
+&lt;p&gt;5.4 Programme Exam Boards are responsible for: making sure assessments across a 
+programme are marked fairly; ensuring university and faculty regulations are adhered to; 
+and responding to points made by External Examiners. 
+&lt;/p&gt;
+&lt;p&gt;5.5 Programme Leaders/Directors are responsible for ensuring a coherent and effective 
+approach to assessment and feedback is taken across a programme of study. This 
+approach will involve:  
+&lt;/p&gt;
+&lt;p&gt;- Ensuring a range of assessment methods are used throughout a programme of study, 
+as appropriate to the discipline; 
+&lt;/p&gt;
+&lt;p&gt;- Monitoring the intensity and equity of assessments across and between programmes, 
+with due consideration to joint honours degrees; 
+&lt;/p&gt;
+&lt;p&gt;- Designing and reviewing the Assessment Schedule and Exam Timetable within a 
+programme and requesting amendments where there is assessment/exam bunching;  
+&lt;/p&gt;
+&lt;p&gt;- Developing effective moderation and/or double marking procedures, in line with the 
+Policy on Moderation and Double Marking;  
+&lt;/p&gt;
+&lt;p&gt;- Ensuring procedures are in place for monitoring students’ use of the Policies and 
+Procedures on Extensions to Coursework Submission and Late Submission of 
+Coursework, as a mechanism for identifying students who may require support; and  
+&lt;/p&gt;
+&lt;p&gt;- Ensuring procedures related to assuring fairness in assessment, such as moderation 
+and the role of External Examiners, are communicated to students. 
+&lt;/p&gt;
+&lt;p&gt;5.6 Year Coordinators and/or Module Coordinators are responsible for:  
+&lt;/p&gt;
+&lt;p&gt;- Having an overview of summative assessment activities within a programme of study to 
+avoid, where possible, a concentration of assessment deadlines, including examinations; &lt;/p&gt;
+&lt;p/&gt;
+&lt;/div&gt;
+&lt;div class="page"&gt;
+
+&lt;p/&gt;
+&lt;p&gt;  Assessment and Feedback Policy 
+&lt;/p&gt;
+&lt;p&gt;   6 
+&lt;/p&gt;
+&lt;p&gt; 
+&lt;/p&gt;
+&lt;p&gt;- Making sure the details of all assessments are provided at the start of a class; 
+- Ensuring assessment criteria that is aligned to intended learning outcomes and the 
+&lt;/p&gt;
+&lt;p&gt;University’s Guidance on Marking Assessments in Undergraduate and Postgraduate 
+Taught programmes, is transparent and made available to students at the start of a 
+class; 
+&lt;/p&gt;
+&lt;p&gt;- Providing opportunities for students to use feedback prior to the submission of any 
+subsequent related assessments;  
+&lt;/p&gt;
+&lt;p&gt;- Working with students to develop effective practice in assessment and feedback, 
+including: providing students with opportunities to develop their understanding of the 
+criteria and standards used to assess their work and supporting students to engage with 
+and use feedback;  
+&lt;/p&gt;
+&lt;p&gt;- Obtaining feedback from students in relation to assessment and feedback for module(s) 
+for which they are responsible, and for communicating any actions on this feedback to 
+students; and 
+&lt;/p&gt;
+&lt;p&gt;- For undertaking effective moderation and/or double marking procedures.  
+&lt;/p&gt;
+&lt;p&gt;5.7 Staff involved in assessing students’ work are responsible for: 
+&lt;/p&gt;
+&lt;p&gt;- Designing assessments that effectively facilitate and measure students’ achievement of 
+intended learning outcomes; 
+&lt;/p&gt;
+&lt;p&gt;- Assessing students’ work according to published assessment criteria which are aligned 
+to intended learning outcomes and the University’s Guidance on Marking Assessments 
+in Undergraduate and Postgraduate Taught programmes;  
+&lt;/p&gt;
+&lt;p&gt;- Providing timely, informative and helpful feedback which enables students to further 
+improve their learning and performance wherever possible;  
+&lt;/p&gt;
+&lt;p&gt;- Informing students when, where and how feedback will be provided; 
+- Engaging in dialogue with students about assessment and feedback; and 
+- Continuously reviewing their approaches to assessment and feedback to reflect effective 
+&lt;/p&gt;
+&lt;p&gt;practice. 
+&lt;/p&gt;
+&lt;p&gt;5.8 Students are expected to be responsible for their own learning through:  
+&lt;/p&gt;
+&lt;p&gt;- Understanding the requirements of individual assessments, and actively engaging with 
+assessment tasks by devoting appropriate time and effort; 
+&lt;/p&gt;
+&lt;p&gt;- Developing an understanding of the relationship between intended learning outcomes 
+and assessment criteria, and standards in their programme of study; 
+&lt;/p&gt;
+&lt;p&gt;- Ensuring their academic work is authentic and honestly produced; 
+- Finding out where, how and when work is submitted and how and when feedback is 
+&lt;/p&gt;
+&lt;p&gt;provided; 
+- Actively engaging, reflecting, and using provided feedback;  
+- Understanding the academic policies and procedures related to assessment and 
+&lt;/p&gt;
+&lt;p&gt;feedback, including Personal Circumstances Procedure, Policy and Procedures for the 
+Late Submission of Coursework, Policy on Moderation and Double Marking, Policy on 
+Extensions to the Submission of Coursework, and Compensation and Motivational Merit; 
+&lt;/p&gt;
+&lt;p&gt;- Seeking academic support when needed, for example, if feedback needs to be clarified; 
+and 
+&lt;/p&gt;
+&lt;p&gt;- Participating in the development of assessment and feedback practices at class and 
+programme levels. &lt;/p&gt;
+&lt;p/&gt;
+&lt;/div&gt;
+&lt;div class="page"&gt;
+
+&lt;p/&gt;
+&lt;p&gt;  Assessment and Feedback Policy 
+&lt;/p&gt;
+&lt;p&gt;   7 
+&lt;/p&gt;
+&lt;p&gt; 
+&lt;/p&gt;
+&lt;p&gt;6. DEFINITIONS OF TERMS 
+ 
+Assessment The process of measuring the performance of students 
+&lt;/p&gt;
+&lt;p&gt;(as in examinations, assignments and other assessable 
+work) that enables students to monitor their progress 
+and contributes to their academic results. 
+ 
+&lt;/p&gt;
+&lt;p&gt;Assessment criteria 
+ 
+&lt;/p&gt;
+&lt;p&gt; 
+&lt;/p&gt;
+&lt;p&gt;Specific criteria against which pieces of work are 
+assessed. An understanding of the criteria must be 
+shared by markers and students. Feedback should 
+relate to these criteria.  
+&lt;/p&gt;
+&lt;p&gt;Assessment bunching The perception of assessments within a programme of 
+study being scheduled too closely together. 
+ 
+&lt;/p&gt;
+&lt;p&gt;Assessment schedule  
+ 
+&lt;/p&gt;
+&lt;p&gt;A timeline of all cohort level assessment. 
+&lt;/p&gt;
+&lt;p&gt;Exam bunching Where the scheduling of two exams falls within a 23 
+hour period.  
+ 
+&lt;/p&gt;
+&lt;p&gt;Feedback Information provided to students on the quality of their 
+performance in relation to assessment criteria, which 
+forms the basis of improved student learning.  
+ 
+&lt;/p&gt;
+&lt;p&gt;Formative assessment   
+ 
+&lt;/p&gt;
+&lt;p&gt;This type of assessment normally has no or low 
+weighting in the final mark for a module or programme. 
+The goal of formative assessment is to provide an 
+opportunity for students to monitor their learning and 
+provide feedback to teachers that can be used to 
+review their teaching. 
+ 
+&lt;/p&gt;
+&lt;p&gt;Graduate attributes Qualities, skills, dispositions, and understanding that 
+students are expected to develop. At Strathclyde these 
+are referred to as the 4 E’s – engaged, enquiring, 
+enterprising and ethically and globally aware. 
+ 
+&lt;/p&gt;
+&lt;p&gt;Intended learning outcomes What the student is expected to be able to do or 
+demonstrate, in terms of particular knowledge, skills 
+and understanding, by the end of a module or 
+programme.  
+ 
+&lt;/p&gt;
+&lt;p&gt;Ipsative feedback 
+ 
+&lt;/p&gt;
+&lt;p&gt;This type of feedback compares a student’s 
+performance on a current assessment with 
+performance on a previous assessment. 
+ 
+&lt;/p&gt;
+&lt;p&gt;Moderation The process of checking that assessment criteria are 
+consistently applied across markers in marking 
+students’ work. 
+ 
+&lt;/p&gt;
+&lt;p&gt;Module The individual components of a programme, normally 
+worth 20 or 10 credits. 
+ 
+&lt;/p&gt;
+&lt;p&gt;Module evaluation The process of obtaining feedback from students on all 
+aspects of teaching, learning, and assessment within a &lt;/p&gt;
+&lt;p/&gt;
+&lt;/div&gt;
+&lt;div class="page"&gt;
+&lt;p/&gt;
+&lt;p&gt;  Assessment and Feedback Policy 
+&lt;/p&gt;
+&lt;p&gt;   8 
+&lt;/p&gt;
+&lt;p&gt; 
+&lt;/p&gt;
+&lt;p&gt;module. 
+ 
+&lt;/p&gt;
+&lt;p&gt;Programme The full degree programme leading to an award. 
+ 
+&lt;/p&gt;
+&lt;p&gt;Seen double marking Where an assessment is independently marked by two 
+markers, but where the second marker has access to 
+the marks or comments of the first marker. 
+ 
+&lt;/p&gt;
+&lt;p&gt;Summative assessment Assessment is summative when the grading of an 
+assessment contributes to the final grade for a class or 
+course. The aim of summative assessment is to 
+evaluate students’ attainment of the intended learning 
+outcomes within a unit of study. 
+ 
+&lt;/p&gt;
+&lt;p&gt;  
+Unseen double marking 
+ 
+&lt;/p&gt;
+&lt;p&gt;Where an assessment is independently marked by two 
+markers who do not have access to the grades or 
+comments of the other marker. 
+ 
+&lt;/p&gt;
+&lt;p&gt;Working days The University’s standard working week is normally 
+Monday to Friday, covering five working days. Fifteen 
+working days would normally equate to 21 calendar 
+days, but may be longer where the period includes 
+University closure days. 
+&lt;/p&gt;
+&lt;p&gt; 
+ &lt;/p&gt;
+&lt;p/&gt;
+&lt;/div&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta name="date"
+content="2019-05-29T13:52:29Z"/>
+<meta name="pdf:PDFVersion"
+content="1.5"/>
+<meta name="xmp:CreatorTool"
+            content="Acrobat PDFMaker 15 for Word"/>
+<meta
+name="pdf:docinfo:title"
+            content="Assessment and Feedback Policy"/>
+<meta
+name="Company" content="University of Strathclyde"/>
+<meta
+name="stream_content_type" content="application/json"/>
+<meta
+name="pdf:hasXFA" content="false"/>
+<meta
+name="access_permission:can_print_degraded" content="true"/>
+<meta
+name="subject" content="Version 1.2"/>
+<meta name="language"
+content="EN-GB"/>
+<meta name="dc:format"
+            content="application/pdf; version=1.5"/>
+<meta
+name="pdf:docinfo:creator_tool"
+            content="Acrobat PDFMaker 15 for Word"/>
+<meta
+name="access_permission:fill_in_form" content="true"/>
+<meta
+name="pdf:encrypted" content="false"/>
+<meta name="dc:title"
+            content="Assessment and Feedback Policy"/>
+<meta
+name="xmp:CreateDate" content="2019-05-29T14:52:24Z"/>
+<meta
+name="modified" content="2019-05-29T13:52:29Z"/>
+<meta
+name="pdf:docinfo:custom:SourceModified"
+content="D:20190528113809"/>
+<meta name="cp:subject"
+content="Version 1.2"/>
+<meta name="pdf:docinfo:subject"
+            content="Version 1.2"/>
+<meta
+name="pdf:docinfo:custom:_TemplateID" content="TC017730709991"/>
+<meta
+name="pdf:hasMarkedContent" content="true"/>
+<meta name="xmp:ModifyDate"
+            content="2019-05-29T14:52:29Z"/>
+<meta
+name="pdf:docinfo:creator" content="Ashley"/>
+<meta name="meta:author"
+content="Ashley"/>
+<meta name="meta:creation-date"
+content="2019-05-29T13:52:24Z"/>
+<meta name="created"
+            content="2019-05-29T13:52:24Z"/>
+<meta
+name="access_permission:extract_for_accessibility"
+content="true"/>
+<meta name="Creation-Date"
+content="2019-05-29T13:52:24Z"/>
+<meta name="resourceName"
+            content="Assessment_and_Feedback_Policy.pdf"/>
+<meta
+name="Author" content="Ashley"/>
+<meta name="producer"
+            content="Adobe PDF Library 15.0"/>
+<meta
+name="pdf:docinfo:producer" content="Adobe PDF Library 15.0"/>
+<meta
+name="_TemplateID" content="TC017730709991"/>
+<meta
+name="dc:description" content="Version 1.2"/>
+<meta
+name="access_permission:modify_annotations" content="true"/>
+<meta
+name="dc:creator" content="Ashley"/>
+<meta name="description"
+content="Version 1.2"/>
+<meta name="dcterms:created"
+content="2019-05-29T13:52:24Z"/>
+<meta name="Last-Modified"
+            content="2019-05-29T13:52:29Z"/>
+<meta
+name="dcterms:modified" content="2019-05-29T13:52:29Z"/>
+<meta
+name="xmpMM:DocumentID"
+            content="uuid:19d0024b-2633-4ae5-a2f5-e0f1b491b856"/>
+<meta
+name="Last-Save-Date" content="2019-05-29T13:52:29Z"/>
+<meta
+name="pdf:docinfo:modified" content="2019-05-29T13:52:29Z"/>
+<meta
+name="meta:save-date" content="2019-05-29T13:52:29Z"/>
+<meta
+name="Content-Type" content="application/pdf"/>
+<meta name="stream_size"
+content="101489"/>
+<meta name="xmp:MetadataDate"
+content="2019-05-29T14:52:29Z"/>
+<meta name="X-Parsed-By"
+            content="org.apache.tika.parser.DefaultParser"/>
+<meta
+name="X-Parsed-By"
+            content="org.apache.tika.parser.pdf.PDFParser"/>
+<meta
+name="creator" content="Ashley"/>
+<meta name="dc:language"
+content="EN-GB"/>
+<meta name="pdf:producer"
+            content="Adobe PDF Library 15.0"/>
+<meta
+name="access_permission:assemble_document" content="true"/>
+<meta
+name="xmpTPg:NPages" content="9"/>
+<meta name="pdf:hasXMP"
+            content="true"/>
+<meta
+name="access_permission:extract_content" content="true"/>
+<meta
+name="pdf:docinfo:custom:Company"
+            content="University of Strathclyde"/>
+<meta
+name="access_permission:can_print" content="true"/>
+<meta
+name="SourceModified" content="D:20190528113809"/>
+<meta
+name="access_permission:can_modify" content="true"/>
+<meta
+name="pdf:docinfo:created" content="2019-05-29T13:52:24Z"/>
+<title>Assessment and Feedback Policy</title>
+</head>
+<body>
+        <div class="page">
+
+<p/>
+<p> 
+</p>
+<p> 
+</p>
+<p> 
+</p>
+<p> ASSESSMENT AND 
+FEEDBACK POLICY 
+</p>
+<p> 
+</p>
+<p>Version No. Description Author Approval Effective Date 
+</p>
+<p>1.2 Assessment and 
+</p>
+<p>Feedback Policy – 
+</p>
+<p>applicable to both 
+</p>
+<p>undergraduate and 
+</p>
+<p>postgraduate taught 
+</p>
+<p>courses 
+</p>
+<p>Assessment 
+</p>
+<p>and 
+</p>
+<p>Feedback 
+</p>
+<p>Working 
+</p>
+<p>Group 
+</p>
+<p>Senate From academic 
+</p>
+<p>year 2019-20 
+</p>
+<p> Version 1.2 
+</p>
+<p> 
+ 
+the place of useful learning  
+The University of Strathclyde is a charitable body, registered in 
+Scotland, number SC015263 
+</p>
+<p> 
+</p>
+<p> 
+ 
+  </p>
+<p/>
+</div>
+<div class="page">
+
+<p/>
+<p>  Assessment and Feedback Policy 
+</p>
+<p>   1 
+</p>
+<p> 
+</p>
+<p>1. RATIONALE 
+</p>
+<p>In higher education, “assessment” describes any process that involves the evaluation or 
+appraisal of a student’s knowledge, understanding, skills, attitudes or abilities. In line with the 
+QAA UK Quality Code for Higher Education, assessment is taken to be an integral component 
+of teaching and learning, and serves multiple purposes. In addition to enabling evaluation and 
+measurement of students’ learning, effective assessment shapes and enhances student 
+learning. Assessments should therefore be designed to facilitate students’ attainment of 
+intended learning outcomes, and permit the measurement of such attainments against explicit 
+criteria. A holistic approach to assessment at course level can also support the development of 
+distinctive Strathclyde graduate attributes: graduates that are engaged, enquiring, enterprising, 
+and ethically and globally aware. Recent publications on assessment and feedback in higher 
+education suggest a ‘transformation’ is required to ensure that assessment and feedback 
+practices enable students to develop such attributes and the skills needed to be lifelong 
+learners in the 21st century.1  
+</p>
+<p>This approach recognises that assessment is central to learning and teaching, and is not 
+designed solely to measure student learning. Also essential to enhancing learning, is the 
+provision of continuous feedback to students on their learning; it is recognised that feedback 
+takes different forms (e.g. replies to posts on a discussion forum), but in relation to assessment, 
+useful feedback is feedback that is specific in informing learners the extent to which they have 
+met published assessment criteria, and explains to them what they need to do to improve. 
+Ensuring feedback is clear, specific, and adopts a supportive tone is most likely to foster 
+student engagement with feedback. The role of feedback in effectively supporting student 
+learning should be recognised at the assessment design stage, where factors such as the 
+timing of the release of feedback and the scheduling of subsequent assessments are 
+considered (particularly where feedback can be used by students to improve the development 
+of future work), as well as the provision of opportunities for students to clarify feedback.  
+</p>
+<p>The University expects that feedback will normally be returned to students within 15 working 
+days of assessment submission2. The University’s VLE, Myplace, provides a platform for the 
+electronic return of grades and feedback, and where permitted by the nature of an assessment, 
+staff are expected to implement the submission of assessments online through Myplace, in 
+order to promote effectiveness and efficiency in each stage of the assessment and feedback 
+process. In addition, Myplace should be used to manage assessments that are submitted offline 
+in order to implement the Policy and Procedure on Extensions to Coursework Submission and 
+Procedures for the Recording and Publication of Marks. Staff should also be cognisant of 
+specific issues relevant to equality, diversity and inclusion in designing assessments and 
+providing feedback, which may affect particular groups of students.3  
+</p>
+<p>                                              
+1 For example: Boud, D. &amp; Falachikov, N. (Eds.). (2007). Rethinking Assessment in Higher Education. Oxon: 
+Routledge; Higher Education Academy. (2012). A Marked Improvement. Transforming assessment in higher 
+education. York: The Higher Education Academy; Merry, S., Price, M., Carless, D. &amp; Taras, M. (Eds.). (2013). 
+Reconceptualising Feedback in Higher Education. Developing Dialogue with Students. Oxon: Routledge; 
+Carless, D. (2015). Excellence in university assessment: learning from award-winning practice. London: 
+Routledge. 
+2 Exceptions to this are dissertations or assessments with credit weightings of 40 credits or higher, and where 
+double marking is required. (See the Policy on Moderation and Double Marking).  
+3 Staff are advised to consult the University’s equality impact assessment information where relevant.   </p>
+<p/>
+<div class="annotation">
+                <a href="https://www.qaa.ac.uk/quality-code/advice-and-guidance/assessment">https://www.qaa.ac.uk/quality-code/advice-and-guidance/assessment</a>
+</div>
+<div class="annotation">
+                <a href="https://www.strath.ac.uk/equalitydiversity/eia/">https://www.strath.ac.uk/equalitydiversity/eia/</a>
+</div>
+</div>
+<div class="page">
+
+<p/>
+<p>  Assessment and Feedback Policy 
+</p>
+<p>   2 
+</p>
+<p> 
+</p>
+<p>Previous work on assessment at Strathclyde (through the Re-Engineering Assessment 
+Practices4 and Peer Evaluation in Education Review5  projects, together with the work on Peer 
+and Community Personal Development Planning), have emphasised the importance of 
+providing students with opportunities to self- and peer-assess, and for students to develop the 
+capacity to evaluate, reflect on6 and manage their own learning through the effective use of 
+feedback. Published research also highlights the importance of developing students’ 
+understanding of the criteria and standards by which their work is assessed, and suggests that 
+providing students with the opportunity to analyse and discuss the qualities of carefully selected 
+exemplars is an effective learning activity to achieve this7. It is widely recognised that these will, 
+in the long-term, help develop attitudes and skills that foster engagement and independence in 
+learning.  
+ 
+The aim of the current policy is to develop an institution-wide approach to assessment and 
+feedback that enhances the effectiveness of assessment in aiding students to achieve the 
+necessary knowledge and skills described in a class or programme’s intended learning 
+outcomes. The policy is underpinned by principles of assessment and feedback (outlined in 
+section 3) that reflect this aim and a commitment to ensuring our assessment and feedback 
+practices are fair, transparent, and continuously reviewed. In short, to ensure they continue to 
+be fit for purpose. This policy should be adhered to across the University. The implementation 
+of the policy will be monitored by the Quality Assurance Committee. 
+</p>
+<p> 
+2. SCOPE  
+</p>
+<p>This policy applies to all undergraduate and postgraduate taught programmes offered by the 
+University. This policy should be read in conjunction with other relevant University policies and 
+procedures. The University website contains policies and procedures on a range of 
+assessment-related matters, including: ensuring equality, guidance for staff on supporting 
+students with a disability, guides for staff marking assessments in undergraduate and 
+postgraduate taught courses, guidance for students and staff on avoiding plagiarism, guidance 
+for staff in dealing with possible cases of plagiarism, policies on classifying honours degrees 
+and other degree awards, and on awarding motivational merit and distinction, guidance on the 
+compensation scheme, the role of external examiners in taught courses, the procedure for 
+dealing with student discipline cases, guidance for staff on the appeals procedure and 
+accounting for students’ personal circumstances. 
+</p>
+<p> 
+</p>
+<p> 
+</p>
+<p> 
+                                              
+4 REAP Project, accessed at http://www.reap.ac.uk/ 
+5 PEER Project, accessed from: http://www.reap.ac.uk/PEER.aspx. The site contains a PEER toolkit 
+containing guidance for staff on using peer review. 
+6 Winstone, N. &amp; Nash. R. (2016). The Developing Engagement with Feedback Toolkit (DEFT). The Higher 
+Education Academy. https://www.heacademy.ac.uk/knowledge-hub/developing-engagement-feedback-toolkit-
+deft 
+7 Carless, D. &amp; Boud, D. (2018): The development of student feedback literacy: enabling uptake of feedback, 
+Assessment &amp; Evaluation in Higher Education, DOI: 10.1080/02602938.2018.1463354 </p>
+<p/>
+<div class="annotation">
+                <a href="http://www.strath.ac.uk/staff/policies/academic/">http://www.strath.ac.uk/staff/policies/academic/</a>
+</div>
+<div class="annotation">
+                <a href="http://www.reap.ac.uk/">http://www.reap.ac.uk/</a>
+</div>
+<div class="annotation">
+                <a href="http://www.reap.ac.uk/PEER.aspx">http://www.reap.ac.uk/PEER.aspx</a>
+</div>
+<div class="annotation">
+                <a href="https://www.heacademy.ac.uk/knowledge-hub/developing-engagement-feedback-toolkit-deft">https://www.heacademy.ac.uk/knowledge-hub/developing-engagement-feedback-toolkit-deft</a>
+</div>
+<div class="annotation">
+                <a href="https://www.heacademy.ac.uk/knowledge-hub/developing-engagement-feedback-toolkit-deft">https://www.heacademy.ac.uk/knowledge-hub/developing-engagement-feedback-toolkit-deft</a>
+</div>
+</div>
+<div class="page">
+
+<p/>
+<p>  Assessment and Feedback Policy 
+</p>
+<p>   3 
+</p>
+<p> 
+</p>
+<p>3. ASSESSMENT AND FEEDBACK PRINCIPLES 
+ 
+</p>
+<p>These principles have been widely consulted on across the University, and must be adhered to 
+throughout the institution.  
+</p>
+<p>PRINCIPLE 1. ASSESSMENT AND FEEDBACK PRACTICES PROMOTE EFFECTIVE 
+STUDENT LEARNING 
+</p>
+<p>1.1 Assessment and feedback activities are designed to foster student engagement, to 
+support and measure students’ attainment of knowledge, understanding, and 
+transferable skills.  
+</p>
+<p>1.2 A range of assessment methods are used, increasing in complexity across a 
+programme, and taking into consideration student and staff workloads. 
+</p>
+<p>1.3 Assessment and feedback practices align with intended learning outcomes and 
+assessment criteria, and provide opportunities for students to be active participants in 
+the process, including opportunities for students to discuss feedback. 
+</p>
+<p>1.4 Timely, constructive, and supportive feedback helps students understand the extent to 
+which they have fulfilled the assessment criteria, and supports students to use their 
+feedback in the development of subsequent work.  
+</p>
+<p>1.5 The timing of assessments and return of feedback should be scheduled to enable 
+students to use feedback to inform their approach to subsequent assessments. The 
+release of feedback should consider the ability of students to gain further feedback and 
+support, and avoid release in close proximity to periods where the university is closed 
+</p>
+<p>1.6 Where examinations are used, students should receive at least general feedback soon 
+after the examination. Students who wish to view their exam scripts following the 
+provision of general feedback should be facilitated to do so under supervision of staff. 
+</p>
+<p>PRINCIPLE 2. ASSESSMENT AND FEEDBACK PRACTICES ARE APPROPRIATE, FAIR, 
+AND TRANSPARENT 
+</p>
+<p>2.1 Assessment tasks are appropriate to disciplinary and/or professional contexts. 
+2.2 Assessment applies rigorous academic standards related to and across, the discipline(s) 
+</p>
+<p>or professional context and is based on clearly defined assessment criteria. 
+2.3 Assessment grading and feedback is based solely on students’ achievement against 
+</p>
+<p>criteria and standards. 
+2.4 Assessment and feedback practices are fair, inclusive and accessible to all students. 
+</p>
+<p>PRINCIPLE 3. ASSESSMENT AND FEEDBACK PRACTICES ARE CLEARLY 
+COMMUNICATED TO STUDENTS AND STAFF 
+</p>
+<p>3.1 Students must be made aware at the beginning of a class of the details of assessments, 
+including the purpose, weighting, and timing of assessment. 
+</p>
+<p>3.2 Students must be made aware at the beginning of a class of the nature and timing of 
+feedback. Where unexpected problems cause a delay in the return of feedback within 15 
+working days, an explanation will be provided to students, along with a new date for the 
+return of feedback. 
+</p>
+<p>3.3 All students and staff are made aware at the start of a class of the criteria and standards 
+used to assess and provide feedback on students’ work. </p>
+<p/>
+</div>
+<div class="page">
+
+<p/>
+<p>  Assessment and Feedback Policy 
+</p>
+<p>   4 
+</p>
+<p> 
+</p>
+<p>3.4 Students must be made aware of relevant policies and procedures around academic 
+honesty in assessment, and of procedures associated with personal circumstances, 
+extensions to the deadlines of coursework, and late submission of coursework. 
+</p>
+<p>3.5 There are opportunities for students and staff to engage in a dialogue around 
+assessment and feedback, including opportunities for students to clarify feedback. 
+</p>
+<p>3.6 In each programme the processes for marking, moderation, and feedback are 
+appropriate and fair and are explained to students and staff. 
+</p>
+<p>PRINCIPLE 4. ASSESSMENT AND FEEDBACK PRACTICES ARE CONTINUOUSLY 
+REVIEWED  
+</p>
+<p>4.1 The timing of assessment activities at cohort level, including the timing of examinations, 
+are monitored and reviewed, in order to minimise bunching.  
+</p>
+<p>4.2 Assessment and feedback activities, and the outcomes of assessment, are reviewed via 
+the class and course approval and/or review processes, and external examining 
+processes. 
+</p>
+<p>4.3 Assessment and feedback activities are continuously reviewed to ensure effective 
+alignment with a programme’s intended learning outcomes and graduate attributes. 
+</p>
+<p>4.4 Opportunities to develop effective practice and innovation in assessment and feedback 
+are available to all staff involved in assessment. 
+</p>
+<p> 
+4. ANONYMOUS MARKING 
+</p>
+<p>4.1 Anonymous marking (when the identity of a student is not known to a marker and/or exam 
+board) will be used for all assessments wherever possible and appropriate, including formal 
+written examinations at both undergraduate and postgraduate levels. 
+</p>
+<p>4.2 Where anonymous marking is not possible, for example where an alternative method of 
+assessment has been used for a student with a disability, additional scrutiny by a second 
+marker may be appropriate.  
+</p>
+<p>4.3 Other exceptions will be where the mode of assessment (e.g., presentations or oral 
+examinations) prevents anonymity, or where there is pedagogical justification (e.g., the use 
+of ipsative feedback).  
+</p>
+<p>4.4 Double marking is effective practice for assessments that are not marked anonymously and 
+for dissertations, or comparable assessments. 
+</p>
+<p> 
+5. RESPONSIBILITIES FOR IMPLEMENTATION 
+</p>
+<p>5.1 The University assumes responsibility for:  
+- Providing staff with opportunities to develop effective practice in assessment and 
+</p>
+<p>feedback through the Organisational Staff and Development Unit (Strathclyde Teaching 
+Excellence Programme) Education Enhancement (the University’s VLE, Myplace offers 
+various tools to support effective practice in assessment and feedback, including 
+handling peer review/assessment activities, online assessment submission and return of 
+feedback, and enabling efficient communication with different student and staff groups; 
+the Sharing Practice in Enhancing Learning and Teaching (SPELT) platform, and </p>
+<p/>
+<div class="annotation">
+                <a href="https://www.strath.ac.uk/hr/learninganddevelopment/step/">https://www.strath.ac.uk/hr/learninganddevelopment/step/</a>
+</div>
+<div class="annotation">
+                <a href="https://www.strath.ac.uk/hr/learninganddevelopment/step/">https://www.strath.ac.uk/hr/learninganddevelopment/step/</a>
+</div>
+<div class="annotation">
+                <a href="http://spelt.strath.ac.uk/pages/viewpage.action;jsessionid=01EB624BAAB6873613854F3DC2EE7433?pageId=8979188">http://spelt.strath.ac.uk/pages/viewpage.action;jsessionid=01EB624BAAB6873613854F3DC2EE7433?pageId=8979188</a>
+</div>
+</div>
+<div class="page">
+
+<p/>
+<p>  Assessment and Feedback Policy 
+</p>
+<p>   5 
+</p>
+<p> 
+</p>
+<p>TESTA), the Disability and Wellbeing Service (for ensuring assessments are accessible 
+to all students), and the Equality and Diversity Office;  
+</p>
+<p>- Providing adequate resources, including information technology systems, to support 
+effective practice (Information Services Directorate, Student Business, Education 
+Enhancement); and 
+</p>
+<p>- Monitoring implementation of this policy through the Quality Assurance Committee 
+(Education Enhancement). 
+</p>
+<p>5.2 Faculties are responsible for: overseeing and receiving reports from programme exam 
+boards; scrutinising external examiners’ reports and responding to them; ensuring 
+consistency in the implementation of this and other related policies across programmes, 
+and sharing effective practice within and between faculties. 
+</p>
+<p>5.3 Heads of Department/School are responsible for: instructing colleagues within their 
+Department/School to note and adhere to the Assessment and Feedback Policy and 
+Procedures for Recording and Publication of Marks, Procedures on Preparing and 
+Conducting Exams, and other related policies such as the Policy on the Late Submission of 
+Coursework, Policy on Extensions to Coursework Submission, the Policy on Moderation 
+and Double Marking, and Guidance on Marking Assessments in Undergraduate and 
+Postgraduate Taught courses; and for ensuring that marking of assessments is sufficiently 
+resourced to enable feedback to be returned within 15 working days of assessment 
+submission. 
+</p>
+<p>5.4 Programme Exam Boards are responsible for: making sure assessments across a 
+programme are marked fairly; ensuring university and faculty regulations are adhered to; 
+and responding to points made by External Examiners. 
+</p>
+<p>5.5 Programme Leaders/Directors are responsible for ensuring a coherent and effective 
+approach to assessment and feedback is taken across a programme of study. This 
+approach will involve:  
+</p>
+<p>- Ensuring a range of assessment methods are used throughout a programme of study, 
+as appropriate to the discipline; 
+</p>
+<p>- Monitoring the intensity and equity of assessments across and between programmes, 
+with due consideration to joint honours degrees; 
+</p>
+<p>- Designing and reviewing the Assessment Schedule and Exam Timetable within a 
+programme and requesting amendments where there is assessment/exam bunching;  
+</p>
+<p>- Developing effective moderation and/or double marking procedures, in line with the 
+Policy on Moderation and Double Marking;  
+</p>
+<p>- Ensuring procedures are in place for monitoring students’ use of the Policies and 
+Procedures on Extensions to Coursework Submission and Late Submission of 
+Coursework, as a mechanism for identifying students who may require support; and  
+</p>
+<p>- Ensuring procedures related to assuring fairness in assessment, such as moderation 
+and the role of External Examiners, are communicated to students. 
+</p>
+<p>5.6 Year Coordinators and/or Module Coordinators are responsible for:  
+</p>
+<p>- Having an overview of summative assessment activities within a programme of study to 
+avoid, where possible, a concentration of assessment deadlines, including examinations; </p>
+<p/>
+</div>
+<div class="page">
+
+<p/>
+<p>  Assessment and Feedback Policy 
+</p>
+<p>   6 
+</p>
+<p> 
+</p>
+<p>- Making sure the details of all assessments are provided at the start of a class; 
+- Ensuring assessment criteria that is aligned to intended learning outcomes and the 
+</p>
+<p>University’s Guidance on Marking Assessments in Undergraduate and Postgraduate 
+Taught programmes, is transparent and made available to students at the start of a 
+class; 
+</p>
+<p>- Providing opportunities for students to use feedback prior to the submission of any 
+subsequent related assessments;  
+</p>
+<p>- Working with students to develop effective practice in assessment and feedback, 
+including: providing students with opportunities to develop their understanding of the 
+criteria and standards used to assess their work and supporting students to engage with 
+and use feedback;  
+</p>
+<p>- Obtaining feedback from students in relation to assessment and feedback for module(s) 
+for which they are responsible, and for communicating any actions on this feedback to 
+students; and 
+</p>
+<p>- For undertaking effective moderation and/or double marking procedures.  
+</p>
+<p>5.7 Staff involved in assessing students’ work are responsible for: 
+</p>
+<p>- Designing assessments that effectively facilitate and measure students’ achievement of 
+intended learning outcomes; 
+</p>
+<p>- Assessing students’ work according to published assessment criteria which are aligned 
+to intended learning outcomes and the University’s Guidance on Marking Assessments 
+in Undergraduate and Postgraduate Taught programmes;  
+</p>
+<p>- Providing timely, informative and helpful feedback which enables students to further 
+improve their learning and performance wherever possible;  
+</p>
+<p>- Informing students when, where and how feedback will be provided; 
+- Engaging in dialogue with students about assessment and feedback; and 
+- Continuously reviewing their approaches to assessment and feedback to reflect effective 
+</p>
+<p>practice. 
+</p>
+<p>5.8 Students are expected to be responsible for their own learning through:  
+</p>
+<p>- Understanding the requirements of individual assessments, and actively engaging with 
+assessment tasks by devoting appropriate time and effort; 
+</p>
+<p>- Developing an understanding of the relationship between intended learning outcomes 
+and assessment criteria, and standards in their programme of study; 
+</p>
+<p>- Ensuring their academic work is authentic and honestly produced; 
+- Finding out where, how and when work is submitted and how and when feedback is 
+</p>
+<p>provided; 
+- Actively engaging, reflecting, and using provided feedback;  
+- Understanding the academic policies and procedures related to assessment and 
+</p>
+<p>feedback, including Personal Circumstances Procedure, Policy and Procedures for the 
+Late Submission of Coursework, Policy on Moderation and Double Marking, Policy on 
+Extensions to the Submission of Coursework, and Compensation and Motivational Merit; 
+</p>
+<p>- Seeking academic support when needed, for example, if feedback needs to be clarified; 
+and 
+</p>
+<p>- Participating in the development of assessment and feedback practices at class and 
+programme levels. </p>
+<p/>
+</div>
+<div class="page">
+
+<p/>
+<p>  Assessment and Feedback Policy 
+</p>
+<p>   7 
+</p>
+<p> 
+</p>
+<p>6. DEFINITIONS OF TERMS 
+ 
+Assessment The process of measuring the performance of students 
+</p>
+<p>(as in examinations, assignments and other assessable 
+work) that enables students to monitor their progress 
+and contributes to their academic results. 
+ 
+</p>
+<p>Assessment criteria 
+ 
+</p>
+<p> 
+</p>
+<p>Specific criteria against which pieces of work are 
+assessed. An understanding of the criteria must be 
+shared by markers and students. Feedback should 
+relate to these criteria.  
+</p>
+<p>Assessment bunching The perception of assessments within a programme of 
+study being scheduled too closely together. 
+ 
+</p>
+<p>Assessment schedule  
+ 
+</p>
+<p>A timeline of all cohort level assessment. 
+</p>
+<p>Exam bunching Where the scheduling of two exams falls within a 23 
+hour period.  
+ 
+</p>
+<p>Feedback Information provided to students on the quality of their 
+performance in relation to assessment criteria, which 
+forms the basis of improved student learning.  
+ 
+</p>
+<p>Formative assessment   
+ 
+</p>
+<p>This type of assessment normally has no or low 
+weighting in the final mark for a module or programme. 
+The goal of formative assessment is to provide an 
+opportunity for students to monitor their learning and 
+provide feedback to teachers that can be used to 
+review their teaching. 
+ 
+</p>
+<p>Graduate attributes Qualities, skills, dispositions, and understanding that 
+students are expected to develop. At Strathclyde these 
+are referred to as the 4 E’s – engaged, enquiring, 
+enterprising and ethically and globally aware. 
+ 
+</p>
+<p>Intended learning outcomes What the student is expected to be able to do or 
+demonstrate, in terms of particular knowledge, skills 
+and understanding, by the end of a module or 
+programme.  
+ 
+</p>
+<p>Ipsative feedback 
+ 
+</p>
+<p>This type of feedback compares a student’s 
+performance on a current assessment with 
+performance on a previous assessment. 
+ 
+</p>
+<p>Moderation The process of checking that assessment criteria are 
+consistently applied across markers in marking 
+students’ work. 
+ 
+</p>
+<p>Module The individual components of a programme, normally 
+worth 20 or 10 credits. 
+ 
+</p>
+<p>Module evaluation The process of obtaining feedback from students on all 
+aspects of teaching, learning, and assessment within a </p>
+<p/>
+</div>
+<div class="page">
+<p/>
+<p>  Assessment and Feedback Policy 
+</p>
+<p>   8 
+</p>
+<p> 
+</p>
+<p>module. 
+ 
+</p>
+<p>Programme The full degree programme leading to an award. 
+ 
+</p>
+<p>Seen double marking Where an assessment is independently marked by two 
+markers, but where the second marker has access to 
+the marks or comments of the first marker. 
+ 
+</p>
+<p>Summative assessment Assessment is summative when the grading of an 
+assessment contributes to the final grade for a class or 
+course. The aim of summative assessment is to 
+evaluate students’ attainment of the intended learning 
+outcomes within a unit of study. 
+ 
+</p>
+<p>  
+Unseen double marking 
+ 
+</p>
+<p>Where an assessment is independently marked by two 
+markers who do not have access to the grades or 
+comments of the other marker. 
+ 
+</p>
+<p>Working days The University’s standard working week is normally 
+Monday to Friday, covering five working days. Fifteen 
+working days would normally equate to 21 calendar 
+days, but may be longer where the period includes 
+University closure days. 
+</p>
+<p> 
+ </p>
+<p/>
+</div>
+</body>
+</html>
+array(14) {
+  ["areaid"]=>
+  string(19) "mod_folder-activity"
+  ["id"]=>
+  string(33) "mod_folder-activity-1-solrfile287"
+  ["itemid"]=>
+  int(1)
+  ["title"]=>
+  string(34) "Assessment_and_Feedback_Policy.pdf"
+  ["contextid"]=>
+  int(268)
+  ["courseid"]=>
+  int(4)
+  ["owneruserid"]=>
+  int(0)
+  ["modified"]=>
+  string(20) "2024-03-04T17:17:08Z"
+  ["type"]=>
+  int(2)
+  ["solr_filegroupingid"]=>
+  string(21) "mod_folder-activity-1"
+  ["solr_fileid"]=>
+  string(3) "287"
+  ["solr_filecontenthash"]=>
+  string(40) "6de274633203c03b996b248e841f2a1f17cdb537"
+  ["solr_fileindexstatus"]=>
+  int(1)
+  ["solr_vector"]=>
+  array(5) {
+    [0]=>
+    float(0.0053587136790156364)
+    [1]=>
+    float(-0.00049990462139248848)
+    [2]=>
+    float(0.038883671164512634)
+    [3]=>
+    float(-0.0030010775662958622)
+    [4]=>
+    float(-0.0090081822127103806)
+  }
+}

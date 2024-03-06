@@ -1,0 +1,64 @@
+Running full reindex of site
+============================
+Processing area: Text block content
+  No new documents to index.
+Processing area: Courses
+  Processed 5 records containing 5 documents (1 batch), in 0.2 seconds.
+Processing area: Course custom fields
+  No new documents to index.
+Processing area: Course sections
+  No new documents to index.
+Processing area: Messages - received
+  No new documents to index.
+Processing area: Messages - sent
+  No new documents to index.
+Processing area: Course Teacher
+  No new documents to index.
+Processing area: Users
+  Processed 103 records containing 103 documents (2 batches), in 1 seconds.
+Processing area: Assignment - activity information
+  Processed 22 records containing 22 documents (1 batch), in 0.3 seconds.
+Processing area: Attendance - activity information
+  Processed 1 records containing 1 documents, in 0.1 seconds.
+Processing area: BigBlueButton - activity information
+  No new documents to index.
+Processing area: BigBlueButton - tags information
+  No new documents to index.
+Processing area: Book - resource information
+  No new documents to index.
+Processing area: Book - chapters
+  No new documents to index.
+Processing area: Chat - activity information
+  No new documents to index.
+Processing area: Choice - activity information
+  No new documents to index.
+Processing area: Database - activity information
+  No new documents to index.
+Processing area: Database - entries
+  No new documents to index.
+Processing area: Feedback - activity information
+  No new documents to index.
+Processing area: Folder
+++ http://172.22.0.6:8983/solr/moodle/update/extract?wt=xml&uprefix=ignored_&captureAttr=true&fmap.content=solr_filecontent&fmap.media_white_point=ignored_mwp&fmap.media_black_point=ignored_mbp&fmap.areaid=ignored_areaid&literal.mdltmp_areaid=mod_folder-activity&fmap.mdltmp_areaid=areaid&fmap.id=ignored_id&literal.mdltmp_id=mod_folder-activity-1-solrfile287&fmap.mdltmp_id=id&fmap.itemid=ignored_itemid&literal.mdltmp_itemid=1&fmap.mdltmp_itemid=itemid&fmap.title=ignored_title&literal.mdltmp_title=Assessment_and_Feedback_Policy.pdf&fmap.mdltmp_title=title&fmap.contextid=ignored_contextid&literal.mdltmp_contextid=268&fmap.mdltmp_contextid=contextid&fmap.courseid=ignored_courseid&literal.mdltmp_courseid=4&fmap.mdltmp_courseid=courseid&fmap.owneruserid=ignored_owneruserid&literal.mdltmp_owneruserid=0&fmap.mdltmp_owneruserid=owneruserid&fmap.modified=ignored_modified&literal.mdltmp_modified=2024-03-04T17%3A17%3A08Z&fmap.mdltmp_modified=modified&fmap.type=ignored_type&literal.mdltmp_type=2&fmap.mdltmp_type=type&fmap.solr_filegroupingid=ignored_solr_filegroupingid&literal.mdltmp_solr_filegroupingid=mod_folder-activity-1&fmap.mdltmp_solr_filegroupingid=solr_filegroupingid&fmap.solr_fileid=ignored_solr_fileid&literal.mdltmp_solr_fileid=287&fmap.mdltmp_solr_fileid=solr_fileid&fmap.solr_filecontenthash=ignored_solr_filecontenthash&literal.mdltmp_solr_filecontenthash=6de274633203c03b996b248e841f2a1f17cdb537&fmap.mdltmp_solr_filecontenthash=solr_filecontenthash&fmap.solr_fileindexstatus=ignored_solr_fileindexstatus&literal.mdltmp_solr_fileindexstatus=1&fmap.mdltmp_solr_fileindexstatus=solr_fileindexstatus&fmap.solr_vector=ignored_solr_vector&literal.mdltmp_solr_vector&fmap.mdltmp_solr_vector=solr_vector&resource.name=Assessment_and_Feedback_Policy.pdf&extractOnly=true ++
+* line 139 of /search/engine/solrrag/classes/engine.php: call to debugging()
+* line 970 of /search/engine/solr/classes/engine.php: call to search_solrrag\engine->add_stored_file()
+* line 776 of /search/engine/solr/classes/engine.php: call to search_solr\engine->process_document_files()
+* line 318 of /search/classes/engine.php: call to search_solr\engine->add_document_batch()
+* line 1283 of /search/classes/manager.php: call to core_search\engine->add_documents()
+* line 108 of /search/cli/indexer.php: call to core_search\manager->index()
+++ Got SOLR update/extract response ++
+* line 181 of /search/engine/solrrag/classes/engine.php: call to debugging()
+* line 970 of /search/engine/solr/classes/engine.php: call to search_solrrag\engine->add_stored_file()
+* line 776 of /search/engine/solr/classes/engine.php: call to search_solr\engine->process_document_files()
+* line 318 of /search/classes/engine.php: call to search_solr\engine->add_document_batch()
+* line 1283 of /search/classes/manager.php: call to core_search\engine->add_documents()
+* line 108 of /search/cli/indexer.php: call to core_search\manager->index()
+++ Using vector field solr_vector_1356 ++
+* line 205 of /search/engine/solrrag/classes/engine.php: call to debugging()
+* line 970 of /search/engine/solr/classes/engine.php: call to search_solrrag\engine->add_stored_file()
+* line 776 of /search/engine/solr/classes/engine.php: call to search_solr\engine->process_document_files()
+* line 318 of /search/classes/engine.php: call to search_solr\engine->add_document_batch()
+* line 1283 of /search/classes/manager.php: call to core_search\engine->add_documents()
+* line 108 of /search/cli/indexer.php: call to core_search\manager->index()
+bool(false)
+Goodbye
