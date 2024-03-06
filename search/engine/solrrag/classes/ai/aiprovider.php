@@ -6,14 +6,7 @@ use \core\persistent;
 
 class AIProvider extends persistent {
 // Ultimately this would extend a persistent.
-    public function __construct($id = 0, stdClass $record = null) {
-        if ($id > 0) {
-            $this->raw_set('id', $id);
-            $this->raw_set('name', "Fake AI Provider");
-            $this->raw_set('allowembeddings', true);
-            $this->raw_set('allowquery', true);
-        }
-    }
+
 
     protected static function define_properties()
     {
@@ -21,11 +14,29 @@ class AIProvider extends persistent {
             'name' => [
                 'type' => PARAM_TEXT
             ],
+            'apikey' =>[
+                'type' => PARAM_ALPHANUMEXT
+            ],
             'allowembeddings' => [
                 'type' => PARAM_BOOL
             ],
             'allowquery' => [
                 'type' => PARAM_BOOL
+            ],
+            'baseurl' => [
+                'type' => PARAM_URL
+            ],
+            'embeddings' => [
+                'type' => PARAM_URL
+            ],
+            'embeddingmodel' => [
+                'type' => PARAM_ALPHANUMEXT
+            ],
+            'completions' => [
+                'type' => PARAM_URL
+            ],
+            'completionmodel' => [
+                'type' => PARAM_ALPHANUMEXT
             ]
         ];
     }
@@ -37,31 +48,43 @@ class AIProvider extends persistent {
     public function use_for_query():bool {
         return $this->get('allowquery');
     }
-    public function embed_documents(array $documents) {
-        // Go send the documents off to a back end and then return array of each document's vectors.
-        // But for the minute generate an array of fake vectors of a specific length.
-        $vectors = [];
-        foreach ($documents as $document) {
-            $vectors[] = $this->fake_vector(1356);
-        }
-        return $vectors;
+    public function get_usage($type) {
+        return "-";
+        $key = [
+            '$type',
+            $this->get('id'),
+            $this->get('apikey'),
+        ];
+        $current = get_config('ai', $key);
+        return $current;
     }
-    private function fake_vector($length) {
-        $vector = [];
-        for ($i = 0; $i < $length; $i++) {
-            $vector[] = rand(0, 1);
-        }
-        return $vector;
+    public function increment_prompt_usage($change) {
+        return;
+        $key = [
+            'prompttokens',
+            $this->get('id'),
+            $this->get('apikey'),
+        ];
+        $key = implode("_", $key);
+        $current = get_config('ai', $key);
+        $new = $current + $change;
+        set_config($key, $new, 'ai');
+    }
+    public function increment_total_tokens($change) {
+        return;
+        $key = [
+            'totaltokens',
+            $this->get('id'),
+            $this->get('apikey'),
+        ];
+        $key = implode("_", $key);
+        $current = get_config('ai', $key);
+        $new = $current + $change;
+        set_config($key, $new, 'ai');
     }
 
-    /**
-     * @param $document
-     * @return array
-     */
-    public function embed_query($document): array {
-        // Send document to back end and return the vector
-        return $this->fake_vector(1356);
-    }
+    //public function
+    // TODO token counting.
     /**
      * We're overriding this whilst we don't have a real DB table.
      * @param $filters
@@ -75,9 +98,18 @@ class AIProvider extends persistent {
         $records = [];
         $fake = new static(0, (object) [
             'id' => 1,
-            'name' => "Fake AI Provider"
+            'name' => "Fake Open AI Provider",
+            'allowembeddings' => true,
+            'allowquery' => true,
+            'baseurl' => 'https://api.openai.com/v1/',
+            'embeddings' => 'embeddings',
+            'embeddingmodel' => 'text-embedding-3-small',
+            'completions' => 'completions',
+            'completionmodel' => 'gpt-4-turbo-preview',
+            'apikey'=> ''
         ]);
         array_push($records, $fake);
         return $records;
     }
+
 }

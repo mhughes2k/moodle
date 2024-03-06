@@ -7,13 +7,16 @@ use search_solrrag\schema;
 // Fudge autoloading!
 require_once($CFG->dirroot ."/search/engine/solrrag/classes/ai/api.php");
 require_once($CFG->dirroot ."/search/engine/solrrag/classes/ai/aiprovider.php");
+require_once($CFG->dirroot ."/search/engine/solrrag/classes/ai/aiclient.php");
 use \core\ai\AIProvider;
+use \core\ai\AIClient;
 class engine extends \search_solr\engine {
 
     /**
      * @var AIProvider AI rovider object to use to generate embeddings.
      */
-    protected ?AIProvider $embeddingprovider = null;
+    protected ?AIClient $aiclient = null;
+    protected ?AIProvider $aiprovider = null;
 
     public function __construct(bool $alternateconfiguration = false)
     {
@@ -25,9 +28,8 @@ class engine extends \search_solr\engine {
         // So we'll fudge this for the moment and leverage an OpenAI Web Service API via a simple HTTP request.
         $aiproviderid = 1;
         $aiprovider = \core\ai\api::get_provider($aiproviderid);
-        if ($aiprovider->use_for_embeddings()) {
-            $this->embeddingprovider = $aiprovider;
-        }
+        $this->aiprovider = $aiprovider;
+        $this->aiclient = !is_null($aiprovider)? new AIClient($aiprovider) : null;
     }
 
     public function is_server_ready()
@@ -75,20 +77,8 @@ class engine extends \search_solr\engine {
     protected function add_stored_file($document, $storedfile)
     {
         $embeddings = [];
+
         $filedoc = $document->export_file_for_engine($storedfile);
-        /**
-         * Should we even attempt to get vectors.
-         */
-        if (!is_null($this->embeddingprovider)) {
-            // garnish $filedoc with the embedding vector. It would be nice if this could be done
-            // via the export_file_for_engine() call above, that has no awareness of the engine.
-            $embeddings = $this->embeddingprovider->embed_documents([$filedoc]);
-        } else {
-            // potentially warn that selected provider can't be used for
-            // generating embeddings for RAG.
-        }
-
-
         // Used the underlying implementation
 
         if (!$this->file_is_indexable($storedfile)) {
@@ -197,15 +187,24 @@ class engine extends \search_solr\engine {
                                 }
                             }
                         }
-                        if (count($embeddings) > 0) {
-                            $vector = $embeddings[0];
+                        /**
+                         * Since solr has given us back the content, we can now send it off to the AI provider.
+                         */
+                        if ($this->aiprovider->use_for_embeddings() && $this->aiclient) {
+                            // garnish $filedoc with the embedding vector. It would be nice if this could be done
+                            // via the export_file_for_engine() call above, that has no awareness of the engine.
+                            // We expect $filedoc['content'] to be set.
+                            $vector = $this->aiclient->embed_query($filedoc['content']);
                             $vlength = count($vector);
                             $vectorfield = "solr_vector_" . $vlength;
+                            // TODO Check if a field of this length actually exists or not.
                             $filedoc[$vectorfield] = $vector;
                             debugging("Using vector field $vectorfield");
+                        } else {
+                            // potentially warn that selected provider can't be used for
+                            // generating embeddings for RAG.
                         }
                         $this->add_solr_document($filedoc);
-                        exit("Goodbye");
                         return;
                     }
                 } else {
