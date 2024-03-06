@@ -9,6 +9,8 @@ class api {
         return array_values(AIProvider::get_records());
     }
     public static function get_provider(int $id): AIProvider {
-        return new AIProvider($id);
+        $fakes = AIProvider::get_records();
+        return $fakes[0];
+
     }
 }
