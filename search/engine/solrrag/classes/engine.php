@@ -64,6 +64,28 @@ class engine extends \search_solr\engine {
     }
 
     /**
+     * Adds a document to the engine, optionally (if available) generating embeddings for it.
+     * @param $document
+     * @param $fileindexing
+     * @return bool
+     * @throws \coding_exception
+     */
+    public function add_document($document, $fileindexing = false) {
+        $docdata = $document->export_for_engine();
+
+        if (!$this->add_solr_document($docdata)) {
+            return false;
+        }
+
+        if ($fileindexing) {
+            // This will take care of updating all attached files in the index.
+            $this->process_document_files($document);
+        }
+
+        return true;
+    }
+
+    /**
      * Adds a file to the search engine.
      *
      * Notes about Solr and Tika indexing. We do not send the mime type, only the filename.
@@ -120,8 +142,12 @@ class engine extends \search_solr\engine {
 
         // This sets the true filename for Tika.
         $url->param('resource.name', $storedfile->get_filename());
-        $url->param('extractOnly', "true");
-//        $url->param("xpath", "/xhtml:html/xhtml:body/xhtml:div//node()");
+        // If we're not doing embeddings, then we can just use the "original" implementation which will
+        // extract and index the file without passing the content back.
+        if (!$this->aiprovider->use_for_embeddings()) {
+            $url->param('extractOnly', "true");
+        }
+
         // A giant block of code that is really just error checking around the curl request.
         try {
             $requesturl = $url->out(false);
@@ -168,41 +194,40 @@ class engine extends \search_solr\engine {
                         debugging($message, DEBUG_DEVELOPER);
                     } else {
                         // The document was successfully indexed.
-                        debugging("Got SOLR update/extract response");
-                        preg_match('/<str>(?<Content>.*)<\/str>/imsU', $result, $streamcontent);
+                        if ($this->aiprovider->use_for_embeddings() && $this->aiclient) {
+                            preg_match('/<str>(?<Content>.*)<\/str>/imsU', $result, $streamcontent);
+                            debugging("Got SOLR update/extract response");
+                            if ($streamcontent[1]!== 0) {
+                                $xmlcontent =  html_entity_decode($streamcontent[1]);
+                                $xml = simplexml_load_string($xmlcontent);
+                                $filedoc['content'] = (string)$xml->body->asXML();
+                                $metadata = $xml->head->meta;
+                                foreach($metadata as $meta) {
+                                    $name = (string)$meta['name'];
+                                    $content = (string)$meta['content'];
+                                    if ($content != null) {
+                                        $filedoc[$name] = $content;
+                                    } else {
+                                        $filedoc[$name] = "";
 
-                        if ($streamcontent[1]!== 0) {
-                            $xmlcontent =  html_entity_decode($streamcontent[1]);
-                            $xml = simplexml_load_string($xmlcontent);
-                            $filedoc['content'] = (string)$xml->body->asXML();
-                            $metadata = $xml->head->meta;
-                            foreach($metadata as $meta) {
-                                $name = (string)$meta['name'];
-                                $content = (string)$meta['content'];
-                                if ($content != null) {
-                                    $filedoc[$name] = $content;
-                                } else {
-                                    $filedoc[$name] = "";
-
+                                    }
                                 }
                             }
-                        }
-                        /**
-                         * Since solr has given us back the content, we can now send it off to the AI provider.
-                         */
-                        if ($this->aiprovider->use_for_embeddings() && $this->aiclient) {
+                            /**
+                             * Since solr has given us back the content, we can now send it off to the AI provider.
+                             */
+
                             // garnish $filedoc with the embedding vector. It would be nice if this could be done
                             // via the export_file_for_engine() call above, that has no awareness of the engine.
                             // We expect $filedoc['content'] to be set.
                             $vector = $this->aiclient->embed_query($filedoc['content']);
                             $vlength = count($vector);
                             $vectorfield = "solr_vector_" . $vlength;
-                            // TODO Check if a field of this length actually exists or not.
                             $filedoc[$vectorfield] = $vector;
-                            debugging("Using vector field $vectorfield");
                         } else {
-                            // potentially warn that selected provider can't be used for
-                            // generating embeddings for RAG.
+                            // As before if embeddings is not in use, then we can bail
+                            // as the document is already indexed.
+                            return;
                         }
                         $this->add_solr_document($filedoc);
                         return;

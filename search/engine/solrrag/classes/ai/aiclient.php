@@ -5,6 +5,9 @@ require_once($CFG->libdir.'/filelib.php');
  * Base client for AI providers that uses simple http request.
  */
 class AIClient extends \curl {
+    /**
+     * @var AIProvider
+     */
     private $provider;
     public function __construct(
         \core\ai\AIProvider $provider
@@ -24,6 +27,44 @@ class AIClient extends \curl {
         return $this->provider->get('baseurl') . $this->provider->get('completions');
     }
 
+    /**
+     * @param $messages
+     * @return array String array of each line of the AI's Response.
+     * @throws \coding_exception
+     */
+    public function chat($messages) {
+        $params = [
+            "model" => $this->provider->get('completionmodel'),
+            "messages" => $messages
+        ];
+        $params = json_encode($params);
+        $rawresult = $this->post($this->get_chat_completions_url(), $params);
+        $jsonresult = json_decode($rawresult);
+        if (!isset($jsonresult->choices)) {
+            exit();
+            return [];
+        }
+        $result = $this->convert_chat_completion($jsonresult->choices);
+        if (isset($jsonresult->usage)) {
+            $this->provider->increment_prompt_usage($jsonresult->usage->prompt_tokens);
+            $this->provider->increment_completion_tokens($jsonresult->usage->completion_tokens);
+            $this->provider->increment_total_tokens($jsonresult->usage->total_tokens);
+        }
+        return $result;
+    }
+
+    /**
+     * Converts an OpenAI Type of response to an array of sentences
+     * @param $completion
+     * @return array
+     */
+    protected function convert_chat_completion($choices) {
+        $responses = [];
+        foreach($choices as $choice) {
+            array_push($responses, $choice->message);
+        }
+        return $responses;
+    }
     /**
      * @param $document
      * @return array
