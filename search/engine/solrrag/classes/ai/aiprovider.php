@@ -70,6 +70,18 @@ class AIProvider extends persistent {
         $new = $current + $change;
         set_config($key, $new, 'ai');
     }
+    public function increment_completion_tokens($change) {
+        return;
+        $key = [
+            'completiontokens',
+            $this->get('id'),
+            $this->get('apikey'),
+        ];
+        $key = implode("_", $key);
+        $current = get_config('ai', $key);
+        $new = $current + $change;
+        set_config($key, $new, 'ai');
+    }
     public function increment_total_tokens($change) {
         return;
         $key = [
@@ -95,6 +107,7 @@ class AIProvider extends persistent {
      * @return array
      */
     public static function get_records($filters = array(), $sort = '', $order = 'ASC', $skip = 0, $limit = 0) {
+        global $_ENV;
         $records = [];
         $fake = new static(0, (object) [
             'id' => 1,
@@ -104,9 +117,9 @@ class AIProvider extends persistent {
             'baseurl' => 'https://api.openai.com/v1/',
             'embeddings' => 'embeddings',
             'embeddingmodel' => 'text-embedding-3-small',
-            'completions' => 'completions',
+            'completions' => 'chat/completions',
             'completionmodel' => 'gpt-4-turbo-preview',
-            'apikey'=> ''
+            'apikey'=> $_ENV['OPENAIKEY']
         ]);
         array_push($records, $fake);
         return $records;
