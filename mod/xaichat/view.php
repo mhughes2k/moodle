@@ -79,24 +79,41 @@ if ($data = $chatform->get_data()) {
     if (isset($data->restartbutton)) {
         redirect(new \moodle_url('/mod/xaichat/view.php', array('id' => $cm->id)));
     }
-    $totalsteps = 3;
+    $stepnow = 0;
+    $totalsteps = 4;
     $aiclient = new \core\ai\AIClient($aiprovider);
 
     $progress = new \progress_bar();
     $progress->create();
-    $progress->update(1, $totalsteps,'Processing User Prompt');
+    if (empty($_SESSION[$aicontextkey]['messages'])) {
+        // If the user has not made any prompts yet, we need to prime the interaction with
+        // a bunch of system and context specific prompts to constrain behaviour.
+        $totalsteps++;
+        $progress->update(1, $totalsteps,'Processing System Prompts');
+    }
+    $progress->update(1, $totalsteps,'Looking for relevant context');
 //    $vector = $aiclient->embed_query($data->userprompt);
     $search = \core_search\manager::instance(true, true);
-    $search->similarity_search($settings);
+//    $search->similarity_search($settings);
+    // Perform "R" from RAG, finding documents from within the context that are similar to the user's prompt.
+    // Add the retrieved documents to the context for this chat by generating some system messages with the content
+    // returned
 
+    // Add the user's new prompt to the messages.
+    $progress->update(2, $totalsteps,'Attaching user prompt');
     $_SESSION[$aicontextkey]['messages'][] = (object)[
         "role" => "user",
         "content" => $data->userprompt
     ];
-    $progress->update(2, $totalsteps, 'Waiting for response');
+    // Pass the whole context over the AI to summarise.
+    $progress->update(3, $totalsteps, 'Waiting for response');
     $airesults = $aiclient->chat($_SESSION[$aicontextkey]['messages']);
     $_SESSION[$aicontextkey]['messages'] = array_merge($_SESSION[$aicontextkey]['messages'],$airesults);
-    $progress->update(3, $totalsteps, 'Got Response');
+    $progress->update(4, $totalsteps, 'Got Response');
+
+    // We stash the data in the session temporarily (should go into an activity-user store in database) but this
+    // is fast and dirty, and then we do a redirect so that we don't double up the request if the user hit's
+    // refresh.
     redirect(new \moodle_url('/mod/xaichat/view.php', ['id' => $cm->id]));
 } else if ($chatform->is_cancelled()) {
     $_SESSION[$aicontextkey] = [
@@ -104,10 +121,7 @@ if ($data = $chatform->get_data()) {
     ];
 } else {
     // Clear session on first view of form.
-    // TODO prefix with system and context prompts.
-//    $_SESSION[$aicontextkey] = [
-//        'messages'=>[]
-//    ];
+
     $toform = [
         'id' => $id,
         'aiproviderid' => $moduleinstance->aiproviderid,
