@@ -282,4 +282,102 @@ class engine extends \search_solr\engine {
 
         return $solrdoc;
     }
+
+    /**
+     * @param $filters \stdClass
+     * @param $accessinfo
+     * @param $limit
+     * @return void
+     * @throws \core_search\engine_exception
+     */
+    public function execute_query($filters, $accessinfo, $limit = 0) {
+        var_dump($filters->similarity);
+        if (isset($filters->similarity) &&
+            $filters->similarity
+        ) {
+            // Do a vector similarity search.
+            debugging("Running similarity search", DEBUG_DEVELOPER);
+            $this->execute_solr_knn_query($filters, $accessinfo, $limit);
+        } else {
+            debugging("Running regular search", DEBUG_DEVELOPER);
+            return parent::execute_query($filters, $accessinfo, $limit);
+        }
+    }
+
+    protected function execute_solr_knn_query($filters, $accessinfo, $limit) {
+        $vector = $filters->vector;
+        $topK = 3;  // Nearest neighbours to retrieve.
+        $field = "solr_vector_" . count($vector);
+        $requestbody = "{!knn f={$field} topK={$topK}}[" . implode(",", $vector) . "]";
+        $filters->mainquery = $requestbody;
+        if (empty($limit)) {
+            $limit = \core_search\manager::MAX_RESULTS;
+        }
+
+        $curl = $this->get_curl_object();
+        $requesturl = $this->get_connection_url('/select');
+        $requesturl->param('fl', 'id,areaid,score');
+        $requesturl->param('wt', 'xml');
+
+        $body = [
+            'query' => $requestbody
+        ];
+        echo $requesturl->out(false);
+        $result = $curl->post($requesturl->out(false),
+            json_encode($body)
+        );
+        // Probably have to duplicate error handling code from the add_stored_file() function.
+        $code = $curl->get_errno();
+        $info = $curl->get_info();
+
+        // Now error handling. It is just informational, since we aren't tracking per file/doc results.
+        if ($code != 0) {
+            // This means an internal cURL error occurred error is in result.
+            $message = 'Curl error ' . $code . ' retrieving';
+//                . $filedoc['id'] . ': ' . $result . '.';
+            debugging($message, DEBUG_DEVELOPER);
+        } else if (isset($info['http_code']) && ($info['http_code'] !== 200)) {
+            // Unexpected HTTP response code.
+            $message = 'Error while indexing file with document id ' ;
+            // Try to get error message out of msg or title if it exists.
+            if (preg_match('|<str [^>]*name="msg"[^>]*>(.*?)</str>|i', $result, $matches)) {
+                $message .= ': ' . $matches[1];
+            } else if (preg_match('|<title[^>]*>([^>]*)</title>|i', $result, $matches)) {
+                $message .= ': ' . $matches[1];
+            }
+            // This is a common error, happening whenever a file fails to index for any reason, so we will make it quieter.
+            if (CLI_SCRIPT && !PHPUNIT_TEST) {
+                mtrace($message);
+                if (debugging()) {
+                    mtrace($requesturl);
+                }
+                // Suspiciion that this fails due to the file contents being PDFs.
+            }
+        } else {
+            // Check for the expected status field.
+
+            if (preg_match('|<int [^>]*name="status"[^>]*>(\d*)</int>|i', $result, $matches)) {
+                // Now check for the expected status of 0, if not, error.
+                if ((int)$matches[1] !== 0) {
+                    $message = 'Unexpected Solr status code ' . (int)$matches[1];
+                    debugging($message, DEBUG_DEVELOPER);
+                } else {
+                    // We got a result back.
+//                    echo htmlentities($result);
+//                    debugging("Got SOLR update/extract response");
+                    $xml = simplexml_load_string($result);
+                    print_r($xml->result);
+                    print_r($xml->result['numFound']);
+                    print_r($xml->result['maxScore']);
+
+                }
+            } else {
+                // We received an unprocessable response.
+                $message = 'Unexpected Solr response';
+                $message .= strtok($result, "\n");
+                debugging($message, DEBUG_DEVELOPER);
+            }
+        }
+        return [];
+    }
 }
