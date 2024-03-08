@@ -26,6 +26,7 @@ namespace core\task;
 
 use core\lock\lock;
 use core\lock\lock_factory;
+use core_shutdown_manager;
 
 define('CORE_TASK_TASKS_FILENAME', 'db/tasks.php');
 /**
@@ -61,19 +62,38 @@ class manager {
     const MAX_RETRY = 9;
 
     /**
+     * @var ?task_base $runningtask Used to tell what is the current running task in this process.
+     */
+    public static ?task_base $runningtask = null;
+
+    /**
+     * @var bool Used to tell if the manager's shutdown callback has been registered.
+     */
+    public static bool $registeredshutdownhandler = false;
+
+    /**
      * @var array A cached queue of adhoc tasks
      */
-    public static $miniqueue;
+    protected static array $miniqueue = [];
 
     /**
      * @var int The last recorded number of unique adhoc tasks.
      */
-    public static $numtasks;
+    protected static int $numtasks = 0;
 
     /**
-     * @var string Used to determine if the adhoc task queue is distributing or filling capacity.
+     * @var null|int Used to determine if the adhoc task queue is distributing or filling capacity.
      */
-    public static $mode;
+    protected static ?int $mode = null;
+
+    /**
+     * Reset the state of the task manager.
+     */
+    public static function reset_state(): void {
+        self::$miniqueue = [];
+        self::$numtasks = 0;
+        self::$mode = null;
+    }
 
     /**
      * Given a component name, will load the list of tasks in the db/tasks.php file for that component.
@@ -203,7 +223,7 @@ class manager {
      * @param \core\task\adhoc_task $task - The new adhoc task information to store.
      * @since Moodle 3.7
      */
-    public static function reschedule_or_queue_adhoc_task(adhoc_task $task) : void {
+    public static function reschedule_or_queue_adhoc_task(adhoc_task $task): void {
         global $DB;
 
         if ($existingrecord = self::get_queued_adhoc_task_record($task)) {
@@ -1105,6 +1125,42 @@ class manager {
     }
 
     /**
+     * This function will fail the currently running task, if there is one.
+     */
+    public static function fail_running_task(): void {
+        $runningtask = self::$runningtask;
+
+        if ($runningtask === null) {
+            return;
+        }
+
+        if ($runningtask instanceof scheduled_task) {
+            self::scheduled_task_failed($runningtask);
+            return;
+        }
+
+        if ($runningtask instanceof adhoc_task) {
+            self::adhoc_task_failed($runningtask);
+            return;
+        }
+    }
+
+    /**
+     * This function set's the $runningtask variable and ensures that the shutdown handler is registered.
+     * @param task_base $task
+     */
+    private static function task_starting(task_base $task): void {
+        self::$runningtask = $task;
+
+        // Add \core\task\manager::fail_running_task to shutdown manager, so we can ensure running tasks fail on shutdown.
+        if (!self::$registeredshutdownhandler) {
+            core_shutdown_manager::register_function('\core\task\manager::fail_running_task');
+
+            self::$registeredshutdownhandler = true;
+        }
+    }
+
+    /**
      * This function indicates that an adhoc task was not completed successfully and should be retried.
      *
      * @param \core\task\adhoc_task $task
@@ -1145,6 +1201,8 @@ class manager {
             $task->get_cron_lock()->release();
         }
         $task->get_lock()->release();
+
+        self::$runningtask = null;
     }
 
     /**
@@ -1169,7 +1227,16 @@ class manager {
         $task->set_pid($pid);
 
         $record = self::record_from_adhoc_task($task);
+
+        // If this is the first time the task has been started, then set the first starting time.
+        $firststartingtime = $DB->get_field('task_adhoc', 'firststartingtime', ['id' => $record->id]);
+        if (is_null($firststartingtime)) {
+            $record->firststartingtime = $time;
+        }
+
         $DB->update_record('task_adhoc', $record);
+
+        self::task_starting($task);
     }
 
     /**
@@ -1195,6 +1262,8 @@ class manager {
             $task->get_cron_lock()->release();
         }
         $task->get_lock()->release();
+
+        self::$runningtask = null;
     }
 
     /**
@@ -1239,6 +1308,8 @@ class manager {
             $task->get_cron_lock()->release();
         }
         $task->get_lock()->release();
+
+        self::$runningtask = null;
     }
 
     /**
@@ -1284,6 +1355,8 @@ class manager {
         $record->hostname = $hostname;
         $record->pid = $pid;
         $DB->update_record('task_scheduled', $record);
+
+        self::task_starting($task);
     }
 
     /**
@@ -1318,6 +1391,8 @@ class manager {
             $task->get_cron_lock()->release();
         }
         $task->get_lock()->release();
+
+        self::$runningtask = null;
     }
 
     /**
@@ -1514,7 +1589,7 @@ class manager {
      *
      * @return bool
      */
-    public static function is_runnable():bool {
+    public static function is_runnable(): bool {
         return self::find_php_cli_path() !== false;
     }
 
@@ -1745,7 +1820,7 @@ class manager {
             $CFG->task_adhoc_failed_retention : static::ADHOC_TASK_FAILED_RETENTION;
         $DB->delete_records_select(
             table: 'task_adhoc',
-            select: 'attemptsavailable = 0 AND timestarted < :time',
+            select: 'attemptsavailable = 0 AND firststartingtime < :time',
             params: ['time' => time() - $difftime],
         );
     }

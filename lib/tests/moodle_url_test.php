@@ -50,6 +50,9 @@ class moodle_url_test extends \advanced_testcase {
         $url = new \moodle_url('/index.php', null, 'test');
         $this->assertSame($CFG->wwwroot.'/index.php#test', $url->out());
 
+        $url = new \moodle_url('/index.php', null, 'Long "Anchor"');
+        $this->assertSame($CFG->wwwroot . '/index.php#Long%20%22Anchor%22', $url->out());
+
         $url = new \moodle_url('/index.php', array('id' => 2), 'test');
         $this->assertSame($CFG->wwwroot.'/index.php?id=2#test', $url->out());
     }
@@ -134,6 +137,18 @@ class moodle_url_test extends \advanced_testcase {
         $strurl = 'http://example.com/?a%5B0%5D=0&a%5B1%5D=1';
         $url = new \moodle_url('http://example.com/?a[]=0&a[]=1');
         $this->assertSame($strurl, $url->out(false));
+    }
+
+    /**
+     * Test returning URL without parameters
+     */
+    public function test_out_omit_querystring(): void {
+        global $CFG;
+
+        $url = new \moodle_url('/index.php', ['id' => 2], 'Long "Anchor"');
+
+        $this->assertSame($CFG->wwwroot . '/index.php', $url->out_omit_querystring());
+        $this->assertSame($CFG->wwwroot . '/index.php#Long%20%22Anchor%22', $url->out_omit_querystring(true));
     }
 
     public function test_compare_url() {
@@ -257,7 +272,7 @@ class moodle_url_test extends \advanced_testcase {
      * @param string $url URL with params to test.
      * @param array $expected The expected result.
      */
-    public function test_moodle_url_export_params_for_template(string $url, array $expected) :void {
+    public function test_moodle_url_export_params_for_template(string $url, array $expected): void {
         // Should return params in the URL.
         $moodleurl = new \moodle_url($url);
         $this->assertSame($expected, $moodleurl->export_params_for_template());
@@ -268,7 +283,7 @@ class moodle_url_test extends \advanced_testcase {
      *
      * @return array[] the array of test data.
      */
-    public function moodle_url_export_params_for_template_provider() :array {
+    public function moodle_url_export_params_for_template_provider(): array {
         $baseurl = "http://example.com";
         return [
                 'With indexed array params' => [

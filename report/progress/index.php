@@ -70,6 +70,7 @@ function csv_quote($value) {
 }
 
 $url = new moodle_url('/report/progress/index.php', array('course'=>$id));
+$PAGE->navigation->override_active_url($url);
 if ($sort !== '') {
     $url->param('sort', $sort);
 }
@@ -272,7 +273,7 @@ if (!$csv) {
     print $pagingbar;
 
     if (!$total) {
-        echo $OUTPUT->heading(get_string('nothingtodisplay'));
+        echo $OUTPUT->notification(get_string('nothingtodisplay'), 'info', false);
         echo $OUTPUT->footer();
         exit;
     }

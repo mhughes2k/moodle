@@ -164,7 +164,7 @@ abstract class test_moodle_database extends \moodle_database {
      * @param string $table
      * @return array database_column_info[] of database_column_info objects indexed with column names
      */
-    public function fetch_columns($table) : array {
+    public function fetch_columns($table): array {
         return $this->_tables[$table]['columns'];
     }
 
@@ -326,10 +326,10 @@ abstract class test_moodle_database extends \moodle_database {
 
     /**
      * Default implementation, throws Exception
-     * @return string $sql
+     * @return string $arr,...
      * @throws Exception
      */
-    public function sql_concat() {
+    public function sql_concat(...$arr) {
         throw new Exception("sql_concat() not implemented");
     }
 

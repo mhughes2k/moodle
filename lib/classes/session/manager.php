@@ -1272,7 +1272,7 @@ class manager {
      * @return boolean If the submitted token is valid.
      */
     public static function validate_login_token($token = false) {
-        global $CFG;
+        global $CFG, $SESSION;
 
         if (!empty($CFG->alternateloginurl) || !empty($CFG->disablelogintoken)) {
             // An external login page cannot generate the login token we need to protect CSRF on
@@ -1292,7 +1292,7 @@ class manager {
         $currenttoken = self::get_login_token();
 
         // We need to clean the login token so the old one is not valid again.
-        self::create_login_token();
+        unset($SESSION->logintoken);
 
         if ($currenttoken !== $token) {
             // Fail the login.
@@ -1454,7 +1454,7 @@ class manager {
      * @param array $current
      * @return array
      */
-    private static function array_session_diff(array $previous, array $current) : array {
+    private static function array_session_diff(array $previous, array $current): array {
         // To use array_udiff_uassoc, the first array must have the most keys; this ensures every key is checked.
         // To do this, we first need to sort them by the length of their keys.
         $arrays = [$current, $previous];

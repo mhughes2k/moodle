@@ -15,6 +15,8 @@ information provided here is intended especially for developers.
   drag/drop, which can be used to add transition effects in calling code
 * course_modinfo now has a purge_course_modules_cache() method, which takes a list of cmids and purges
   them all in a single cache set.
+* The `core_plugin_manager::plugintype_name[_plural]` methods now require language strings for subplugin types always
+  be defined in plugins (via `subplugintype_<type>` and `subplugintype_<type>_plural` language strings)
 * Behat generators can now implement the function finish_generate_ to detect when the whole list of elements have been generated.
 * New return value 'icon' has been added to the 'external_files' webservice structure. This return value represents the
   relative path to the relevant file type icon based on the file's mime type.
@@ -55,6 +57,25 @@ information provided here is intended especially for developers.
 * The nocache option for format_text has been removed. It was deprecated in Moodle 2.3.
 * The set_heading() method has a new parameter, $clean, to define whether the heading should be cleaned or not when no formatting
   is applied.
+* The Horde library has been removed from core. It was only used by the tool_messageinbound. Now tool_messageinbound
+  uses the new RoundCube library.
+* Visibility of internal properties of the \core\task\manager have been changed from public to protected. These should not have been accessible.
+  - $miniqueue
+  - $numtasks
+  - $mode
+* Removed \zip_writer::sanitise_filepath and \zipwriter::sanitise_filename as they are now automatically sanitised in the zipstream.
+* Plugins implementing callback `bulk_user_actions()` should be aware that bulk user actions can be executed
+  from /admin/user.php as well as from the bulk actions page. The 'returnurl' parameter will be passed in the request.
+* A new attribute helper has been created at \core\attribute_helper.
+  This helper contains methods to fetch a single \ReflectionAttribute, or an array of \ReflectionAttribute for an item,
+  or an instance, or a set of instances.
+* New generic attributes have been added for:
+ - \core\attribute\label - An untranslated text label of an object
+ - \core\attribute\tags - A set of tags for an object
+* The hook API now supports the use of \core\attribute\label and \core\attribute\tags
+  as an alternative to implementing the \core\hook\described_hook interface.
+* The hook API now supports the use of the new \core\attribute\hook\replaces_callbacks() attribute
+  as an alternative to implementing the \core\hook\deprecated_callback_replacement interface.
 
 === 4.3 ===
 

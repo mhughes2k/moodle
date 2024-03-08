@@ -270,6 +270,23 @@ class externallib_test extends externallib_advanced_testcase {
         $expected[] = ['name' => 'tool_dataprivacy_contactdataprotectionofficer', 'value' => get_config('tool_dataprivacy', 'contactdataprotectionofficer')];
         $expected[] = ['name' => 'tool_dataprivacy_showdataretentionsummary', 'value' => get_config('tool_dataprivacy', 'showdataretentionsummary')];
 
+        $expected[] = ['name' => 'useblogassociations', 'value' => $CFG->useblogassociations];
+        $expected[] = ['name' => 'bloglevel', 'value' => $CFG->bloglevel];
+        $expected[] = ['name' => 'blogusecomments', 'value' => $CFG->blogusecomments];
+
+        $this->assertCount(0, $result['warnings']);
+        $this->assertEquals($expected, $result['settings']);
+
+        // H5P custom CSS.
+        set_config('h5pcustomcss', '.debug { color: #fab; }', 'core_h5p');
+        \core_h5p\local\library\autoloader::register();
+        \core_h5p\file_storage::generate_custom_styles();
+        $result = external::get_config();
+        $result = external_api::clean_returnvalue(external::get_config_returns(), $result);
+
+        $customcss = \core_h5p\file_storage::get_custom_styles();
+        $expected[] = ['name' => 'h5pcustomcssurl', 'value' => $customcss['cssurl']->out() . '?ver=' . $customcss['cssversion']];
+
         $this->assertCount(0, $result['warnings']);
         $this->assertEquals($expected, $result['settings']);
 

@@ -593,10 +593,15 @@ class quiz_attempt {
      * The values are arrays with two items, title and content. Each of these
      * will be either a string, or a renderable.
      *
+     * If this method is called before load_questions() is called, then an empty array is returned.
+     *
      * @param question_display_options $options the display options for this quiz attempt at this time.
      * @return array as described above.
      */
     public function get_additional_summary_data(question_display_options $options) {
+        if (!isset($this->quba)) {
+            return [];
+        }
         return $this->quba->get_summary_information($options);
     }
 
@@ -947,8 +952,7 @@ class quiz_attempt {
      * state data about this question.
      *
      * @param int $slot the number used to identify this question within this attempt.
-     * @return string the formatted grade, to the number of decimal places specified
-     *      by the quiz.
+     * @return string the name of the question. Must be output through format_string.
      */
     public function get_question_name($slot) {
         return $this->quba->get_question($slot, false)->name;
@@ -1116,7 +1120,7 @@ class quiz_attempt {
      * @param int $page the page number (starting with 0) in the attempt.
      * @return string attempt page title.
      */
-    public function attempt_page_title(int $page) : string {
+    public function attempt_page_title(int $page): string {
         if ($this->get_num_pages() > 1) {
             $a = new stdClass();
             $a->name = $this->get_quiz_name();
@@ -1149,7 +1153,7 @@ class quiz_attempt {
      *
      * @return string summary page title.
      */
-    public function summary_page_title() : string {
+    public function summary_page_title(): string {
         return get_string('attemptsummarytitle', 'quiz', $this->get_quiz_name());
     }
 
@@ -1178,7 +1182,7 @@ class quiz_attempt {
      * @param bool $showall whether the review page contains the entire attempt on one page.
      * @return string title of the review page.
      */
-    public function review_page_title(int $page, bool $showall = false) : string {
+    public function review_page_title(int $page, bool $showall = false): string {
         if (!$showall && $this->get_num_pages() > 1) {
             $a = new stdClass();
             $a->name = $this->get_quiz_name();
@@ -2336,5 +2340,53 @@ class quiz_attempt {
             }
         }
         return $totalunanswered;
+    }
+
+    /**
+     * If any questions in this attempt have changed, update the attempts.
+     *
+     * For now, this should only be done for previews.
+     *
+     * When we update the question, we keep the same question (in the case of random questions)
+     * and the same variant (if this question has variants). If possible, we use regrade to
+     * preserve any interaction that has been had with this question (e.g. a saved answer) but
+     * if that is not possible, we put in a newly started attempt.
+     */
+    public function update_questions_to_new_version_if_changed(): void {
+        global $DB;
+
+        $versioninformation = qbank_helper::get_version_information_for_questions_in_attempt(
+            $this->attempt, $this->get_context());
+
+        $anychanges = false;
+        foreach ($versioninformation as $slotinformation) {
+            if ($slotinformation->currentquestionid == $slotinformation->newquestionid) {
+                continue;
+            }
+
+            $anychanges = true;
+
+            $slot = $slotinformation->questionattemptslot;
+            $newquestion = question_bank::load_question($slotinformation->newquestionid);
+            if (empty($this->quba->validate_can_regrade_with_other_version($slot, $newquestion))) {
+                // We can use regrade to replace the question while preserving any existing state.
+                $finished = $this->get_attempt()->state == self::FINISHED;
+                $this->quba->regrade_question($slot, $finished, null, $newquestion);
+            } else {
+                // So much has changed, we have to replace the question with a new attempt.
+                $oldvariant = $this->get_question_attempt($slot)->get_variant();
+                $slot = $this->quba->add_question_in_place_of_other($slot, $newquestion, null, false);
+                $this->quba->start_question($slot, $oldvariant);
+            }
+        }
+
+        if ($anychanges) {
+            question_engine::save_questions_usage_by_activity($this->quba);
+            if ($this->attempt->state == self::FINISHED) {
+                $this->attempt->sumgrades = $this->quba->get_total_mark();
+                $DB->update_record('quiz_attempts', $this->attempt);
+                $this->recompute_final_grade();
+            }
+        }
     }
 }

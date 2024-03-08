@@ -1016,7 +1016,7 @@ function course_module_flag_for_async_deletion($cmid) {
  * @param bool $onlygradable whether to check only gradable modules or all modules.
  * @return bool true if the course contains any modules pending deletion, false otherwise.
  */
-function course_modules_pending_deletion(int $courseid, bool $onlygradable = false) : bool {
+function course_modules_pending_deletion(int $courseid, bool $onlygradable = false): bool {
     if (empty($courseid)) {
         return false;
     }
@@ -2177,6 +2177,9 @@ function create_course($data, $editoroptions = NULL) {
     $data->id = $course->id;
     $handler->instance_form_save($data, true);
 
+    $hook = new \core_course\hook\after_form_submission($data, true);
+    \core\hook\manager::get_instance()->dispatch($hook);
+
     return $course;
 }
 
@@ -2424,6 +2427,9 @@ function update_course($data, $editoroptions = NULL) {
     // Update custom fields if there are any of them in the form.
     $handler = core_course\customfield\course_handler::create();
     $handler->instance_form_save($data);
+
+    $hook = new \core_course\hook\after_form_submission($data);
+    \core\hook\manager::get_instance()->dispatch($hook);
 
     // Update with the new data
     $DB->update_record('course', $data);
@@ -3750,6 +3756,11 @@ function core_course_core_calendar_get_valid_event_timestart_range(\calendar_eve
 function core_course_drawer(): string {
     global $PAGE;
 
+    // If the course index is explicitly set and if it should be hidden.
+    if ($PAGE->get_show_course_index() === false) {
+        return '';
+    }
+
     // Only add course index on non-site course pages.
     if (!$PAGE->course || $PAGE->course->id == SITEID) {
         return '';
@@ -4262,7 +4273,7 @@ function course_get_enrolled_courses_for_logged_in_user(
     int $dbquerylimit = COURSE_DB_QUERY_LIMIT,
     array $includecourses = [],
     array $hiddencourses = []
-) : Generator {
+): Generator {
 
     $haslimit = !empty($limit);
     $recordsloaded = 0;
@@ -4308,7 +4319,7 @@ function course_get_enrolled_courses_for_logged_in_user_from_search(
     int $dbquerylimit = COURSE_DB_QUERY_LIMIT,
     array $searchcriteria = [],
     array $options = []
-) : Generator {
+): Generator {
 
     $haslimit = !empty($limit);
     $recordsloaded = 0;
@@ -4355,7 +4366,7 @@ function course_filter_courses_by_timeline_classification(
     $courses,
     string $classification,
     int $limit = 0
-) : array {
+): array {
 
     if (!in_array($classification,
             [COURSE_TIMELINE_ALLINCLUDINGHIDDEN, COURSE_TIMELINE_ALL, COURSE_TIMELINE_PAST, COURSE_TIMELINE_INPROGRESS,
@@ -4412,7 +4423,7 @@ function course_filter_courses_by_favourites(
     $courses,
     $favouritecourseids,
     int $limit = 0
-) : array {
+): array {
 
     $filteredcourses = [];
     $numberofcoursesprocessed = 0;
@@ -4459,7 +4470,7 @@ function course_filter_courses_by_customfield(
     $customfieldname,
     $customfieldvalue,
     int $limit = 0
-) : array {
+): array {
     global $DB;
 
     if (!$courses) {

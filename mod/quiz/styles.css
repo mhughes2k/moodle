@@ -188,6 +188,10 @@
     margin: 0.5em 0;
 }
 
+.path-mod-quiz .autosave_info {
+    font-size: small;
+}
+
 .path-mod-quiz .othernav a,
 .path-mod-quiz .othernav input {
     display: block;
@@ -245,24 +249,6 @@
 #page-mod-quiz-view .quizinfo,
 #page-mod-quiz-view #page .quizgradefeedback {
     text-align: center;
-}
-
-#page-mod-quiz-view #page .quizattemptsummary td p {
-    margin-top: 0;
-}
-
-#page-mod-quiz-view table.quizattemptsummary tr.bestrow td {
-    border-color: #bce8f1;
-    background-color: #d9edf7;
-}
-
-table.quizattemptsummary .noreviewmessage {
-    color: gray;
-}
-
-#page-mod-quiz-view .generaltable.quizattemptsummary {
-    margin-left: auto;
-    margin-right: auto;
 }
 
 #page-mod-quiz-view .generalbox#feedback .overriddennotice {
@@ -753,19 +739,12 @@ table.quizreviewsummary td.cell {
 
 #page-mod-quiz-edit ul.slots li.section li.activity .question_dependency_wrapper {
     position: absolute;
-    top: 0;
-    right: 0;
+    top: -1em;
+    right: -20px;
 }
 
 #page-mod-quiz-edit ul.slots li.section li.activity .question_dependency_wrapper.question_dependency_cannot_depend {
     display: none;
-}
-
-#page-mod-quiz-edit ul.slots li.section li.activity .question_dependency_wrapper .currentlink,
-#page-mod-quiz-edit ul.slots li.section li.activity .question_dependency_wrapper .cm-edit-action {
-    position: relative;
-    left: 20px;
-    top: -1em;
 }
 
 #page-mod-quiz-edit ul.slots li.section li.activity .activityinstance {
@@ -790,9 +769,9 @@ table.quizreviewsummary td.cell {
 
 #page-mod-quiz-edit ul.slots .activityinstance span.instancename {
     overflow-x: hidden;
+    overflow-y: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
-    overflow: hidden;
     display: inline-block;
     height: 20px;
 }

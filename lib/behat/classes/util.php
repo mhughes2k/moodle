@@ -384,7 +384,7 @@ class behat_util extends testing_util {
      * Returns the path to the file which specifies if test environment is enabled
      * @return string
      */
-    public final static function get_test_file_path() {
+    final public static function get_test_file_path() {
         return behat_command::get_parent_behat_dir() . '/test_environment_enabled.txt';
     }
 
@@ -434,6 +434,9 @@ class behat_util extends testing_util {
 
         // Inform data generator.
         self::get_data_generator()->reset();
+
+        // Reset the task manager.
+        \core\task\manager::reset_state();
 
         // Initialise $CFG with default values. This is needed for behat cli process, so we don't have modified
         // $CFG values from the old run. @see set_config.

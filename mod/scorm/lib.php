@@ -1042,7 +1042,8 @@ function scorm_supports($feature) {
         case FEATURE_GRADE_OUTCOMES:          return true;
         case FEATURE_BACKUP_MOODLE2:          return true;
         case FEATURE_SHOW_DESCRIPTION:        return true;
-        case FEATURE_MOD_PURPOSE:             return MOD_PURPOSE_CONTENT;
+        case FEATURE_MOD_PURPOSE:
+            return MOD_PURPOSE_INTERACTIVECONTENT;
 
         default: return null;
     }
@@ -1800,7 +1801,7 @@ function mod_scorm_core_calendar_get_valid_event_timestart_range(\calendar_event
  * @param  array  $args The path (the part after the filearea and before the filename).
  * @return array The itemid and the filepath inside the $args path, for the defined filearea.
  */
-function mod_scorm_get_path_from_pluginfile(string $filearea, array $args) : array {
+function mod_scorm_get_path_from_pluginfile(string $filearea, array $args): array {
     // SCORM never has an itemid (the number represents the revision but it's not stored in database).
     array_shift($args);
 

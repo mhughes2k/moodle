@@ -619,7 +619,7 @@ class moodle_url {
             $uri .= '?' . $querystring;
         }
         if (!is_null($this->anchor)) {
-            $uri .= '#'.$this->anchor;
+            $uri .= '#' . rawurlencode($this->anchor);
         }
 
         return $uri;
@@ -639,7 +639,7 @@ class moodle_url {
         $uri .= $this->port ? ':'.$this->port : '';
         $uri .= $this->path ? $this->path : '';
         if ($includeanchor and !is_null($this->anchor)) {
-            $uri .= '#' . $this->anchor;
+            $uri .= '#' . rawurlencode($this->anchor);
         }
 
         return $uri;
@@ -904,7 +904,7 @@ class moodle_url {
      *
      * @return bool True if URL is relative to $CFG->wwwroot; otherwise, false.
      */
-    public function is_local_url() : bool {
+    public function is_local_url(): bool {
         global $CFG;
 
         $url = $this->out();

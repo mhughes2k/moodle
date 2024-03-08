@@ -19,6 +19,11 @@
         "allowedlevel2": true,
         "allowedspread": true
     },
+    "attribute": {
+        "component": "core",
+        "allowedlevel2": true,
+        "allowedspread": true
+    },
     "availability": {
         "component": "core_availability",
         "allowedlevel2": false,
@@ -131,6 +136,11 @@
     },
     "h5p": {
         "component": "core_h5p",
+        "allowedlevel2": true,
+        "allowedspread": true
+    },
+    "hook": {
+        "component": "core",
         "allowedlevel2": true,
         "allowedspread": true
     },

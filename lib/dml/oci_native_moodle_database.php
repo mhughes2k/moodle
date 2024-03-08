@@ -719,7 +719,7 @@ class oci_native_moodle_database extends moodle_database {
      * @param $field string the field where the record is going to be inserted/updated
      * @param $value mixed the value to be inserted/updated
      */
-    private function oracle_dirty_hack ($table, $field, $value) {
+    private function oracle_dirty_hack($table, $field, $value) {
 
         // General bound parameter, just hack the spaces and pray it will work.
         if (!$table) {
@@ -1577,8 +1577,7 @@ class oci_native_moodle_database extends moodle_database {
         }
     }
 
-    public function sql_concat() {
-        $arr = func_get_args();
+    public function sql_concat(...$arr) {
         if (empty($arr)) {
             return " ' ' ";
         }

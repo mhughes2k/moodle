@@ -100,6 +100,8 @@ if ($accessmanager->is_preflight_check_required($attemptobj->get_attemptid())) {
 // Set up auto-save if required.
 $autosaveperiod = get_config('quiz', 'autosaveperiod');
 if ($autosaveperiod) {
+    $PAGE->requires->string_for_js('strftimedatetimeshortaccurate', 'langconfig');
+    $PAGE->requires->string_for_js('lastautosave', 'quiz');
     $PAGE->requires->yui_module('moodle-mod_quiz-autosave',
             'M.mod_quiz.autosave.init', [$autosaveperiod]);
 }
@@ -118,6 +120,10 @@ if (empty($slots)) {
 // Update attempt page, redirecting the user if $page is not valid.
 if (!$attemptobj->set_currentpage($page)) {
     redirect($attemptobj->start_attempt_url(null, $attemptobj->get_currentpage()));
+}
+
+if ($attemptobj->is_own_preview()) {
+    $attemptobj->update_questions_to_new_version_if_changed();
 }
 
 // Initialise the JavaScript.
