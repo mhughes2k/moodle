@@ -2,6 +2,7 @@
 
 namespace search_solrrag;
 
+use search_solr\document;
 use \search_solrrag\engine;
 
 class schema extends \search_solr\schema
@@ -93,6 +94,54 @@ class schema extends \search_solr\schema
                 }
             }
         }
+    }
+    public function setup($checkexisting = true) {
+        $fields = \search_solrrag\document::get_default_fields_definition();
+
+        // Field id is already there.
+        unset($fields['id']);
+
+        $this->check_index();
+
+        $return = $this->add_fields($fields, $checkexisting);
+
+        // Tell the engine we are now using the latest schema version.
+        $this->engine->record_applied_schema_version(document::SCHEMA_VERSION);
+
+        return $return;
+    }
+    protected function validate_add_field_result($result) {
+
+        if (!$result) {
+            throw new \moodle_exception('errorcreatingschema', 'search_solrrag', '', get_string('nodatafromserver', 'search_solrrag'));
+        }
+
+        $results = json_decode($result);
+        if (!$results) {
+            if (is_scalar($result)) {
+                $errormsg = $result;
+            } else {
+                $errormsg = json_encode($result);
+            }
+            throw new \moodle_exception('errorcreatingschema', 'search_solrrag', '', $errormsg);
+        }
+
+        // It comes as error when fetching fields data.
+        if (!empty($results->error)) {
+            throw new \moodle_exception('errorcreatingschema', 'search_solrrag', '', $results->error);
+        }
+
+        // It comes as errors when adding fields.
+        if (!empty($results->errors)) {
+
+            // We treat this error separately.
+            $errorstr = '';
+            foreach ($results->errors as $error) {
+                $errorstr .= implode(', ', $error->errorMessages);
+            }
+            throw new \moodle_exception('errorcreatingschema', 'search_solrrag', '', $errorstr);
+        }
+
     }
 //    public function can_setup_server() {
 //print_r($this->engine);

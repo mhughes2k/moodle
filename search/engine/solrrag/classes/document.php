@@ -78,4 +78,27 @@ class document extends \search_solr\document {
     public function fetch_document_contents() {
 
     }
+    public function set_data_from_engine($docdata) {
+        $fields = static::$requiredfields + static::$optionalfields + static::$enginefields;
+        foreach ($fields as $fieldname => $field) {
+
+            // Optional params might not be there.
+            if (isset($docdata[$fieldname])) {
+                if ($field['type'] === 'tdate') {
+                    // Time fields may need a preprocessing.
+                    $this->set($fieldname, static::import_time_from_engine($docdata[$fieldname]));
+                } else {
+                    // No way we can make this work if there is any multivalue field.
+                    if($fieldname === 'solr_vector_1536' || $fieldname === 'solr_vector_3072') {
+                        debugging("Skipping $fieldname");
+                        continue;
+                    }
+                    if (is_array($docdata[$fieldname])) {
+                        throw new \core_search\engine_exception('multivaluedfield', 'search_solr', '', $fieldname);
+                    }
+                    $this->set($fieldname, $docdata[$fieldname]);
+                }
+            }
+        }
+    }
 }

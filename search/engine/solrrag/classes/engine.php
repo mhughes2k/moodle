@@ -72,6 +72,17 @@ class engine extends \search_solr\engine {
      */
     public function add_document($document, $fileindexing = false) {
         $docdata = $document->export_for_engine();
+        debugging("Adding document");
+        if ($this->aiprovider->use_for_embeddings() && $this->aiclient) {
+            debugging('Generating vector using provider');
+            $vector = $this->aiclient->embed_query($document['content']);
+            $vlength = count($vector);
+            $vectorfield = "solr_vector_" . $vlength;
+            $docdata[$vectorfield] = $vector;
+            var_dump($docdata);
+        } else {
+            debugging("Err didn't do any vector stuff!");
+        }
 
         if (!$this->add_solr_document($docdata)) {
             return false;
@@ -83,6 +94,37 @@ class engine extends \search_solr\engine {
         }
 
         return true;
+    }
+
+    public function add_document_batch(array $documents, bool $fileindexing = false): array {
+        $docdatabatch = [];
+        foreach ($documents as $document) {
+            //$docdatabatch[] = $document->export_for_engine();
+            $doc = $document->export_for_engine();
+            if ($this->aiprovider->use_for_embeddings() && $this->aiclient) {
+                debugging('Generating vector using provider');
+                $vector = $this->aiclient->embed_query($doc['content']);
+                $vlength = count($vector);
+                $vectorfield = "solr_vector_" . $vlength;
+                $doc[$vectorfield] = $vector;
+                var_dump($doc);
+            } else {
+                debugging("Err didn't do any vector stuff!");
+            }
+            $docdatabatch[] = $doc;
+        }
+
+        $resultcounts = $this->add_solr_documents($docdatabatch);
+
+        // Files are processed one document at a time (if there are files it's slow anyway).
+        if ($fileindexing) {
+            foreach ($documents as $document) {
+                // This will take care of updating all attached files in the index.
+                $this->process_document_files($document);
+            }
+        }
+
+        return $resultcounts;
     }
 
     /**
@@ -291,7 +333,7 @@ class engine extends \search_solr\engine {
      * @throws \core_search\engine_exception
      */
     public function execute_query($filters, $accessinfo, $limit = 0) {
-        var_dump($filters->similarity);
+
         if (isset($filters->similarity) &&
             $filters->similarity
         ) {
@@ -300,11 +342,13 @@ class engine extends \search_solr\engine {
             $this->execute_solr_knn_query($filters, $accessinfo, $limit);
         } else {
             debugging("Running regular search", DEBUG_DEVELOPER);
+            print_r($filters);
+            print_r($accessinfo);
             return parent::execute_query($filters, $accessinfo, $limit);
         }
     }
 
-    protected function execute_solr_knn_query($filters, $accessinfo, $limit) {
+    public function execute_solr_knn_query($filters, $accessinfo, $limit) {
         $vector = $filters->vector;
         $topK = 3;  // Nearest neighbours to retrieve.
         $field = "solr_vector_" . count($vector);
