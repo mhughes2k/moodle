@@ -380,4 +380,40 @@ class engine extends \search_solr\engine {
         }
         return [];
     }
+
+    /**
+     * @see \search_solr\engine::get_schema_version()
+     *
+     * @param $oldversion
+     * @param $newversion
+     * @return bool|\lang_string|string
+     * @throws \coding_exception
+     * @throws \moodle_exception
+     */
+    protected function update_schema($oldversion, $newversion) {
+        // Construct schema.
+        $schema = new \search_solrrag\schema($this);
+        $cansetup = $schema->can_setup_server();
+        if ($cansetup !== true) {
+            return $cansetup;
+        }
+
+        switch ($newversion) {
+            // This version just requires a setup call to add new fields.
+            case 2017091700:
+                $setup = true;
+                break;
+
+            // If we don't know about the schema version we might not have implemented the
+            // change correctly, so return.
+            default:
+                return get_string('schemaversionunknown', 'search');
+        }
+
+        if ($setup) {
+            $schema->setup();
+        }
+
+        return true;
+    }
 }
