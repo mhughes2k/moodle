@@ -128,6 +128,7 @@ class schema extends \search_solr\schema
 
         // It comes as error when fetching fields data.
         if (!empty($results->error)) {
+            var_dump($results);
             throw new \moodle_exception('errorcreatingschema', 'search_solrrag', '', $results->error);
         }
 

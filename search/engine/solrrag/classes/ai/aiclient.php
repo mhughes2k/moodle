@@ -84,7 +84,7 @@ class AIClient extends \curl {
         $rawresult = $this->post($this->get_embeddings_url(), $params);
 //        var_dump($rawresult);
         $result = json_decode($rawresult, true);
-        var_dump($result);
+        // var_dump($result);
         $usage = $result['usage'];
         $this->provider->increment_prompt_usage($usage['prompt_tokens']);
         $this->provider->increment_total_tokens($usage['total_tokens']);

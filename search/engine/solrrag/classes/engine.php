@@ -339,7 +339,7 @@ class engine extends \search_solr\engine {
         ) {
             // Do a vector similarity search.
             debugging("Running similarity search", DEBUG_DEVELOPER);
-            $this->execute_solr_knn_query($filters, $accessinfo, $limit);
+            return $this->execute_solr_knn_query($filters, $accessinfo, $limit);
         } else {
             debugging("Running regular search", DEBUG_DEVELOPER);
             print_r($filters);
@@ -353,6 +353,7 @@ class engine extends \search_solr\engine {
         $topK = 3;  // Nearest neighbours to retrieve.
         $field = "solr_vector_" . count($vector);
         $requestbody = "{!knn f={$field} topK={$topK}}[" . implode(",", $vector) . "]";
+
         $filters->mainquery = $requestbody;
         if (empty($limit)) {
             $limit = \core_search\manager::MAX_RESULTS;
@@ -360,20 +361,18 @@ class engine extends \search_solr\engine {
 
         $curl = $this->get_curl_object();
         $requesturl = $this->get_connection_url('/select');
-        $requesturl->param('fl', 'id,areaid,score');
+        $requesturl->param('fl', 'id,areaid,score,content');
         $requesturl->param('wt', 'xml');
-
-        $body = [
-            'query' => $requestbody
+        // $requesturl->param('query', $requestbody)
+        $params = [
+            "query" => $requestbody,
         ];
-        echo $requesturl->out(false);
-        $result = $curl->post($requesturl->out(false),
-            json_encode($body)
-        );
+        $curl->setHeader('Content-type: application/json');
+        $result = $curl->post($requesturl->out(false), json_encode($params));
+
         // Probably have to duplicate error handling code from the add_stored_file() function.
         $code = $curl->get_errno();
         $info = $curl->get_info();
-
         // Now error handling. It is just informational, since we aren't tracking per file/doc results.
         if ($code != 0) {
             // This means an internal cURL error occurred error is in result.
@@ -410,10 +409,22 @@ class engine extends \search_solr\engine {
 //                    echo htmlentities($result);
 //                    debugging("Got SOLR update/extract response");
                     $xml = simplexml_load_string($result);
-                    print_r($xml->result);
-                    print_r($xml->result['numFound']);
-                    print_r($xml->result['maxScore']);
-
+                    // echo "<pre>";
+                    // var_dump($xml->result);
+                    // echo "</pre>";
+                    $results = $xml->result->doc;
+                    $docs = [];
+                    foreach($results as $doc) {
+                        $docs[] = (object)[
+                            'id' => (string)$doc->str[0],
+                            'areaid' => (string)$doc->str[1],
+                            'content' => (string)$doc->str[2],
+                            'score' => (string)$doc->float,
+                        ];
+                    }
+                    return $docs;
+                    // [0][1][2] as defined in the fl attribute above
+                    
                 }
             } else {
                 // We received an unprocessable response.
