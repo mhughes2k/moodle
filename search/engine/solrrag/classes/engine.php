@@ -4,12 +4,14 @@ namespace search_solrrag;
 
 use search_solrrag\document;
 use search_solrrag\schema;
-// Fudge autoloading!
-require_once($CFG->dirroot ."/search/engine/solrrag/classes/ai/api.php");
-require_once($CFG->dirroot ."/search/engine/solrrag/classes/ai/aiprovider.php");
-require_once($CFG->dirroot ."/search/engine/solrrag/classes/ai/aiclient.php");
+require_once($CFG->dirroot . "/search/engine/solrrag/lib.php");
+// // Fudge autoloading!
+// require_once($CFG->dirroot ."/search/engine/solrrag/classes/ai/api.php");
+// require_once($CFG->dirroot ."/search/engine/solrrag/classes/ai/aiprovider.php");
+// require_once($CFG->dirroot ."/search/engine/solrrag/classes/ai/aiclient.php");
 use \core\ai\AIProvider;
 use \core\ai\AIClient;
+use \core\ai\AiException;
 class engine extends \search_solr\engine {
 
     /**
@@ -79,7 +81,7 @@ class engine extends \search_solr\engine {
             $vlength = count($vector);
             $vectorfield = "solr_vector_" . $vlength;
             $docdata[$vectorfield] = $vector;
-            var_dump($docdata);
+            // var_dump($docdata);
         } else {
             debugging("Err didn't do any vector stuff!");
         }
@@ -107,7 +109,7 @@ class engine extends \search_solr\engine {
                 $vlength = count($vector);
                 $vectorfield = "solr_vector_" . $vlength;
                 $doc[$vectorfield] = $vector;
-                var_dump($doc);
+                // var_dump($doc);
             } else {
                 debugging("Err didn't do any vector stuff!");
             }
@@ -338,37 +340,163 @@ class engine extends \search_solr\engine {
             $filters->similarity
         ) {
             // Do a vector similarity search.
-            debugging("Running similarity search", DEBUG_DEVELOPER);
-            return $this->execute_solr_knn_query($filters, $accessinfo, $limit);
+            // debugging("Running similarity search", DEBUG_DEVELOPER);
+            // We may get accessinfo, but we actually should determine our own ones to apply too
+            // But we can't access the "manager" class' get_areas_user_accesses function, and
+            // that's already been called based on the configuration / data from the user
+            return $this->execute_similarity_query($filters, $accessinfo, $limit);
         } else {
-            debugging("Running regular search", DEBUG_DEVELOPER);
-            print_r($filters);
-            print_r($accessinfo);
+            // debugging("Running regular search", DEBUG_DEVELOPER);
+            // print_r($filters);
+            // print_r($accessinfo);
             return parent::execute_query($filters, $accessinfo, $limit);
         }
     }
+    /**
+     * A logging function just to allow us to output all the things
+     * that the process is doing for verification / validation.
+     * 
+     * Probably not the most efficient way to do this, but Moodle's lacking
+     * a good generic logging framework.
+     * 
+     * @param mixed $message An object/array/string that will be turned into a string.
+     */
+    protected function log($message) {
+        $logfiledir = make_temp_directory('search_solrrag');
+        $file = $logfiledir . '/solr_knn_query.log';
+        $log = fopen($file, 'a');
+        if (is_object($message)) {
+            $message = print_r($message, true);
+        } else if (is_array($message)) {
+            $message = print_r($message, true);
+        } 
+        fwrite($log, date('Y-m-d H:i:s') . " " . $message . "\n");
+        fclose($log);
+    }
 
-    public function execute_solr_knn_query($filters, $accessinfo, $limit) {
+    /**
+     * Perform a similarity search against the backend.
+     * 
+     * This should be an optional method that can be implemented if the engine supports
+     * a vector search capability.
+     * 
+     * This function will broadly replicate the same functionality as execute_query, but optimised 
+     * for similarity
+     * 
+     * @param \stdClass filters The filters object that contains the query and any other parameters. Basically from the search form.
+     * @param \stdClass accessinfo The access information for the user.
+     * @param int limit The maximum number of results to return.
+     */
+    public function execute_similarity_query(\stdClass $filters, \stdClass $accessinfo, int $limit = null) {
+        $data = clone($filters);
+        $this->log("Executing SOLR KNN QUery");
+        $this->log("Filters");
+        $this->log($filters);
         $vector = $filters->vector;
-        $topK = 3;  // Nearest neighbours to retrieve.
-        $field = "solr_vector_" . count($vector);
-        $requestbody = "{!knn f={$field} topK={$topK}}[" . implode(",", $vector) . "]";
+        $topK = $limit > 0 ? $limit: 1; // We'll make the number of neighbours the same as search result limit.
 
-        $filters->mainquery = $requestbody;
         if (empty($limit)) {
             $limit = \core_search\manager::MAX_RESULTS;
+            $topK = \core_search\manager::MAX_RESULTS;  // Nearest neighbours to retrieve.
         }
+
+        $field = "solr_vector_" . count($vector);
+        $requestbody = "{!knn f={$field} topK={$topK}}[" . implode(",", $vector) . "]";
+        $this->log($requestbody);
+        $filters->mainquery = $requestbody;
+        // Build filter restrictions.
+        $filterqueries = [];
+        if(!empty($data->areaids)) {
+            $filterqueries[] = '{!cache=false}areaid:(' . implode(' OR ', $data->areaids) . ')';
+        }
+
+        if(!empty($data->excludeareaids)) {
+            $filterqueries[] = '{!cache=false}-areaid:(' . implode(' OR ', $data->excludeareaids) . ')';
+        }
+        // Build access restrictions.
+
+        // And finally restrict it to the context where the user can access, we want this one cached.
+        // If the user can access all contexts $usercontexts value is just true, we don't need to filter
+        // in that case.
+        if (!$accessinfo->everything && is_array($accessinfo->usercontexts)) {
+            // Join all area contexts into a single array and implode.
+            $allcontexts = array();
+            foreach ($accessinfo->usercontexts as $areaid => $areacontexts) {
+                if (!empty($data->areaids) && !in_array($areaid, $data->areaids)) {
+                    // Skip unused areas.
+                    continue;
+                }
+                foreach ($areacontexts as $contextid) {
+                    // Ensure they are unique.
+                    $allcontexts[$contextid] = $contextid;
+                }
+            }
+            if (empty($allcontexts)) {
+                // This means there are no valid contexts for them, so they get no results.
+                return null;
+            }
+            $filterqueries[] = 'contextid:(' . implode(' OR ', $allcontexts) . ')';
+        }
+
+        if (!$accessinfo->everything && $accessinfo->separategroupscontexts) {
+            // Add another restriction to handle group ids. If there are any contexts using separate
+            // groups, then results in that context will not show unless you belong to the group.
+            // (Note: Access all groups is taken care of earlier, when computing these arrays.)
+
+            // This special exceptions list allows for particularly pig-headed developers to create
+            // multiple search areas within the same module, where one of them uses separate
+            // groups and the other uses visible groups. It is a little inefficient, but this should
+            // be rare.
+            $exceptions = '';
+            if ($accessinfo->visiblegroupscontextsareas) {
+                foreach ($accessinfo->visiblegroupscontextsareas as $contextid => $areaids) {
+                    $exceptions .= ' OR (contextid:' . $contextid . ' AND areaid:(' .
+                            implode(' OR ', $areaids) . '))';
+                }
+            }
+
+            if ($accessinfo->usergroups) {
+                // Either the document has no groupid, or the groupid is one that the user
+                // belongs to, or the context is not one of the separate groups contexts.
+                $filterqueries[] = '(*:* -groupid:[* TO *]) OR ' .
+                        'groupid:(' . implode(' OR ', $accessinfo->usergroups) . ') OR ' .
+                        '(*:* -contextid:(' . implode(' OR ', $accessinfo->separategroupscontexts) . '))' .
+                        $exceptions;
+            } else {
+                // Either the document has no groupid, or the context is not a restricted one.
+                $filterqueries[] = '(*:* -groupid:[* TO *]) OR ' .
+                        '(*:* -contextid:(' . implode(' OR ', $accessinfo->separategroupscontexts) . '))' .
+                        $exceptions;
+            }
+        }
+
+        if ($this->file_indexing_enabled()) {
+            // Now group records by solr_filegroupingid. Limit to 3 results per group.
+            // TODO work out how to convert the following into query / filter parameters.
+            // $query->setGroup(true);
+            // $query->setGroupLimit(3);
+            // $query->setGroupNGroups(true);
+            // $query->addGroupField('solr_filegroupingid');
+        } else {
+            // Make sure we only get text files, in case the index has pre-existing files.
+            $filterqueries[] = 'type:'.\core_search\manager::TYPE_TEXT;
+        }
+
+        // Finally perform the actaul search
 
         $curl = $this->get_curl_object();
         $requesturl = $this->get_connection_url('/select');
         $requesturl->param('fl', 'id,areaid,score,content');
         $requesturl->param('wt', 'xml');
-        // $requesturl->param('query', $requestbody)
+        $requesturl->param('fq', implode("&", $filterqueries));
+
         $params = [
             "query" => $requestbody,
         ];
+
         $curl->setHeader('Content-type: application/json');
         $result = $curl->post($requesturl->out(false), json_encode($params));
+        $this->log($result);
 
         // Probably have to duplicate error handling code from the add_stored_file() function.
         $code = $curl->get_errno();

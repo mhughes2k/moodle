@@ -3,6 +3,8 @@
 
 namespace core\ai;
 
+require_once($CFG->dirroot . "/search/engine/solrrag/lib.php");
+
 class api {
 
     /**
@@ -15,7 +17,8 @@ class api {
     }
     public static function get_provider(int $id): AIProvider {
         $fakes = AIProvider::get_records();
-        return $fakes[0];
+        return $fakes[0]; // Open AI
+        // return $fakes[1]; // Ollama
 
     }
 }

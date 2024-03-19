@@ -94,13 +94,12 @@ if ($data = $chatform->get_data()) {
     $progress->update(1, $totalsteps,'Looking for relevant context');
     $vector = $aiclient->embed_query($data->userprompt);
     $search = \core_search\manager::instance(true, true);
-    $settings = [
-        'similarity' => true,
-        'vector' => $vector,
-    ];
-    $limit = 0;
+    // Some of these values can't be "trusted" to the end user to supply, via something
+    // like a form, nor can they be entirely left to the plugin developer.
+    $settings = $aiprovider->get_settings_for_user($USER);
+    $settings['vector'] = $vector;
+    $settings['userquery'] = $data->userprompt;
     $docs = $search->search((object)$settings);
-    var_dump($docs);
     
     // Perform "R" from RAG, finding documents from within the context that are similar to the user's prompt.
     // Add the retrieved documents to the context for this chat by generating some system messages with the content
@@ -110,22 +109,22 @@ if ($data = $chatform->get_data()) {
         foreach ($docs as $doc) {
             $context[] = $doc->content;
         }
-        $_SESSION[$aicontextkey]['messages'][] = (object)[
+        $prompt = (object)[
             "role" => "system",
-            "content" => "Use the following context to answer questions:" . implode("\n",$context)
+            "content" => "Use the following context to answer following question:" . implode("\n",$context)
         ];
-    }
-
-    // Add the user's new prompt to the messages.
+        $_SESSION[$aicontextkey]['messages'][] = $prompt;
+    } 
     $progress->update(2, $totalsteps,'Attaching user prompt');
-    $_SESSION[$aicontextkey]['messages'][] = (object)[
+    // $_SESSION[$aicontextkey]['messages'][] 
+    $prompt = (object)[
         "role" => "user",
         "content" => $data->userprompt
     ];
-    // Pass the whole context over the AI to summarise.
-    var_dump($_SESSION[$aicontextkey]['messages']);
+    $_SESSION[$aicontextkey]['messages'][] = $prompt;
+    
+    // Pass the whole context over the AI to summarise.    
     $progress->update(3, $totalsteps, 'Waiting for response');
-
     $airesults = $aiclient->chat($_SESSION[$aicontextkey]['messages']);
     $_SESSION[$aicontextkey]['messages'] = array_merge($_SESSION[$aicontextkey]['messages'],$airesults);
     $progress->update(4, $totalsteps, 'Got Response');
@@ -133,14 +132,19 @@ if ($data = $chatform->get_data()) {
     // We stash the data in the session temporarily (should go into an activity-user store in database) but this
     // is fast and dirty, and then we do a redirect so that we don't double up the request if the user hit's
     // refresh.
-    redirect(new \moodle_url('/mod/xaichat/view.php', ['id' => $cm->id]));
+    $next = new \moodle_url('/mod/xaichat/view.php', ['id' => $cm->id]);
+    redirect($next);
 } else if ($chatform->is_cancelled()) {
     $_SESSION[$aicontextkey] = [
         'messages'=>[]
     ];
+    $prompt = (object)[
+        "role" => "system",
+        "content" => "You are a helpful AI. You should only use information you know. Only use information that is relevant to the question."
+    ];
+    $_SESSION[$aicontextkey]['messages'][] = $prompt;
 } else {
     // Clear session on first view of form.
-
     $toform = [
         'id' => $id,
         'aiproviderid' => $moduleinstance->aiproviderid,
@@ -154,19 +158,27 @@ $aipic = $aiprovider->get('name');
 
 $displaymessages = [];
 foreach ($_SESSION[$aicontextkey]['messages'] as $message) {
-    $displaymessages[] = [
-        "role" => $message->role == "user" ? $userpic : \html_writer::tag("strong", $aipic),
-        "content" => format_text($message->content, FORMAT_MARKDOWN)
-    ];
+    if ($message->role != "system") {
+        $displaymessages[] = [
+            "role" => $message->role == "user" ? $userpic : \html_writer::tag("strong", $aipic),
+            "content" => format_text($message->content, FORMAT_MARKDOWN)
+        ];
+    }
 }
+$displaymessages = array_reverse($displaymessages);
 $tcontext = [
     "userpic" => new user_picture($USER),
     "messages" => $displaymessages
 ];
+$chatform->display();
 
 echo $OUTPUT->render_from_template("mod_xaichat/conversation", $tcontext);
 
-$chatform->display();
+if (false) {
+    echo html_writer::tag("pre", print_r($_SESSION[$aicontextkey]['messages'],1));
+}
+
+
 
 //echo \html_writer::tag('pre', print_r($displaymessages,1));
 //echo \html_writer::tag('pre', print_r($_SESSION[$aicontextkey]['messages'],1));
