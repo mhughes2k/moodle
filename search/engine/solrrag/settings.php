@@ -23,7 +23,7 @@
  */
 
 defined('MOODLE_INTERNAL') || die();
-
+require_once($CFG->dirroot . "/search/engine/solrrag/lib.php");
 if ($ADMIN->fulltree) {
 
     if (!during_initial_install()) {
