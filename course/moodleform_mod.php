@@ -1195,4 +1195,25 @@ abstract class moodleform_mod extends moodleform {
         }
         return $data;
     }
+
+    public function standard_aiprovider_coursemodule_elements() {
+
+        if (!$this->_features->ai) {
+            return;
+        }
+        $mform = $this->_form;
+        // Adding the rest of mod_xaichat settings, spreading all them into this fieldset
+        // ... or adding more fieldsets ('header' elements) if needed for better logic.
+        $mform->addElement('header', 'aiprovider', get_string('aiprovider'));
+
+        $providers = \core\ai\api::get_all_providers();
+        $optproviders = [];
+        foreach($providers as $provider) {
+            $optproviders[$provider->get('id')] = $provider->get('name');
+        }
+        $mform->addElement('select', 'aiproviderid',
+            'Choose Provider',
+            $optproviders
+        );
+    }
 }

@@ -251,10 +251,10 @@ if (isset($CFG->phpunit_profilingenabled) && $CFG->phpunit_profilingenabled) {
     $CFG->profilingenabled = true;
     $CFG->profilingincluded = '*';
 }
+
 require("$CFG->dirroot/lib/setup.php");
 
 raise_memory_limit(MEMORY_HUGE);
-
 if (PHPUNIT_UTIL) {
     // We are not going to do testing, this is 'true' in utility scripts that only init database.
     return;
