@@ -23,10 +23,10 @@
  */
 
 defined('MOODLE_INTERNAL') || die();
-
-require_once($CFG->dirroot ."/search/engine/solrrag/classes/ai/api.php");
-require_once($CFG->dirroot ."/search/engine/solrrag/classes/ai/aiprovider.php");
-require_once($CFG->dirroot ."/search/engine/solrrag/classes/ai/aiclient.php");
+//
+//require_once($CFG->dirroot ."/search/engine/solrrag/classes/ai/api.php");
+//require_once($CFG->dirroot ."/search/engine/solrrag/classes/ai/aiprovider.php");
+//require_once($CFG->dirroot ."/search/engine/solrrag/classes/ai/aiclient.php");
 
 /**
  * Return if the plugin supports $feature.
@@ -36,6 +36,8 @@ require_once($CFG->dirroot ."/search/engine/solrrag/classes/ai/aiclient.php");
  */
 function xaichat_supports($feature) {
     switch ($feature) {
+        case FEATURE_AI:
+            return true;
         case FEATURE_GRADE_HAS_GRADE:
             return true;
         case FEATURE_MOD_INTRO:

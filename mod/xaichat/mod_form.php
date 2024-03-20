@@ -69,19 +69,7 @@ class mod_xaichat_mod_form extends moodleform_mod {
             $this->add_intro_editor();
         }
 
-        // Adding the rest of mod_xaichat settings, spreading all them into this fieldset
-        // ... or adding more fieldsets ('header' elements) if needed for better logic.
-        $mform->addElement('header', 'xaichatfieldset', get_string('xaichatfieldset', 'mod_xaichat'));
-
-        $providers = \core\ai\api::get_all_providers();
-        $optproviders = [];
-        foreach($providers as $provider) {
-            $optproviders[$provider->get('id')] = $provider->get('name');
-        }
-        $mform->addElement('select', 'aiproviderid',
-            'Choose Provider',
-            $optproviders
-        );
+        $this->standard_aiprovider_coursemodule_elements();
         // Add standard grading elements.
         $this->standard_grading_coursemodule_elements();
 

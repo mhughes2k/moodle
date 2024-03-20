@@ -658,6 +658,7 @@ setup_validate_php_configuration();
 setup_DB();
 
 if (PHPUNIT_TEST and !PHPUNIT_UTIL) {
+
     // Make sure tests do not run in parallel.
     $suffix = '';
     if (phpunit_util::is_in_isolated_process()) {
@@ -668,7 +669,9 @@ if (PHPUNIT_TEST and !PHPUNIT_UTIL) {
     try {
         if ($dbhash = $DB->get_field('config', 'value', array('name'=>'phpunittest'))) {
             // reset DB tables
+            echo('1');
             phpunit_util::reset_database();
+            echo('2');
         }
     } catch (Exception $e) {
         if ($dbhash) {

@@ -4,7 +4,7 @@ namespace search_solrrag;
 
 use search_solrrag\document;
 use search_solrrag\schema;
-require_once($CFG->dirroot . "/search/engine/solrrag/lib.php");
+//require_once($CFG->dirroot . "/search/engine/solrrag/lib.php");
 // // Fudge autoloading!
 // require_once($CFG->dirroot ."/search/engine/solrrag/classes/ai/api.php");
 // require_once($CFG->dirroot ."/search/engine/solrrag/classes/ai/aiprovider.php");
