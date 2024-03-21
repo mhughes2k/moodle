@@ -25,9 +25,6 @@
 defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->dirroot.'/course/moodleform_mod.php');
-require_once($CFG->dirroot ."/search/engine/solrrag/classes/ai/api.php");
-require_once($CFG->dirroot ."/search/engine/solrrag/classes/ai/aiprovider.php");
-require_once($CFG->dirroot ."/search/engine/solrrag/classes/ai/aiclient.php");
 
 /**
  * Module instance settings form.
@@ -69,7 +66,7 @@ class mod_xaichat_mod_form extends moodleform_mod {
             $this->add_intro_editor();
         }
 
-        $this->standard_aiprovider_coursemodule_elements();
+        $this->standard_aiprovider_coursemodule_elements(true, true);
         // Add standard grading elements.
         $this->standard_grading_coursemodule_elements();
 

@@ -210,6 +210,7 @@ abstract class moodleform_mod extends moodleform {
         $this->_features->advancedgrading   = plugin_supports('mod', $this->_modname, FEATURE_ADVANCED_GRADING, false);
         $this->_features->hasnoview         = plugin_supports('mod', $this->_modname, FEATURE_NO_VIEW_LINK, false);
         $this->_features->canrescale = (component_callback_exists('mod_' . $this->_modname, 'rescale_activity_grades') !== false);
+        $this->_features->ai                = plugin_supports('mod', $this->_modname, FEATURE_AI, false);
     }
 
     /**
@@ -1196,7 +1197,17 @@ abstract class moodleform_mod extends moodleform {
         return $data;
     }
 
-    public function standard_aiprovider_coursemodule_elements() {
+    /**
+     * Display AI Provider configuration section.
+     * @param $allowdisable If the plugin can function without AI, then it's edit form can offer a "disabled" option.
+     * @return void
+     * @throws coding_exception
+     */
+    public function standard_aiprovider_coursemodule_elements(
+        $allowchat = false,
+        $allowembedding = false,
+        $allowdisable = false
+    ) {
 
         if (!$this->_features->ai) {
             return;
@@ -1204,10 +1215,34 @@ abstract class moodleform_mod extends moodleform {
         $mform = $this->_form;
         // Adding the rest of mod_xaichat settings, spreading all them into this fieldset
         // ... or adding more fieldsets ('header' elements) if needed for better logic.
-        $mform->addElement('header', 'aiprovider', get_string('aiprovider'));
+        $mform->addElement('header', 'aiprovider', get_string('aiprovider', 'ai'));
 
-        $providers = \core\ai\api::get_all_providers();
+        $mform->addElement('static', "aiproviderfeatures",
+            get_string("aiproviderfeatures", 'ai'),
+            get_string("aiproviderfeatures_desc", 'ai')
+        );
+        $contextconstraint = "Context id {$this->context->id} or above";
+        $mform->addElement('static', 'aiprovider_contextconstraint', get_string('context'),
+            $contextconstraint
+        );
+        $mform->addElement(
+            'static', 'aiprovider_chat', get_string('chat', 'ai'),
+            $allowchat ? get_string("yes") : get_string("no")
+        );
+
+        $mform->addElement('static', 'aiprovider_embedding', get_string('embedding', 'ai'),
+            $allowembedding ? get_string("yes") : get_string("no")
+        );
+
+        $providers = \core_ai\api::get_providers(
+            $this->context->id,
+            $allowchat,
+            $allowembedding
+        );
         $optproviders = [];
+        if ($allowdisable) {
+            $optproviders[''] = get_string('disable', 'ai');
+        }
         foreach($providers as $provider) {
             $optproviders[$provider->get('id')] = $provider->get('name');
         }
@@ -1215,5 +1250,8 @@ abstract class moodleform_mod extends moodleform {
             'Choose Provider',
             $optproviders
         );
+
+        // TODO Display provider settings that can be set at this context.
+
     }
 }

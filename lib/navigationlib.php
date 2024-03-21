@@ -25,6 +25,7 @@
 
 use core\moodlenet\utilities;
 use core_contentbank\contentbank;
+use core\ai\api;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -4847,7 +4848,19 @@ class settings_navigation extends navigation_node {
                 $coursereusenav->add(get_string('reset'), $url, self::TYPE_SETTING, null, 'reset', new pix_icon('i/return', ''));
             }
         }
-
+        // Core AI Function
+        if (has_capability('moodle/ai:manageproviders', $coursecontext)) {
+            $coursenode->add(
+                get_string('manageproviders', 'ai'),
+                new moodle_url(
+                    '/ai/index.php',
+                    [
+                        'id' => $coursecontext->id,
+                        'action' => \core_ai\api::ACTION_MANAGE_PROVIDERS
+                    ]),
+                navigation_node::TYPE_SETTING
+            );
+        }
         // Return we are done
         return $coursenode;
     }
@@ -5618,6 +5631,19 @@ class settings_navigation extends navigation_node {
             $categorynode->add(get_string('restorecourse', 'admin'), $url, self::TYPE_SETTING, null, 'restorecourse', new pix_icon('i/restore', ''));
         }
 
+        // AI
+        if (has_capability('moodle/ai:manageproviders', $catcontext)) {
+            $categorynode->add(
+                get_string('manageproviders', 'core_ai'),
+                new moodle_url(
+                    '/ai/index.php',
+                    [
+                        'id' => $catcontext->id,
+                        'action' => api::ACTION_MANAGE_PROVIDERS
+                    ]),
+                navigation_node::TYPE_SETTING
+            );
+        }
         // Let plugins hook into category settings navigation.
         $pluginsfunction = get_plugins_with_function('extend_navigation_category_settings', 'lib.php');
         foreach ($pluginsfunction as $plugintype => $plugins) {

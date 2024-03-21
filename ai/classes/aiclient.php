@@ -1,7 +1,7 @@
 <?php
-namespace core\ai;
+namespace core_ai;
 require_once($CFG->libdir.'/filelib.php');
-use core\ai\AiException;
+use core_ai\AiException;
 /**
  * Base client for AI providers that uses simple http request.
  */
@@ -11,7 +11,7 @@ class AIClient extends \curl {
      */
     private $provider;
     public function __construct(
-        \core\ai\AIProvider $provider
+        AIProvider $provider
     ) {
         $this->provider = $provider;
         $settings = [];

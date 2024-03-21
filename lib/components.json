@@ -44,6 +44,7 @@
         "paygw": "payment\/gateway"
     },
     "subsystems": {
+        "ai": "ai",
         "access": null,
         "admin": "admin",
         "adminpresets": "admin/presets",
