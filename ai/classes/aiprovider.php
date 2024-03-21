@@ -2,11 +2,12 @@
 // We're mocking a core Moodle "AI" Subsystem a la Oauth 2
 namespace core_ai;
 
-use \core\persistent;
+use core\persistent;
 use core_course_category;
 
 class AIProvider extends persistent {
 // Ultimately this would extend a persistent.
+
     const CONTEXT_ALL_MY_COURSES = -1;
 
     protected static function define_properties()
@@ -54,6 +55,7 @@ class AIProvider extends persistent {
             ],
         ];
     }
+
 
     /**
      * Work out the context path from the site to this AI Provider's context
