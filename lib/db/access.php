@@ -2748,4 +2748,28 @@ $capabilities = array(
             'manager' => CAP_ALLOW,
         ]
     ],
+    // Allow user to add AI Provider to contexts.
+    'moodle/ai:addprovider' => [
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_COURSECAT,
+        'archetypes' => [
+            'manager' => CAP_ALLOW,
+        ]
+    ],
+    // Allow user to remove AI Provider from contexts.
+    'moodle/ai:removeprovider' => [
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_COURSECAT,
+        'archetypes' => [
+            'manager' => CAP_ALLOW,
+        ]
+    ],
+    // Allow user to modify AI Providers in contexts.
+    'moodle/ai:manageproviders' => [
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_COURSECAT,
+        'archetypes' => [
+            'manager' => CAP_ALLOW,
+        ]
+    ],
 );

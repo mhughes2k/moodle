@@ -1,7 +1,6 @@
 <?php
 // We're mocking a core Moodle "AI" Subsystem a la Oauth 2
-namespace core\ai;
-require_once($CFG->dirroot . "/search/engine/solrrag/lib.php");
+namespace core_ai;
 
 use \core\persistent;
 use core_course_category;
@@ -16,13 +15,16 @@ class AIProvider extends persistent {
             'name' => [
                 'type' => PARAM_TEXT
             ],
+            'enabled' => [
+                'type' => PARAM_BOOL
+            ],
             'apikey' =>[
                 'type' => PARAM_ALPHANUMEXT
             ],
             'allowembeddings' => [
                 'type' => PARAM_BOOL
             ],
-            'allowquery' => [
+            'allowchat' => [
                 'type' => PARAM_BOOL
             ],
             'baseurl' => [
@@ -43,7 +45,7 @@ class AIProvider extends persistent {
             // What context is this provider attached to. 
             // If null, it's a global provider.
             // If -1 its limited to user's own courses.
-            'context' => [
+            'contextid' => [
                 'type' => PARAM_INT
             ],
             // If true, only courses that the user is enrolled in will be searched.
@@ -53,6 +55,14 @@ class AIProvider extends persistent {
         ];
     }
 
+    /**
+     * Work out the context path from the site to this AI Provider's context
+     * @return void
+     */
+    public function get_context_path() {
+        $context = \context::instance_by_id($this->get('contextid'));
+        var_dump($context);
+    }
     public function use_for_embeddings(): bool {
         return $this->get('allowembeddings');
     }
@@ -173,40 +183,102 @@ class AIProvider extends persistent {
      * @param $limit
      * @return array
      */
-    public static function get_records($filters = array(), $sort = '', $order = 'ASC', $skip = 0, $limit = 0) {
+    public static function get_records($filters = [], $sort = '', $order = 'ASC', $skip = 0, $limit = 0) {
         global $_ENV;
+
         $records = [];
         $fake = new static(0, (object) [
             'id' => 1,
-            'name' => "Fake Open AI Provider",
+            'name' => "Open AI Provider (hardcoded)",
+            'enabled' => true,
             'allowembeddings' => true,
-            'allowquery' => true,
+            'allowchat' => true,
             'baseurl' => 'https://api.openai.com/v1/',
             'embeddings' => 'embeddings',
             'embeddingmodel' => 'text-embedding-3-small',
             'completions' => 'chat/completions',
             'completionmodel' => 'gpt-4-turbo-preview',
             'apikey'=> $_ENV['OPENAIKEY'],
-            'context' => \context_system::instance()->id,
+            'contextid' => \context_system::instance()->id,
             //null,  // Global AI Provider
             'onlyenrolledcourses' => true
         ]);
         array_push($records, $fake);
         $fake = new static(0, (object) [
             'id' => 2,
-            'name' => "Ollama AI Provider",
+            'name' => "Ollama AI Provider (hard coded)",
+            'enabled' => true,
             'allowembeddings' => true,
-            'allowquery' => true,
+            'allowchat' => true,
             'baseurl' => 'http://127.0.0.1:11434/api/',
             'embeddings' => 'embeddings',
             'embeddingmodel' => '',
             'completions' => 'chat',
             'completionmodel' => 'llama2',
-            'context' => null,  // Global AI Provider
+            'contextid' => null,  // Global AI Provider
             'onlyenrolledcourses' => true
             // 'apikey'=> $_ENV['OPENAIKEY']
         ]);
         array_push($records, $fake);
+        $fake = new static(0, (object) [
+            'id' => 3,
+            'name' => "Ollama AI Provider (hard coded) Misc Category only",
+            'enabled' => true,
+            'allowembeddings' => true,
+            'allowchat' => true,
+            'baseurl' => 'http://127.0.0.1:11434/api/',
+            'embeddings' => 'embeddings',
+            'embeddingmodel' => '',
+            'completions' => 'chat',
+            'completionmodel' => 'llama2',
+            'contextid' => 111,  // Global AI Provider
+            'onlyenrolledcourses' => true,
+            // 'apikey'=> $_ENV['OPENAIKEY']
+        ]);
+        array_push($records, $fake);
+
+        $targetcontextid = $filters['contextid'] ?? null;
+        $targetcontext = null;
+        if (is_null($targetcontextid)) {
+//            debugging("No Context Restriction", DEBUG_DEVELOPER);
+            unset($filters['contextid']); // Because we need special handling.
+        } else {
+//            debugging("Context Restriction: {$targetcontextid}", DEBUG_DEVELOPER);
+            $targetcontext = \context::instance_by_id($targetcontextid);
+        }
+//        debugging(print_r($filters,1), DEBUG_DEVELOPER);
+        $records = array_filter($records, function($record) use ($filters, $targetcontext) {
+            $result = true;
+            foreach($filters as $key => $value) {
+                if ($key == "contextid") {
+                    $providercontextid = $record->get('contextid');
+                    if ($providercontextid == self::CONTEXT_ALL_MY_COURSES) {
+                        // More problematic.
+                        debugging('Provider needs to be in one of user\'s courses', DEBUG_DEVELOPER);
+                        $result = $result & true;
+                    } else if ($providercontextid == null) {
+                        // System provider so always matches.
+                        debugging("System AI provider", DEBUG_DEVELOPER);
+                        $result = $result & true;
+                    } else {
+                        debugging("Context linked AI provider", DEBUG_DEVELOPER);
+                        $providercontext = \context::instance_by_id(
+                            $providercontextid
+                        );
+                        $ischild = $targetcontext->is_child_of($providercontext, true);
+                        debugging("IS child ". (int)$ischild, DEBUG_DEVELOPER);
+                        $result = $result & $ischild;
+                    }
+                }else {
+                    debugging('Filtering on '.$key. "' = {$value}", DEBUG_DEVELOPER);
+                    if ($record->get($key) != $value) {
+                        return false;
+                    }
+                }
+            }
+            return $result;
+        });
+
         return $records;
     }
 
