@@ -1,6 +1,8 @@
 <?php
+namespace core_ai\output;
+use core_ai\api;
 
-class index_page implements renderable, templatable {
+class index_page implements \renderable, \templatable {
 
     private $providers = null;
     function __construct($providers) {
@@ -9,7 +11,7 @@ class index_page implements renderable, templatable {
 
     public function providers_table($providers) {
         global $CFG;
-        $table = new html_table();
+        $table = new \html_table();
         $table->head = [
             'name',
             'context',
@@ -40,7 +42,7 @@ class index_page implements renderable, templatable {
                 if (
                     !isset($contextcache[$contextid])
                 ) {
-                    $contextcache[$contextid] = context::instance_by_id($contextid);
+                    $contextcache[$contextid] = \context::instance_by_id($contextid);
                 }
                 $contextinstance = $contextcache[$contextid];
                 $context = $contextinstance->get_context_name();
@@ -54,39 +56,36 @@ class index_page implements renderable, templatable {
             $status = $provider->get('enabled');
 
             // Set up cells.
-            $namecell = new html_table_cell($name);
+            $namecell = new \html_table_cell($name);
             $namecell->header = true;
 
-            $contextcell = new html_table_cell($context);
-            $contextcell->header = true;
+            $contextcell = new \html_table_cell($context);
 
-            $completioncell = new html_table_cell(
+            $completioncell = new \html_table_cell(
                 $completion
                     ?"yes"//$this->pix_icon('yes', get_string('enabled','ai'))
                     :"no"//$this->pix_icon('no', get_string('disabled','ai'))
             );
-            $completioncell->header = true;
 
-            $embeddingscell = new html_table_cell(
+            $embeddingscell = new \html_table_cell(
                 $embeddings
                     ?"yes"//$this->pix_icon('yes', get_string('enabled','ai'), 'ai')
                     :"no"//$this->pix_icon('no', get_string('disabled','ai'), 'ai')
             );
-            $embeddingscell->header = true;
 
-            $statuscell = new html_table_cell($status);
+            $statuscell = new \html_table_cell($status);
             $statuscell->header = true;
 
             $links = "";
             // Action links.
-            $editurl = new moodle_url($CFG->wwwroot . '/ai/index.php',
+            $editurl = new \moodle_url($CFG->wwwroot . '/ai/index.php',
                 [
                     'action' => api::ACTION_EDIT_PROVIDER,
                     'pid' => $provider->get('id')
                 ]);
-            $links .= html_writer::link($editurl, 'Edit');
-            $editcell = new html_table_cell($links);
-            $row = new html_table_row([
+            $links .= \html_writer::link($editurl, 'Edit');
+            $editcell = new \html_table_cell($links);
+            $row = new \html_table_row([
                 $namecell,
                 $contextcell,
                 $completioncell,
@@ -97,12 +96,35 @@ class index_page implements renderable, templatable {
             $data[] = $row;
         }
         $table->data = $data;
-        return html_writer::table($table);
+        return \html_writer::table($table);
     }
-    public function export_for_template(renderer_base $output) : stdClass{
-        $data = (object)[
-            'providers' => array_values($this->providers_table($this->providers))
+
+    private $providertypes = ['OpenAI API'];
+    protected function template_buttons() {
+        global $CFG;
+        $buttons = [];
+        foreach($this->providertypes as $type) {
+            $addurl = new \moodle_url($CFG->wwwroot . '/ai/index.php',
+                [
+                    'action' => api::ACTION_EDIT_PROVIDER,
+                    'type' => $type,
+                    'pid' => null
+                ]
+            );
+            $buttontext = get_string('newprovider', 'ai', $type);
+            $buttons[] = [$addurl, $buttontext];
+        }
+        return $buttons;
+    }
+    public function export_for_template(\renderer_base $output) : object{
+        $buttondefs = $this->template_buttons();
+        $buttons = array_map(function($button) use ($output) {
+            return $output->single_button($button[0], $button[1]);
+        }, $buttondefs);
+        $data = [
+            'providers_table' => $this->providers_table($this->providers),
+            'templates' => $buttons
         ];
-        return $data;
+        return (object)$data;
     }
 }

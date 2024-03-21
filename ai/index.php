@@ -41,7 +41,10 @@ if ($action == api::ACTION_EDIT_PROVIDER) {
     } else {
         // Create new
     }
-    $mform = new \core\ai\form\provider(null, ['persistent' => $provider]);
+    $mform = new \core_ai\form\aiprovider(null, [
+        'persistent' => $provider,
+        'type' => required_param('type', PARAM_RAW)
+    ]);
 }
 
 
@@ -60,9 +63,11 @@ if ($mform && $mform->is_cancelled()) {
     // Handle remove.
 } else {
     // Display list of providers.
-    $providers = api::get_providers();
+    $indexpage = new \core_ai\output\index_page(
+        api::get_providers()
+    );
     echo $OUTPUT->header();
     echo $OUTPUT->heading(get_string('pluginname', 'ai'));
-    echo $renderer->providers_table($providers);
+    echo $renderer->render_index_page($indexpage);
     echo $OUTPUT->footer();
 }
