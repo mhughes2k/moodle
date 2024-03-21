@@ -26,7 +26,8 @@ use lang_string;
 use moodle_url;
 use stdClass;
 use core_reportbuilder\local\entities\base;
-use core_reportbuilder\local\filters\{select, text};
+use core_reportbuilder\local\filters\{date, select, text};
+use core_reportbuilder\local\helpers\database;
 use core_reportbuilder\local\report\{column, filter};
 
 defined('MOODLE_INTERNAL') or die;
@@ -283,6 +284,8 @@ class badge extends base {
      * @return filter[]
      */
     protected function get_all_filters(): array {
+        global $DB;
+
         $badgealias = $this->get_table_alias('badge');
 
         // Name.
@@ -292,6 +295,16 @@ class badge extends base {
             new lang_string('name'),
             $this->get_entity_name(),
             "{$badgealias}.name"
+        ))
+            ->add_joins($this->get_joins());
+
+        // Version.
+        $filters[] = (new filter(
+            text::class,
+            'version',
+            new lang_string('version', 'core_badges'),
+            $this->get_entity_name(),
+            "{$badgealias}.version"
         ))
             ->add_joins($this->get_joins());
 
@@ -310,6 +323,30 @@ class badge extends base {
                 BADGE_STATUS_INACTIVE_LOCKED => new lang_string('badgestatus_2', 'core_badges'),
                 BADGE_STATUS_ACTIVE_LOCKED => new lang_string('badgestatus_3', 'core_badges'),
                 BADGE_STATUS_ARCHIVED => new lang_string('badgestatus_4', 'core_badges'),
+            ]);
+
+        // Expiry date/period.
+        [$parammaxint, $paramtime] = database::generate_param_names(2);
+        $filters[] = (new filter(
+            date::class,
+            'expiry',
+            new lang_string('expirydate', 'core_badges'),
+            $this->get_entity_name(),
+            "CASE WHEN {$badgealias}.expiredate IS NULL AND {$badgealias}.expireperiod IS NULL
+                  THEN " . $DB->sql_cast_char2int(":{$parammaxint}") . "
+                  ELSE COALESCE({$badgealias}.expiredate, {$badgealias}.expireperiod + :{$paramtime})
+             END",
+            [$parammaxint => 2147483647, $paramtime => time()]
+        ))
+            ->add_joins($this->get_joins())
+            ->set_limited_operators([
+                date::DATE_ANY,
+                date::DATE_RANGE,
+                date::DATE_LAST,
+                date::DATE_CURRENT,
+                date::DATE_NEXT,
+                date::DATE_PAST,
+                date::DATE_FUTURE,
             ]);
 
         // Type.
