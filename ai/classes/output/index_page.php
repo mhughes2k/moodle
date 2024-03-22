@@ -99,11 +99,13 @@ class index_page implements \renderable, \templatable {
         return \html_writer::table($table);
     }
 
-    private $providertypes = ['OpenAI API'];
+    private $providertypes = [
+        'openaiapi' => 'OpenAI API'
+    ];
     protected function template_buttons() {
         global $CFG;
         $buttons = [];
-        foreach($this->providertypes as $type) {
+        foreach($this->providertypes as $type => $name) {
             $addurl = new \moodle_url($CFG->wwwroot . '/ai/index.php',
                 [
                     'action' => api::ACTION_EDIT_PROVIDER,
@@ -111,7 +113,7 @@ class index_page implements \renderable, \templatable {
                     'pid' => null
                 ]
             );
-            $buttontext = get_string('newprovider', 'ai', $type);
+            $buttontext = get_string('newprovider', 'ai', $name);
             $buttons[] = [$addurl, $buttontext];
         }
         return $buttons;
