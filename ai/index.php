@@ -41,7 +41,7 @@ if ($action == api::ACTION_EDIT_PROVIDER) {
     } else {
         // Create new
     }
-    $mform = new \core_ai\form\aiprovider(null, [
+    $mform = new \core_ai\form\openaiapiprovider(null, [
         'persistent' => $provider,
         'type' => required_param('type', PARAM_RAW)
     ]);

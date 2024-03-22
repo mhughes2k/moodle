@@ -42,3 +42,31 @@ $string['embedding'] = 'Embedding';
 $string['embedding_help'] = 'Embedding allows the AI to generate vector representations of text.';
 $string['aiproviderfeatures'] = '';
 $string['aiproviderfeatures_desc'] = 'This plugin needs the following AI features';
+
+// providers
+$string['newprovider'] = '{$a} Based Provider';
+
+// Provider instance form
+$string['providername'] = "Name";
+$string['providername_help'] = "Name";
+$string['baseurl'] = 'Base URL';
+$string['baseurl_help'] = 'Base URL';
+$string['apikey'] = 'API Key';
+$string['apikey_help'] = 'API KEY ';
+
+$string['features'] = 'Features';
+$string['allowchat'] = 'Allow Chat';
+$string['allowchat_help'] = 'Allow this provider to provide chat completion.';
+$string['completionspath'] = 'Completions path';
+$string['completionspath_help'] = 'Completions path';
+$string['completionmodel'] = 'Completion Model';
+$string['completionmodel_help'] = 'Completion Model';
+$string['allowembeddings'] = 'Allow Emebddings';
+$string['allowembeddings_help'] = 'Allow this provider to be used to create embeddings.';
+$string['embeddingspath'] = 'Embeddings path';
+$string['embeddingspath_help'] = 'Embeddings path';
+$string['embeddingmodel'] = 'Embedding Model';
+$string['embeddingmodel_help'] = 'Embedding Model';
+
+$string['constraints'] = 'Constraints';
+$string['savechanges'] = 'Save changes';
