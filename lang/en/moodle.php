@@ -62,6 +62,7 @@ $string['addedtogroup'] = 'Added to group "{$a}"';
 $string['addedtogroupnot'] = 'Not added to group "{$a}"';
 $string['addedtogroupnotenrolled'] = 'Not added to group "{$a}", because not enrolled in course';
 $string['addfilehere'] = 'Drop files here to add them at the bottom of this section';
+$string['addfilesdrop'] = 'You can drag and drop files here to upload or click to select.';
 $string['addinganew'] = 'New {$a}';
 $string['additionalcustomnav'] = 'Additional custom navigation';
 $string['addnew'] = 'Add a new {$a}';
@@ -2458,11 +2459,6 @@ $string['yourteacher'] = 'your {$a}';
 $string['yourwordforx'] = 'Your word for \'{$a}\'';
 $string['zippingbackup'] = 'Zipping backup';
 $string['deprecatedeventname'] = '{$a} (no longer in use)';
-
-// Deprecated since Moodle 4.0.
-$string['createuserandpass'] = 'Choose your username and password';
-$string['descriptiona'] = 'Description: {$a}';
-$string['supplyinfo'] = 'More details';
 
 // Deprecated since Moodle 4.3.
 $string['clicktochangeinbrackets'] = '{$a} (Click to change)';
