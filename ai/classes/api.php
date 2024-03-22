@@ -13,6 +13,8 @@ class api {
     const ACTION_REMOVE_PROVIDER = "remove";
     const ACTION_EDIT_PROVIDER = "edit";
     const ACTION_MANAGE_PROVIDERS = "manage";
+
+    const ACTION_SAVE_PROVIDER = "save";
     /**
      * Return a list of AIProviders that are available for specified context.
      * @param $context
@@ -51,5 +53,22 @@ class api {
         //debugging(print_r($filters,1), DEBUG_DEVELOPER);
         $providers = aiprovider::get_records($filters);
         return array_values($providers);
+    }
+    public static function create_provider($data) {
+        return self::create_or_update_provider($data, true);
+    }
+    public static function update_provider($data) {
+        return self::create_or_update_provider($data, false);
+    }
+    protected static function create_or_update_provider($data, bool $create) {
+        //TODO Capability check.
+        $provider = new aiprovider($data->id ?? 0, $data);
+
+        if ($create) {
+            $provider->create();
+        } else {
+            $provider->update();
+        }
+        return $provider;
     }
 }

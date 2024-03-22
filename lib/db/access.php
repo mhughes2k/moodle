@@ -2772,4 +2772,11 @@ $capabilities = array(
             'manager' => CAP_ALLOW,
         ]
     ],
+    'moodle/ai:selectcategory' => [
+        'captype' => 'read',
+        'contextlevel' => CONTEXT_COURSECAT,
+        'archetypes' => [
+            'manager' => CAP_ALLOW,
+        ]
+    ]
 );

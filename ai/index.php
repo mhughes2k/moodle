@@ -52,8 +52,22 @@ if ($mform && $mform->is_cancelled()) {
     redirect(new moodle_url('/admin/tool/oauth2/issuers.php'));
 } else if ($action == api::ACTION_EDIT_PROVIDER) {
     // Handle edit.
-    if ($data = $mform->get_data()) {
+    if ($mform->is_cancelled()) {
+        echo 'cancelled';
+    }
+    if ($mform->is_submitted()) {
+        echo 'submitted';
+    }
+    echo 'validated '. (int)$mform->is_validated();
 
+    if ($data = $mform->get_data()) {
+        var_dump($data);
+        if (!empty($data->id)) {
+            core_ai\api::update_provider($data);
+        } else {
+            core_ai\api::create_provider($data);
+        }
+        exit();
     } else {
         echo $OUTPUT->header();
         $mform->display();

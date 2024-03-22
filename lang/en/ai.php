@@ -24,6 +24,8 @@
 $string['pluginname'] = 'AI Providers';
 $string['aiprovider'] = 'AI Provider';
 $string['addprovider'] = 'Add AI Provider';
+$string['anyusercourse'] = 'Any course user is enrolled in';
+$string['anywhere'] = 'Anywhere in site';
 $string['enabled'] = 'Enabled';
 $string['disabled'] = 'Disabled';
 $string['removeprovider'] = 'Remove AI Provider';
@@ -67,6 +69,19 @@ $string['embeddingspath'] = 'Embeddings path';
 $string['embeddingspath_help'] = 'Embeddings path';
 $string['embeddingmodel'] = 'Embedding Model';
 $string['embeddingmodel_help'] = 'Embedding Model';
+
+$string['scopecoursecategory'] = 'Category';
+$string['scopecoursecategory_help'] = 'Limit AI scope to courses and sub-categories.
+
+This can be limited to work only against the user\'s enrolled courses.
+
+Users must hold the `moodle/ai:selectcategory` capability on a category to choose it.';
+$string['scopecourse'] = 'Course(s)';
+$string['scopecourse_help'] = 'Limit AI scope to specific courses.
+
+Not available if a category scope constraint has been chosen.
+
+Users must hold the `moodle/ai:selectcourse` capability on a course to choose it.';
 
 $string['constraints'] = 'Constraints';
 $string['savechanges'] = 'Save changes';
