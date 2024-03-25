@@ -40,6 +40,7 @@ System level AI Providers that meet the required features will always be listed.
 ';
 $string['chat'] = 'Chat Completion';
 $string['chat_help'] = 'Chat Completion allows the AIProvider to be used to generate text.';
+$string['disable'] = 'Disable';
 $string['embedding'] = 'Embedding';
 $string['embedding_help'] = 'Embedding allows the AI to generate vector representations of text.';
 $string['aiproviderfeatures'] = '';
@@ -85,3 +86,4 @@ Users must hold the `moodle/ai:selectcourse` capability on a course to choose it
 
 $string['constraints'] = 'Constraints';
 $string['savechanges'] = 'Save changes';
+$string['aisettings'] = 'AI Provider Settings';

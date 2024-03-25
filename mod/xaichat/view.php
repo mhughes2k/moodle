@@ -25,6 +25,8 @@ define("NO_OUTPUT_BUFFERING", true);
 
 require(__DIR__.'/../../config.php');
 require_once(__DIR__.'/lib.php');
+
+use core_ai\api;
 use mod_xaichat\aichatform;
 
 // Course module id.
@@ -57,7 +59,7 @@ if (!isset($_SESSION[$aicontextkey])) {
 }
 //$aicontext = $_SESSION[$aicontextkey];
 
-if (!($aiprovider = \core\ai\api::get_provider($moduleinstance->aiproviderid))){
+if (!($aiprovider = api::get_provider($moduleinstance->aiproviderid))){
     throw new moodle_exception("noaiproviderfound", 'xaichat');
 }
 

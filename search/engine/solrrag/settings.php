@@ -31,6 +31,28 @@ if ($ADMIN->fulltree) {
             $settings->add(new admin_setting_heading('search_solrrag_settings', '', get_string('extensionerror', 'search_solrrag')));
 
         } else {
+            // Which AI Provider to use:
+            $settings->add(new admin_setting_heading('search_solrrag_aiprovider',
+                new lang_string('aisettings', 'ai'), ''));
+            $providers = \core_ai\api::get_providers(
+                null,
+                true,
+                true
+            );
+            $optproviders = [
+                '' => get_string('disable', 'ai')
+            ];
+
+            foreach($providers as $provider) {
+                $optproviders[$provider->get('id')] = $provider->get('name');
+            }
+            $settings->add(new admin_setting_configselect(
+                'search_solrrag/aiprovider',
+                'Choose Provider',
+                'List of available AI services',
+                "",
+                $optproviders
+            ));
             $settings->add(new admin_setting_heading('search_solrrag_connection',
                 new lang_string('connectionsettings', 'search_solrrag'), ''));
             $settings->add(new admin_setting_configtext('search_solrrag/server_hostname', new lang_string('solrserverhostname', 'search_solrrag'), new lang_string('solrserverhostname_desc', 'search_solrrag'), '127.0.0.1', PARAM_HOST));
