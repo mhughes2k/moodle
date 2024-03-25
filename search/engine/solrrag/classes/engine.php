@@ -2,6 +2,7 @@
 
 namespace search_solrrag;
 
+use core_ai\api;
 use search_solrrag\document;
 use search_solrrag\schema;
 //require_once($CFG->dirroot . "/search/engine/solrrag/lib.php");
@@ -9,9 +10,9 @@ use search_solrrag\schema;
 // require_once($CFG->dirroot ."/search/engine/solrrag/classes/ai/api.php");
 // require_once($CFG->dirroot ."/search/engine/solrrag/classes/ai/aiprovider.php");
 // require_once($CFG->dirroot ."/search/engine/solrrag/classes/ai/aiclient.php");
-use \core\ai\AIProvider;
-use \core\ai\AIClient;
-use \core\ai\AiException;
+use \core_ai\AIProvider;
+use \core_ai\aiclient;
+use \core_ai\AiException;
 class engine extends \search_solr\engine {
 
     /**
@@ -28,8 +29,8 @@ class engine extends \search_solr\engine {
         // Ideally we'd be using a Moodle AI provider to tell us which LLM to use for generating embeddings, and
         // then simply calling the API and get some results back...but we don't have that yet.
         // So we'll fudge this for the moment and leverage an OpenAI Web Service API via a simple HTTP request.
-        $aiproviderid = 1;
-        $aiprovider = \core\ai\api::get_provider($aiproviderid);
+        $aiproviderid = get_config('search_solrrag', 'aiprovider');
+        $aiprovider = api::get_provider($aiproviderid);
         $this->aiprovider = $aiprovider;
         $this->aiclient = !is_null($aiprovider)? new AIClient($aiprovider) : null;
     }

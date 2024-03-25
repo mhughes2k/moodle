@@ -256,14 +256,14 @@ class AIProvider extends persistent {
                     $providercontextid = $record->get('contextid');
                     if ($providercontextid == self::CONTEXT_ALL_MY_COURSES) {
                         // More problematic.
-                        debugging('Provider needs to be in one of user\'s courses', DEBUG_DEVELOPER);
+//                        debugging('Provider needs to be in one of user\'s courses', DEBUG_DEVELOPER);
                         $result = $result & true;
                     } else if ($providercontextid == null) {
                         // System provider so always matches.
-                        debugging("System AI provider", DEBUG_DEVELOPER);
+//                        debugging("System AI provider", DEBUG_DEVELOPER);
                         $result = $result & true;
                     } else {
-                        debugging("Context linked AI provider", DEBUG_DEVELOPER);
+//                        debugging("Context linked AI provider", DEBUG_DEVELOPER);
                         $providercontext = \context::instance_by_id(
                             $providercontextid
                         );
@@ -272,7 +272,7 @@ class AIProvider extends persistent {
                         $result = $result & $ischild;
                     }
                 }else {
-                    debugging('Filtering on '.$key. "' = {$value}", DEBUG_DEVELOPER);
+//                    debugging('Filtering on '.$key. "' = {$value}", DEBUG_DEVELOPER);
                     if ($record->get($key) != $value) {
                         return false;
                     }
