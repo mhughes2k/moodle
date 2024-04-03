@@ -15,15 +15,22 @@ $PAGE->set_url('/ai/index.php');
 $PAGE->set_context(context_system::instance());
 $PAGE->set_pagelayout("admin");
 
-$strheading = get_string('aiprovider', 'ai');
-$PAGE->set_heading($strheading);
-$PAGE->set_title($strheading);
-
 $renderer = $PAGE->get_renderer('core', 'ai');
 
 $action = optional_param('action', '', PARAM_ALPHAEXT);
 // We're using pid as "id" is used to specify contextids.
 $providerid = optional_param('pid', '', PARAM_RAW);
+$incontextid = optional_param('contextid', null, PARAM_RAW);
+
+$context = !is_null($incontextid) ? \context::instance_by_id($incontextid) : null;
+
+if (empty($context)) {
+    $strheading = get_string(get_string('pluginname', 'ai'));
+} else {
+    $strheading = get_string('aiprovidersin', 'ai', $context->get_context_name());
+}
+$PAGE->set_heading($strheading);
+$PAGE->set_title($strheading);
 
 $provider = null;
 $mform = null;
@@ -43,7 +50,8 @@ if ($action == api::ACTION_EDIT_PROVIDER) {
     }
     $mform = new \core_ai\form\openaiapiprovider(null, [
         'persistent' => $provider,
-        'type' => required_param('type', PARAM_RAW)
+        'type' => required_param('type', PARAM_RAW),
+        'contextid' => $incontextid
     ]);
 }
 
@@ -78,10 +86,10 @@ if ($mform && $mform->is_cancelled()) {
 } else {
     // Display list of providers.
     $indexpage = new \core_ai\output\index_page(
-        api::get_providers()
+        api::get_providers($incontextid)
     );
     echo $OUTPUT->header();
-    echo $OUTPUT->heading(get_string('pluginname', 'ai'));
+
     echo $renderer->render_index_page($indexpage);
     echo $OUTPUT->footer();
 }

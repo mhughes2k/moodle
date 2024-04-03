@@ -25,7 +25,7 @@
 
 use core\moodlenet\utilities;
 use core_contentbank\contentbank;
-use core\ai\api;
+use core_ai\api;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -5654,8 +5654,8 @@ class settings_navigation extends navigation_node {
                 new moodle_url(
                     '/ai/index.php',
                     [
-                        'id' => $catcontext->id,
-                        'action' => api::ACTION_MANAGE_PROVIDERS
+                        'contextid' => $catcontext->id,
+                        'action' => api::ACTION_MANAGE_PROVIDERS,
                     ]),
                 navigation_node::TYPE_SETTING
             );

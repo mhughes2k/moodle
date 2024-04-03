@@ -219,7 +219,6 @@ class AIProvider extends persistent {
             'completionmodel' => 'llama2',
             'contextid' => null,  // Global AI Provider
             'onlyenrolledcourses' => true
-            // 'apikey'=> $_ENV['OPENAIKEY']
         ]);
         array_push($records, $fake);
         $fake = new static(0, (object) [
@@ -235,20 +234,16 @@ class AIProvider extends persistent {
             'completionmodel' => 'llama2',
             'contextid' => 111,  // Global AI Provider
             'onlyenrolledcourses' => true,
-            // 'apikey'=> $_ENV['OPENAIKEY']
         ]);
         array_push($records, $fake);
 
         $targetcontextid = $filters['contextid'] ?? null;
         $targetcontext = null;
         if (is_null($targetcontextid)) {
-//            debugging("No Context Restriction", DEBUG_DEVELOPER);
             unset($filters['contextid']); // Because we need special handling.
         } else {
-//            debugging("Context Restriction: {$targetcontextid}", DEBUG_DEVELOPER);
             $targetcontext = \context::instance_by_id($targetcontextid);
         }
-//        debugging(print_r($filters,1), DEBUG_DEVELOPER);
         $records = array_filter($records, function($record) use ($filters, $targetcontext) {
             $result = true;
             foreach($filters as $key => $value) {
@@ -256,14 +251,11 @@ class AIProvider extends persistent {
                     $providercontextid = $record->get('contextid');
                     if ($providercontextid == self::CONTEXT_ALL_MY_COURSES) {
                         // More problematic.
-//                        debugging('Provider needs to be in one of user\'s courses', DEBUG_DEVELOPER);
                         $result = $result & true;
                     } else if ($providercontextid == null) {
                         // System provider so always matches.
-//                        debugging("System AI provider", DEBUG_DEVELOPER);
                         $result = $result & true;
                     } else {
-//                        debugging("Context linked AI provider", DEBUG_DEVELOPER);
                         $providercontext = \context::instance_by_id(
                             $providercontextid
                         );
