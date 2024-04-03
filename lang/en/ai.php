@@ -23,6 +23,7 @@
 */
 $string['pluginname'] = 'AI Providers';
 $string['aiprovider'] = 'AI Provider';
+$string['aiprovidersin'] = 'AI Providers in {$a}';
 $string['addprovider'] = 'Add AI Provider';
 $string['anyusercourse'] = 'Any course user is enrolled in';
 $string['anywhere'] = 'Anywhere in site';
