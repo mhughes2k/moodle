@@ -9,6 +9,7 @@ class AIProvider extends persistent {
 // Ultimately this would extend a persistent.
 
     const CONTEXT_ALL_MY_COURSES = -1;
+    const TABLE = "aiprovider";
 
     protected static function define_properties()
     {
@@ -31,13 +32,13 @@ class AIProvider extends persistent {
             'baseurl' => [
                 'type' => PARAM_URL
             ],
-            'embeddings' => [
+            'embeddingsurl' => [
                 'type' => PARAM_URL
             ],
             'embeddingmodel' => [
                 'type' => PARAM_ALPHANUMEXT
             ],
-            'completions' => [
+            'completionsurl' => [
                 'type' => PARAM_URL
             ],
             'completionmodel' => [
@@ -150,10 +151,10 @@ class AIProvider extends persistent {
         $mycourseids = enrol_get_my_courses(array('id', 'cacherev'), 'id', 0, [], false);
         $onlyenrolledcourses = $this->get('onlyenrolledcourses');
         $courseids = [];
-        if ($this->get('context') == self::CONTEXT_ALL_MY_COURSES) {
+        if ($this->get('contextid') == self::CONTEXT_ALL_MY_COURSES) {
             $courseids  = array_keys($mycourseids);
         } else {
-            $context = \context::instance_by_id($this->get('context'));
+            $context = \context::instance_by_id($this->get('contextid'));
             if ($context->contextlevel == CONTEXT_COURSE) {
                 // Check that the specific course is also in the user's list of courses.
                 $courseids = array_intersect([$context->instanceid], $mycourseids);
@@ -187,40 +188,41 @@ class AIProvider extends persistent {
      */
     public static function get_records($filters = [], $sort = '', $order = 'ASC', $skip = 0, $limit = 0) {
         global $_ENV;
-
-        $records = [];
-        $fake = new static(0, (object) [
-            'id' => 1,
-            'name' => "Open AI Provider (hardcoded)",
-            'enabled' => true,
-            'allowembeddings' => true,
-            'allowchat' => true,
-            'baseurl' => 'https://api.openai.com/v1/',
-            'embeddings' => 'embeddings',
-            'embeddingmodel' => 'text-embedding-3-small',
-            'completions' => 'chat/completions',
-            'completionmodel' => 'gpt-4-turbo-preview',
-            'apikey'=> $_ENV['OPENAIKEY'],
-            'contextid' => \context_system::instance()->id,
-            //null,  // Global AI Provider
-            'onlyenrolledcourses' => true
-        ]);
-        array_push($records, $fake);
-        $fake = new static(0, (object) [
-            'id' => 2,
-            'name' => "Ollama AI Provider (hard coded)",
-            'enabled' => true,
-            'allowembeddings' => true,
-            'allowchat' => true,
-            'baseurl' => 'http://127.0.0.1:11434/api/',
-            'embeddings' => 'embeddings',
-            'embeddingmodel' => '',
-            'completions' => 'chat',
-            'completionmodel' => 'llama2',
-            'contextid' => null,  // Global AI Provider
-            'onlyenrolledcourses' => true
-        ]);
-        array_push($records, $fake);
+        $records = parent::get_records($filters, $sort, $order, $skip, $limit);
+//        $records = [];
+//        $fake = new static(0, (object) [
+//            'id' => 1,
+//            'name' => "Open AI Provider (hardcoded)",
+//            'enabled' => true,
+//            'allowembeddings' => true,
+//            'allowchat' => true,
+//            'baseurl' => 'https://api.openai.com/v1/',
+//            'embeddings' => 'embeddings',
+//            'embeddingmodel' => 'text-embedding-3-small',
+//            'completions' => 'chat/completions',
+//            'completionmodel' => 'gpt-4-turbo-preview',
+//            'apikey'=> $_ENV['OPENAIKEY'],
+//            'contextid' => \context_system::instance()->id,
+//            //null,  // Global AI Provider
+//            'onlyenrolledcourses' => true
+//        ]);
+//        array_push($records, $fake);
+//        $fake = new static(0, (object) [
+//            'id' => 2,
+//            'name' => "Ollama AI Provider (hard coded)",
+//            'enabled' => true,
+//            'allowembeddings' => true,
+//            'allowchat' => true,
+//            'baseurl' => 'http://127.0.0.1:11434/api/',
+//            'embeddings' => 'embeddings',
+//            'embeddingmodel' => '',
+//            'completions' => 'chat',
+//            'completionmodel' => 'llama2',
+//            'contextid' => null,  // Global AI Provider
+//            'onlyenrolledcourses' => true
+//        ]);
+//        array_push($records, $fake);
+/*
         $fake = new static(0, (object) [
             'id' => 3,
             'name' => "Ollama AI Provider (hard coded) Misc Category only",
@@ -236,7 +238,7 @@ class AIProvider extends persistent {
             'onlyenrolledcourses' => true,
         ]);
         array_push($records, $fake);
-
+*/
         $targetcontextid = $filters['contextid'] ?? null;
         $targetcontext = null;
         if (is_null($targetcontextid)) {

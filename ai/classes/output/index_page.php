@@ -52,7 +52,7 @@ class index_page implements \renderable, \templatable {
                 $context = "System";
             }
             $completion = $provider->get('allowchat');
-            $embeddings = $provider->get('embeddings');
+            $embeddings = $provider->get('allowembeddings');
             $status = $provider->get('enabled');
 
             // Set up cells.

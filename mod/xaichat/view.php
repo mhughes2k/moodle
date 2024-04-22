@@ -27,6 +27,7 @@ require(__DIR__.'/../../config.php');
 require_once(__DIR__.'/lib.php');
 
 use core_ai\api;
+use core_ai\aiclient;
 use mod_xaichat\aichatform;
 
 // Course module id.
@@ -83,7 +84,7 @@ if ($data = $chatform->get_data()) {
     }
     $stepnow = 0;
     $totalsteps = 4;
-    $aiclient = new \core\ai\AIClient($aiprovider);
+    $aiclient = new AIClient($aiprovider);
 
     $progress = new \progress_bar();
     $progress->create();
