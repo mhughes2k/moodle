@@ -1131,7 +1131,6 @@ function xmldb_main_upgrade($oldversion) {
 
     if ($oldversion < 2024032600.01) {
 
-
         // Changing precision of field attemptsavailable on table task_adhoc to (2).
         $table = new xmldb_table('task_adhoc');
         $field = new xmldb_field('attemptsavailable', XMLDB_TYPE_INTEGER, '2', null, null, null, null, 'pid');
@@ -1167,7 +1166,7 @@ function xmldb_main_upgrade($oldversion) {
         // Main savepoint reached.
         upgrade_main_savepoint(true, 2024041200.00);
     }
-    //if ($oldversion < 2024042200.01) {
+
     if (!$dbman->table_exists($table)) {
         // Define table aiprovider to be created.
         $table = new xmldb_table('aiprovider');
@@ -1202,7 +1201,7 @@ function xmldb_main_upgrade($oldversion) {
         // Main savepoint reached.
 //        upgrade_main_savepoint(true, 2024042200.01);
         // We're an unnamed version at this point.
-    }
 
+    }
     return true;
 }
