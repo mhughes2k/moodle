@@ -1131,6 +1131,7 @@ function xmldb_main_upgrade($oldversion) {
 
     if ($oldversion < 2024032600.01) {
 
+
         // Changing precision of field attemptsavailable on table task_adhoc to (2).
         $table = new xmldb_table('task_adhoc');
         $field = new xmldb_field('attemptsavailable', XMLDB_TYPE_INTEGER, '2', null, null, null, null, 'pid');
@@ -1165,6 +1166,42 @@ function xmldb_main_upgrade($oldversion) {
 
         // Main savepoint reached.
         upgrade_main_savepoint(true, 2024041200.00);
+    }
+    //if ($oldversion < 2024042200.01) {
+    if (!$dbman->table_exists($table)) {
+        // Define table aiprovider to be created.
+        $table = new xmldb_table('aiprovider');
+
+        // Adding fields to table aiprovider.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('usermodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('name', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('enabled', XMLDB_TYPE_INTEGER, '2', null, XMLDB_NOTNULL, null, '1');
+        $table->add_field('apikey', XMLDB_TYPE_TEXT, null, null, null, null, null);
+        $table->add_field('allowembeddings', XMLDB_TYPE_INTEGER, '2', null, XMLDB_NOTNULL, null, '1');
+        $table->add_field('allowchat', XMLDB_TYPE_INTEGER, '2', null, XMLDB_NOTNULL, null, '1');
+        $table->add_field('baseurl', XMLDB_TYPE_TEXT, null, null, null, null, null);
+        $table->add_field('embeddingsurl', XMLDB_TYPE_TEXT, null, null, null, null, null);
+        $table->add_field('completionsurl', XMLDB_TYPE_TEXT, null, null, null, null, null);
+        $table->add_field('embeddingmodel', XMLDB_TYPE_TEXT, null, null, null, null, null);
+        $table->add_field('completionmodel', XMLDB_TYPE_TEXT, null, null, null, null, null);
+        $table->add_field('contextid', XMLDB_TYPE_INTEGER, '10', null, null, null, '0');
+        $table->add_field('onlyenrolledcourses', XMLDB_TYPE_INTEGER, '2', null, XMLDB_NOTNULL, null, '1');
+
+        // Adding keys to table aiprovider.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('usermodified', XMLDB_KEY_FOREIGN, ['usermodified'], 'user', ['id']);
+
+        // Conditionally launch create table for aiprovider.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Main savepoint reached.
+//        upgrade_main_savepoint(true, 2024042200.01);
+        // We're an unnamed version at this point.
     }
 
     return true;

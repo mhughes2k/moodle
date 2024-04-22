@@ -21,11 +21,11 @@ $action = optional_param('action', '', PARAM_ALPHAEXT);
 // We're using pid as "id" is used to specify contextids.
 $providerid = optional_param('pid', '', PARAM_RAW);
 $incontextid = optional_param('contextid', null, PARAM_RAW);
-
-$context = !is_null($incontextid) ? \context::instance_by_id($incontextid) : null;
+//var_dump($incontextid);
+$context = !empty($incontextid) ? \context::instance_by_id($incontextid) : null;
 
 if (empty($context)) {
-    $strheading = get_string(get_string('pluginname', 'ai'));
+    $strheading = get_string('pluginname', 'ai');
 } else {
     $strheading = get_string('aiprovidersin', 'ai', $context->get_context_name());
 }
@@ -36,21 +36,24 @@ $provider = null;
 $mform = null;
 
 if ($providerid) {
-    $provider = core\ai\api::get_provider($providerid);
+    $provider = api::get_provider($providerid);
     if (!$provider) {
         throw new moodle_exception('invaliddata');
     }
 }
 
 if ($action == api::ACTION_EDIT_PROVIDER) {
+
     if ($provider) {
         // Edit
+        $type = "openaipi";// Should store in and read from provider.
     } else {
         // Create new
+        $type = required_param('type', PARAM_RAW);
     }
     $mform = new \core_ai\form\openaiapiprovider(null, [
         'persistent' => $provider,
-        'type' => required_param('type', PARAM_RAW),
+        'type' => $type,
         'contextid' => $incontextid
     ]);
 }
@@ -81,6 +84,7 @@ if ($mform && $mform->is_cancelled()) {
         $mform->display();
         echo $OUTPUT->footer();
     }
+    exit;
 } else if ($action == api::ACTION_REMOVE_PROVIDER) {
     // Handle remove.
 } else {

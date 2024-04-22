@@ -32,7 +32,8 @@ class openaiapiprovider extends \core\form\persistent{
         $mform->addRule('name', null, 'required', null, 'client');
         $mform->addRule('name', get_string('maximumchars', '', 255), 'maxlength', 255, 'client');
         $mform->addHelpButton('name', 'providername', 'ai');
-
+        $mform->addElement('advcheckbox', 'enabled', get_string('enabled', 'ai'));
+        $mform->addHelpButton('enabled', 'enabled', 'ai');
         // Client Secret.
         $mform->addElement('text','baseurl', get_string('baseurl', 'ai'));
         $mform->setType('baseurl', PARAM_URL);
@@ -44,14 +45,14 @@ class openaiapiprovider extends \core\form\persistent{
 
         $mform->addElement('advcheckbox', 'allowchat', get_string('allowchat', 'ai'));
         $mform->addHelpButton('allowchat', 'allowchat', 'ai');
-        $mform->addElement('text','completions', get_string('completionspath', 'ai'));
+        $mform->addElement('text','completionsurl', get_string('completionspath', 'ai'));
         $mform->addElement('text','completionmodel', get_string('completionmodel', 'ai'));
-        $mform->disabledIf('completions', 'allowchat', 'notchecked');
+        $mform->disabledIf('completionsurl', 'allowchat', 'notchecked');
         $mform->disabledIf('completionmodel', 'allowchat', 'notchecked');
 
         $mform->addElement('advcheckbox', 'allowembeddings', get_string('allowembeddings', 'ai'));
         $mform->addHelpButton('allowembeddings', 'allowembeddings', 'ai');
-        $mform->addElement('text','embeddings', get_string('embeddingspath', 'ai'));
+        $mform->addElement('text','embeddingsurl', get_string('embeddingspath', 'ai'));
         $mform->addElement('text','embeddingmodel', get_string('embeddingmodel', 'ai'));
         $mform->disabledIf('embeddings', 'allowembeddings', 'notchecked');
         $mform->disabledIf('embeddingmodel', 'allowembeddings', 'notchecked');
@@ -87,8 +88,8 @@ class openaiapiprovider extends \core\form\persistent{
         $mform->addElement('hidden', 'onlyenrolledcourses', );
         $mform->setType('onlyenrolledcourses', PARAM_RAW);
 
-        $mform->addElement('hidden', 'enabled', true);
-        $mform->setType('enabled', PARAM_ALPHA);
+//        $mform->addElement('hidden', 'enabled', true);
+//        $mform->setType('enabled', PARAM_ALPHA);
         
         $mform->addElement('hidden', 'type', $this->_customdata['type']);
         $mform->setType('type', PARAM_ALPHANUM);
