@@ -234,7 +234,8 @@ class AIProvider extends persistent {
             'embeddingmodel' => '',
             'completions' => 'chat',
             'completionmodel' => 'llama2',
-            'contextid' => 111,  // Global AI Provider
+            'contextid' => \context_system::instance()->id,
+            // 111,  // Global AI Provider
             'onlyenrolledcourses' => true,
         ]);
         array_push($records, $fake);
