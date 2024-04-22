@@ -136,10 +136,14 @@ class assign_grading_table extends table_sql implements renderable {
         $params['assignmentid3'] = (int)$this->assignment->get_instance()->id;
         $params['newstatus'] = ASSIGN_SUBMISSION_STATUS_NEW;
 
-        // TODO Does not support custom user profile fields (MDL-70456).
-        $userfieldsapi = \core_user\fields::for_identity($this->assignment->get_context(), false)->with_userpic();
-        $userfields = $userfieldsapi->get_sql('u', false, '', '', false)->selects;
+        $userfieldsapi = \core_user\fields::for_identity($this->assignment->get_context(), true)->with_userpic();
+        $sql = $userfieldsapi->get_sql('u', true, '', '', false);
+        $userfields = $sql->selects;
+        $joins = $sql->joins;
+        $eufparams = $sql->params;
+        $mappings = $sql->mappings;
         $extrauserfields = $userfieldsapi->get_required_fields([\core_user\fields::PURPOSE_IDENTITY]);
+
         $fields = $userfields . ', ';
         $fields .= 'u.id as userid, ';
         $fields .= 's.status as status, ';
@@ -163,11 +167,16 @@ class assign_grading_table extends table_sql implements renderable {
                                AND s.assignment = :assignmentid1
                                AND s.latest = 1 ';
 
+        $from .= $joins;
+
         // For group assignments, there can be a grade with no submission.
         $from .= ' LEFT JOIN {assign_grades} g
                             ON g.assignment = :assignmentid2
                            AND u.id = g.userid
                            AND (g.attemptnumber = s.attemptnumber OR s.attemptnumber IS NULL) ';
+
+        // Add Extra fields parameters.
+        $params += $eufparams;
 
         $from .= 'LEFT JOIN {assign_user_flags} uf
                          ON u.id = uf.userid
@@ -1507,7 +1516,7 @@ class assign_grading_table extends table_sql implements renderable {
                     if ($submission) {
                         if ($submission->status == ASSIGN_SUBMISSION_STATUS_REOPENED) {
                             // For a newly reopened submission - we want to show the previous submission in the table.
-                            $this->get_group_and_submission($row->id, $group, $submission, $submission->attemptnumber-1);
+                            $this->get_group_and_submission($row->id, $group, $submission, $submission->attemptnumber - 1);
                         }
                         if (isset($field)) {
                             return $plugin->get_editor_text($field, $submission->id);
