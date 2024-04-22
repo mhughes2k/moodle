@@ -153,7 +153,10 @@ class AIProvider extends persistent {
         $courseids = [];
         if ($this->get('contextid') == self::CONTEXT_ALL_MY_COURSES) {
             $courseids  = array_keys($mycourseids);
+        } else if ($this->get('contextid') == 0) {
+            $context = \context_system::instance();
         } else {
+
             $context = \context::instance_by_id($this->get('contextid'));
             if ($context->contextlevel == CONTEXT_COURSE) {
                 // Check that the specific course is also in the user's list of courses.
@@ -179,7 +182,7 @@ class AIProvider extends persistent {
     // TODO token counting.
     /**
      * We're overriding this whilst we don't have a real DB table.
-     * @param $filters
+     * @param $filters This can have the contexts, but also can have 'excludesystem' set to not include system AI Providers.
      * @param $sort
      * @param $order
      * @param $skip
@@ -188,7 +191,6 @@ class AIProvider extends persistent {
      */
     public static function get_records($filters = [], $sort = '', $order = 'ASC', $skip = 0, $limit = 0) {
         global $_ENV;
-        $records = parent::get_records($filters, $sort, $order, $skip, $limit);
 //        $records = [];
 //        $fake = new static(0, (object) [
 //            'id' => 1,
@@ -247,6 +249,13 @@ class AIProvider extends persistent {
         } else {
             $targetcontext = \context::instance_by_id($targetcontextid);
         }
+        $systemproviders = [];
+        if (!isset($filters['excludesystem'])) {
+            $systemfilter = $filters;
+            $systemfilter['contextid'] = 0;
+            $systemproviders = parent::get_records($systemfilter, $sort, $order, $skip, $limit);
+        }
+        $records = parent::get_records($filters, $sort, $order, $skip, $limit);
         $records = array_filter($records, function($record) use ($filters, $targetcontext) {
             $result = true;
             foreach($filters as $key => $value) {
@@ -255,7 +264,7 @@ class AIProvider extends persistent {
                     if ($providercontextid == self::CONTEXT_ALL_MY_COURSES) {
                         // More problematic.
                         $result = $result & true;
-                    } else if ($providercontextid == null) {
+                    } else if ($providercontextid == 0) {
                         // System provider so always matches.
                         $result = $result & true;
                     } else {
@@ -263,7 +272,7 @@ class AIProvider extends persistent {
                             $providercontextid
                         );
                         $ischild = $targetcontext->is_child_of($providercontext, true);
-                        debugging("IS child ". (int)$ischild, DEBUG_DEVELOPER);
+//                        debugging("IS child ". (int)$ischild, DEBUG_DEVELOPER);
                         $result = $result & $ischild;
                     }
                 }else {
@@ -275,7 +284,7 @@ class AIProvider extends persistent {
             }
             return $result;
         });
-
+        $records = array_merge($systemproviders, $records);
         return $records;
     }
 

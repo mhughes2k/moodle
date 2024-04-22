@@ -27,8 +27,11 @@ $string['aiprovidersin'] = 'AI Providers in {$a}';
 $string['addprovider'] = 'Add AI Provider';
 $string['anyusercourse'] = 'Any course user is enrolled in';
 $string['anywhere'] = 'Anywhere in site';
+$string['baseurl_help'] = 'Common shared base URL *without* trailing slash';
 $string['enabled'] = 'Enabled';
+$string['enabled_help'] = 'Show this AI Provider be available to users.';
 $string['disabled'] = 'Disabled';
+$string['general'] = 'General Settings';
 $string['removeprovider'] = 'Remove AI Provider';
 $string['manageproviders'] = 'Manage AI Providers';
 $string['availableproviders'] = 'Available Providers';
@@ -44,6 +47,9 @@ $string['chat_help'] = 'Chat Completion allows the AIProvider to be used to gene
 $string['disable'] = 'Disable';
 $string['embedding'] = 'Embedding';
 $string['embedding_help'] = 'Embedding allows the AI to generate vector representations of text.';
+$string['selectcategory'] = '';
+$string['selectcategory_help'] = '';
+
 $string['aiproviderfeatures'] = '';
 $string['aiproviderfeatures_desc'] = 'This plugin needs the following AI features';
 

@@ -25,8 +25,8 @@ class openaiapiprovider extends \core\form\persistent{
 
         $mform = $this->_form;
         $provider = $this->get_persistent();
-        $mform->addElement('html','intro', 'hello');
-
+//        $mform->addElement('html','intro', 'hello');
+        $mform->addElement('header', 'features', get_string('general', 'ai'));
         // Name.
         $mform->addElement('text', 'name', get_string('providername', 'ai'));
         $mform->addRule('name', null, 'required', null, 'client');
@@ -34,6 +34,7 @@ class openaiapiprovider extends \core\form\persistent{
         $mform->addHelpButton('name', 'providername', 'ai');
         $mform->addElement('advcheckbox', 'enabled', get_string('enabled', 'ai'));
         $mform->addHelpButton('enabled', 'enabled', 'ai');
+        $mform->setDefault('enabled', true);
         // Client Secret.
         $mform->addElement('text','baseurl', get_string('baseurl', 'ai'));
         $mform->setType('baseurl', PARAM_URL);

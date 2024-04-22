@@ -54,7 +54,8 @@ if ($action == api::ACTION_EDIT_PROVIDER) {
     $mform = new \core_ai\form\openaiapiprovider(null, [
         'persistent' => $provider,
         'type' => $type,
-        'contextid' => $incontextid
+        'contextid' => $incontextid,
+        'enabled' => true,
     ]);
 }
 
@@ -64,20 +65,24 @@ if ($mform && $mform->is_cancelled()) {
 } else if ($action == api::ACTION_EDIT_PROVIDER) {
     // Handle edit.
     if ($mform->is_cancelled()) {
-        echo 'cancelled';
+        redirect(new moodle_url('/ai/index.php'));
     }
-    if ($mform->is_submitted()) {
-        echo 'submitted';
-    }
-    echo 'validated '. (int)$mform->is_validated();
 
     if ($data = $mform->get_data()) {
         var_dump($data);
-        if (!empty($data->id)) {
-            core_ai\api::update_provider($data);
-        } else {
-            core_ai\api::create_provider($data);
+        try {
+            if (!empty($data->id)) {
+                core_ai\api::update_provider($data);
+            } else {
+                core_ai\api::create_provider($data);
+            }
+            redirect(new moodle_url('/ai/index.php'));
         }
+        catch (moodle_exception $e) {
+            throw $e;
+        }
+
+
         exit();
     } else {
         echo $OUTPUT->header();

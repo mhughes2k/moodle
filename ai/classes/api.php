@@ -36,12 +36,13 @@ class api {
      * @return array
      */
     public static function get_providers($contextid = null, $allowchat = null, $allowembeddings = null) {
-        $requirements  = ['contextid','allowchat', 'allowembeddings'];
+        $requirements  = ['contextid', 'allowchat', 'allowembeddings'];
         // Filtering AI providers that are available to $contextid, walking up the
         // tree when we only have the contextid the AIProvider is set *on* is going to take
         // more work.
         $filters = [];
         foreach($requirements as $req) {
+
             $reqparam = ${$req};
             // Null means we don't consider it.
             if (!is_null($reqparam)) {
@@ -50,7 +51,7 @@ class api {
                 $filters[$req] = $reqparam;
             }
         }
-        //debugging(print_r($filters,1), DEBUG_DEVELOPER);
+        debugging(print_r($filters,1), DEBUG_DEVELOPER);
         $providers = aiprovider::get_records($filters);
         return array_values($providers);
     }

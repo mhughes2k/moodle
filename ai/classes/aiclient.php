@@ -21,11 +21,11 @@ class AIClient extends \curl {
     }
 
     public function get_embeddings_url(): string {
-        return $this->provider->get('baseurl') . $this->provider->get('embeddings');
+        return $this->provider->get('baseurl') . $this->provider->get('embeddingsurl');
     }
 
     public function get_chat_completions_url(): string {
-        return $this->provider->get('baseurl') . $this->provider->get('completions');
+        return $this->provider->get('baseurl') . $this->provider->get('completionsurl');
     }
 
     /**

@@ -3,6 +3,7 @@
 namespace search_solrrag;
 
 use core_ai\api;
+use core_ai\logger;
 use search_solrrag\document;
 use search_solrrag\schema;
 //require_once($CFG->dirroot . "/search/engine/solrrag/lib.php");
@@ -20,7 +21,7 @@ class engine extends \search_solr\engine {
      */
     protected ?AIClient $aiclient = null;
     protected ?AIProvider $aiprovider = null;
-
+    protected ?logger $logger = null;
     public function __construct(bool $alternateconfiguration = false)
     {
         parent::__construct($alternateconfiguration);
@@ -345,7 +346,9 @@ class engine extends \search_solr\engine {
             // We may get accessinfo, but we actually should determine our own ones to apply too
             // But we can't access the "manager" class' get_areas_user_accesses function, and
             // that's already been called based on the configuration / data from the user
-            return $this->execute_similarity_query($filters, $accessinfo, $limit);
+            $docs = $this->execute_similarity_query($filters, $accessinfo, $limit);
+            var_dump($docs);
+            return $docs;
         } else {
             // debugging("Running regular search", DEBUG_DEVELOPER);
             // print_r($filters);
@@ -489,7 +492,10 @@ class engine extends \search_solr\engine {
         $requesturl = $this->get_connection_url('/select');
         $requesturl->param('fl', 'id,areaid,score,content');
         $requesturl->param('wt', 'xml');
-        $requesturl->param('fq', implode("&", $filterqueries));
+        foreach($filterqueries as $fq) {
+            $requesturl->param('fq', $fq);
+        }
+//        $requesturl->param('fq', implode("&", $filterqueries));
 
         $params = [
             "query" => $requestbody,
@@ -510,7 +516,7 @@ class engine extends \search_solr\engine {
             debugging($message, DEBUG_DEVELOPER);
         } else if (isset($info['http_code']) && ($info['http_code'] !== 200)) {
             // Unexpected HTTP response code.
-            $message = 'Error while indexing file with document id ' ;
+            $message = 'Error while querying for documents ' ;
             // Try to get error message out of msg or title if it exists.
             if (preg_match('|<str [^>]*name="msg"[^>]*>(.*?)</str>|i', $result, $matches)) {
                 $message .= ': ' . $matches[1];

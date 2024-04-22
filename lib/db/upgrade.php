@@ -1167,9 +1167,10 @@ function xmldb_main_upgrade($oldversion) {
         upgrade_main_savepoint(true, 2024041200.00);
     }
 
+    $table = new xmldb_table('aiprovider');
     if (!$dbman->table_exists($table)) {
         // Define table aiprovider to be created.
-        $table = new xmldb_table('aiprovider');
+
 
         // Adding fields to table aiprovider.
         $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
