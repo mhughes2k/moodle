@@ -20,6 +20,7 @@ require_once($CFG->libdir.'/formslib.php');
 require_once($CFG->libdir.'/gradelib.php');
 require_once($CFG->libdir.'/plagiarismlib.php');
 
+use core_ai\api;
 use core_grades\component_gradeitems;
 
 /**
@@ -1234,7 +1235,7 @@ abstract class moodleform_mod extends moodleform {
             $allowembedding ? get_string("yes") : get_string("no")
         );
 
-        $providers = \core_ai\api::get_providers(
+        $providers = api::get_providers(
             $this->context->id,
             $allowchat,
             $allowembedding

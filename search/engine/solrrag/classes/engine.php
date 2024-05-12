@@ -3,25 +3,23 @@
 namespace search_solrrag;
 
 use core_ai\api;
-use core_ai\logger;
+use core_ai\LoggerAwareTrait;
 use search_solrrag\document;
 use search_solrrag\schema;
-//require_once($CFG->dirroot . "/search/engine/solrrag/lib.php");
-// // Fudge autoloading!
-// require_once($CFG->dirroot ."/search/engine/solrrag/classes/ai/api.php");
-// require_once($CFG->dirroot ."/search/engine/solrrag/classes/ai/aiprovider.php");
-// require_once($CFG->dirroot ."/search/engine/solrrag/classes/ai/aiclient.php");
+
 use \core_ai\AIProvider;
 use \core_ai\aiclient;
 use \core_ai\AiException;
-class engine extends \search_solr\engine {
+
+class engine extends \search_solr\engine implements \core_ai\LoggerAwareInterface {
+    use LoggerAwareTrait;
 
     /**
      * @var AIProvider AI rovider object to use to generate embeddings.
      */
     protected ?AIClient $aiclient = null;
     protected ?AIProvider $aiprovider = null;
-    protected ?logger $logger = null;
+
     public function __construct(bool $alternateconfiguration = false)
     {
         parent::__construct($alternateconfiguration);
@@ -34,6 +32,7 @@ class engine extends \search_solr\engine {
         $aiprovider = api::get_provider($aiproviderid);
         $this->aiprovider = $aiprovider;
         $this->aiclient = !is_null($aiprovider)? new AIClient($aiprovider) : null;
+        $this->setLogger($aiprovider->get_logger());
     }
 
     public function is_server_ready()
@@ -76,24 +75,28 @@ class engine extends \search_solr\engine {
      */
     public function add_document($document, $fileindexing = false) {
         $docdata = $document->export_for_engine();
-        debugging("Adding document");
+        $this->logger->info("Adding document to search engine");
         if ($this->aiprovider->use_for_embeddings() && $this->aiclient) {
-            debugging('Generating vector using provider');
+            $this->logger->info("Generating vector using document content");
             $vector = $this->aiclient->embed_query($document['content']);
             $vlength = count($vector);
             $vectorfield = "solr_vector_" . $vlength;
+            $this->logger->info("Generated vector length: {length}, field: {field}", [
+                'length' => $vlength, 'field' => $vectorfield
+            ]);
             $docdata[$vectorfield] = $vector;
-            // var_dump($docdata);
         } else {
-            debugging("Err didn't do any vector stuff!");
+            $this->logger->warning("Wasn't able to generate a vector for document");
         }
 
         if (!$this->add_solr_document($docdata)) {
+            $this->logger->warning("Failed to add document to search engine index");
             return false;
         }
 
         if ($fileindexing) {
             // This will take care of updating all attached files in the index.
+            $this->logger->warning("Processing document's files");
             $this->process_document_files($document);
         }
 
@@ -101,19 +104,26 @@ class engine extends \search_solr\engine {
     }
 
     public function add_document_batch(array $documents, bool $fileindexing = false): array {
+        $this->logger->info("Entering solrrag::add_document_batch()");
         $docdatabatch = [];
         foreach ($documents as $document) {
             //$docdatabatch[] = $document->export_for_engine();
             $doc = $document->export_for_engine();
             if ($this->aiprovider->use_for_embeddings() && $this->aiclient) {
-                debugging('Generating vector using provider');
+                if (empty($doc['content'])) {
+                    $this->logger->info("Empty doc {id} - {title}", ['id' => $doc['id'], 'title' => $doc['title']]);
+                }
+                $this->logger->info('Generating vector using provider');
                 $vector = $this->aiclient->embed_query($doc['content']);
                 $vlength = count($vector);
                 $vectorfield = "solr_vector_" . $vlength;
                 $doc[$vectorfield] = $vector;
-                // var_dump($doc);
+                $this->logger->info("Vector length {length} field {field}", [
+                    'length' => $vlength, 'field' => $vectorfield
+                ]);
             } else {
-                debugging("Err didn't do any vector stuff!");
+                $this->logger->info("Didn't do any vector stuff!");
+//                debugging("Err didn't do any vector stuff!");
             }
             $docdatabatch[] = $doc;
         }
@@ -121,14 +131,90 @@ class engine extends \search_solr\engine {
         $resultcounts = $this->add_solr_documents($docdatabatch);
 
         // Files are processed one document at a time (if there are files it's slow anyway).
+
         if ($fileindexing) {
+            $this->logger->info("Processing files");
             foreach ($documents as $document) {
                 // This will take care of updating all attached files in the index.
                 $this->process_document_files($document);
             }
+            $this->logger->info("Completed Processing files");
         }
 
         return $resultcounts;
+    }
+    /**
+     * Adds multiple text documents to the search engine.
+     *
+     * @param array $docs Array of documents (each an array of fields) to add
+     * @return int[] Array of success, failure, batch count
+     * @throws \core_search\engine_exception
+     */
+    protected function add_solr_documents(array $docs): array {
+        $solrdocs = [];
+        foreach ($docs as $doc) {
+            $solrdocs[] = $this->create_solr_document($doc);
+        }
+
+        try {
+            // Add documents in a batch and report that they all succeeded.
+            $this->get_search_client()->addDocuments($solrdocs, true, static::AUTOCOMMIT_WITHIN);
+            return [count($solrdocs), 0, 1];
+        } catch (\SolrClientException $e) {
+            // If there is an exception, fall through...
+            $donothing = true;
+        } catch (\SolrServerException $e) {
+            // If there is an exception, fall through...
+            $donothing = true;
+        }
+
+        // When there is an error, we fall back to adding them individually so that we can report
+        // which document(s) failed. Since it overwrites, adding the successful ones multiple
+        // times won't hurt.
+        $success = 0;
+        $failure = 0;
+        $batches = 0;
+        foreach ($docs as $doc) {
+            $result = $this->add_solr_document($doc);
+            $batches++;
+            if ($result) {
+                $success++;
+            } else {
+                $failure++;
+            }
+        }
+
+        return [$success, $failure, $batches];
+    }
+
+    /**
+     * Adds a text document to the search engine.
+     *
+     * @param array $doc
+     * @return bool
+     */
+    protected function add_solr_document($doc) {
+        $solrdoc = $this->create_solr_document($doc);
+
+        try {
+            $result = $this->get_search_client()->addDocument($solrdoc, true, static::AUTOCOMMIT_WITHIN);
+            return true;
+        } catch (\SolrClientException $e) {
+            debugging('Solr client error adding document with id ' . $doc['id'] . ': ' . $e->getMessage(), DEBUG_DEVELOPER);
+            $this->logger->error('Solr client error adding document with id ' . $doc['id'] . ': ' . $e->getMessage());
+        } catch (\SolrServerException $e) {
+            // We only use the first line of the message, as it's a fully java stacktrace behind it.
+            // $msg = strtok($e->getMessage(), "\n");
+            $msg = $e->getMessage();
+            debugging('Solr server error adding document with id ' . $doc['id'] . ': ' . $msg, DEBUG_DEVELOPER);
+            $this->logger->error('Solr server error adding document with id ' . $doc['id'] . ': ' . $msg);
+            $msgdoc = $doc;
+            unset($msgdoc['solr_vector_768']);
+            $this->logger->debug(print_r($msgdoc, true));
+
+        }
+
+        return false;
     }
 
     /**
@@ -142,8 +228,11 @@ class engine extends \search_solr\engine {
      * @param \stored_file $storedfile
      * @return void
      */
-    protected function add_stored_file($document, $storedfile)
-    {
+    protected function add_stored_file($document, $storedfile) {
+        $this->logger->info("Adding stored file {name} to document {document}", [
+            "name" => $storedfile->get_filename(),
+            "document" => "TBD"
+        ]);
         $embeddings = [];
 
         $filedoc = $document->export_file_for_engine($storedfile);
@@ -151,6 +240,7 @@ class engine extends \search_solr\engine {
 
         if (!$this->file_is_indexable($storedfile)) {
             // For files that we don't consider indexable, we will still place a reference in the search engine.
+            $this->logger->warning("File {filename} is not indexable", ['filename' => $storedfile->get_filename()]);
             $filedoc['solr_fileindexstatus'] = document::INDEXED_FILE_FALSE;
             $this->add_solr_document($filedoc);
             return;
@@ -190,20 +280,20 @@ class engine extends \search_solr\engine {
         $url->param('resource.name', $storedfile->get_filename());
         // If we're not doing embeddings, then we can just use the "original" implementation which will
         // extract and index the file without passing the content back.
-        if (!$this->aiprovider->use_for_embeddings()) {
-            $url->param('extractOnly', "true");
+        if ($this->aiprovider->use_for_embeddings()) {
+            $this->logger->info("Extracting file content without embeddings");
+            $url->param('extractOnly', "true"); // This gets solr to extract the content but not write it to the index.
         }
 
         // A giant block of code that is really just error checking around the curl request.
         try {
             $requesturl = $url->out(false);
 
-            debugging($requesturl);
+            $this->logger->info("Attempting to extract resource content");
             // We have to post the file directly in binary data (not using multipart) to avoid
             // Solr bug SOLR-15039 which can cause incorrect data when you use multipart upload.
             // Note this loads the whole file into memory; see limit in file_is_indexable().
             $result = $curl->post($requesturl, $storedfile->get_content());
-            //$url->out(false)
 
             $code = $curl->get_errno();
             $info = $curl->get_info();
@@ -213,6 +303,7 @@ class engine extends \search_solr\engine {
                 // This means an internal cURL error occurred error is in result.
                 $message = 'Curl error ' . $code . ' while indexing file with document id ' . $filedoc['id'] . ': ' . $result . '.';
                 debugging($message, DEBUG_DEVELOPER);
+                $this->logger->error($message);
             } else if (isset($info['http_code']) && ($info['http_code'] !== 200)) {
                 // Unexpected HTTP response code.
                 $message = 'Error while indexing file with document id ' . $filedoc['id'];
@@ -225,8 +316,9 @@ class engine extends \search_solr\engine {
                 // This is a common error, happening whenever a file fails to index for any reason, so we will make it quieter.
                 if (CLI_SCRIPT && !PHPUNIT_TEST) {
                     mtrace($message);
+                    $this->logger->warning($message);
                     if (debugging()) {
-                        mtrace($requesturl);
+                        $this->logger->debug($requesturl);
                     }
                     // Suspiciion that this fails due to the file contents being PDFs.
                 }
@@ -237,44 +329,72 @@ class engine extends \search_solr\engine {
                     if ((int)$matches[1] !== 0) {
                         $message = 'Unexpected Solr status code ' . (int)$matches[1];
                         $message .= ' while indexing file with document id ' . $filedoc['id'] . '.';
-                        debugging($message, DEBUG_DEVELOPER);
+                        $this->logger->warning($message);
                     } else {
-                        // The document was successfully indexed.
+                        // The document was successfully extracted.
                         if ($this->aiprovider->use_for_embeddings() && $this->aiclient) {
-                            preg_match('/<str>(?<Content>.*)<\/str>/imsU', $result, $streamcontent);
-                            debugging("Got SOLR update/extract response");
-                            if ($streamcontent[1]!== 0) {
-                                $xmlcontent =  html_entity_decode($streamcontent[1]);
-                                $xml = simplexml_load_string($xmlcontent);
-                                $filedoc['content'] = (string)$xml->body->asXML();
-                                $metadata = $xml->head->meta;
-                                foreach($metadata as $meta) {
-                                    $name = (string)$meta['name'];
-                                    $content = (string)$meta['content'];
-                                    if ($content != null) {
-                                        $filedoc[$name] = $content;
+                            $matchresult = preg_match('/<str>(?<Content>.*)<\/str>/imsU', $result, $streamcontent);
+                            if ($matchresult === 0) {
+                                $this->logger->error("Didn't get an extraction response");
+                                $filedoc['solr_fileindexstatus'] = document::INDEXED_FILE_ERROR;
+                                $this->logger->debug($requesturl);
+                                $this->logger->debug($result);
+
+                            } else {
+                                $this->logger->info('document extracted successfully');
+                                $xmlcontent = html_entity_decode($streamcontent[1]);
+                                $this->logger->debug($xmlcontent);
+                                try {
+                                    $xml = simplexml_load_string($xmlcontent);
+                                    if ($xml === false) {
+                                        $this->logger->error("Didn't get back a valid XML response");
+                                        $filedoc['solr_fileindexstatus'] = document::INDEXED_FILE_ERROR;
                                     } else {
-                                        $filedoc[$name] = "";
+                                        $filedoc['content'] = (string)$xml->body->asXML();
+                                        $metadata = $xml->head->meta;
+                                        foreach ($metadata as $meta) {
+                                            $name = (string)$meta['name'];
+                                            $content = (string)$meta['content'];
+                                            if ($content != null) {
+                                                $filedoc[$name] = $content;
+                                            } else {
+                                                $filedoc[$name] = "";
 
+                                            }
+                                        }
+                                        // Note a successful extraction in the log
+                                        $this->logger->info("Successfully extracted content from file {filename}", [
+                                            'filename' => $storedfile->get_filename()
+                                        ]);
                                     }
+                                    /**
+                                     * Since solr has given us back the content, we can now send it off to the AI provider.
+                                     */
+                                    // garnish $filedoc with the embedding vector. It would be nice if this could be done
+                                    // via the export_file_for_engine() call above, that has no awareness of the engine.
+                                    // We expect $filedoc['content'] to be set.
+                                    if(isset($filedoc['content'])) {
+                                        $this->logger->info("Extracting vector from content {$content}", $filedoc);
+                                        $vector = $this->aiclient->embed_query($filedoc['content']);
+                                        $vlength = count($vector);
+                                        $vectorfield = "solr_vector_" . $vlength;
+                                        $filedoc[$vectorfield] = $vector;
+                                        $this->logger->info("Generated vector length: {length}, field: {field}", [
+                                            'length' => $vlength, 'field' => $vectorfield
+                                        ]);
+                                    } else {
+                                        $this->logger->info("Document had no content", $filedoc);
+                                    }
+                                    $this->logger->info("Solr dor: {doc}", ["doc" => print_r($filedoc,true)]);
+                                } catch (\Exception $e) {
+                                    $this->logger->error("Error parsing XML from solr");
+                                    $this->logger->debug($xmlcontent);
                                 }
-                            }
-                            /**
-                             * Since solr has given us back the content, we can now send it off to the AI provider.
-                             */
 
-                            // garnish $filedoc with the embedding vector. It would be nice if this could be done
-                            // via the export_file_for_engine() call above, that has no awareness of the engine.
-                            // We expect $filedoc['content'] to be set.
-                            $vector = $this->aiclient->embed_query($filedoc['content']);
-                            $vlength = count($vector);
-                            $vectorfield = "solr_vector_" . $vlength;
-                            $filedoc[$vectorfield] = $vector;
-                        } else {
-                            // As before if embeddings is not in use, then we can bail
-                            // as the document is already indexed.
-                            return;
+                            }
                         }
+                        // We can add either the document with content or without.
+                        $this->logger->info("Adding document to search index.");
                         $this->add_solr_document($filedoc);
                         return;
                     }
@@ -283,11 +403,13 @@ class engine extends \search_solr\engine {
                     $message = 'Unexpected Solr response while indexing file with document id ' . $filedoc['id'] . ': ';
                     $message .= strtok($result, "\n");
                     debugging($message, DEBUG_DEVELOPER);
+                    $this->logger->warning($message);
                 }
             }
         } catch (\Exception $e) {
             // There was an error, but we are not tracking per-file success, so we just continue on.
             debugging('Unknown exception while indexing file "' . $storedfile->get_filename() . '".', DEBUG_DEVELOPER);
+            $this->logger->error($message);
         }
         
         // If we get here, the document was not indexed due to an error. So we will index just the base info without the file.
@@ -305,6 +427,7 @@ class engine extends \search_solr\engine {
     protected function create_solr_document(array $doc): \SolrInputDocument {
         $solrdoc = new \SolrInputDocument();
 
+        $forcetostring = ["dc_title", "Object_Name"];
         // Replace underlines in the content with spaces. The reason for this is that for italic
         // text, content_to_text puts _italic_ underlines. Solr treats underlines as part of the
         // word, which means that if you search for a word in italic then you can't find it.
@@ -318,10 +441,22 @@ class engine extends \search_solr\engine {
                 continue;
             }
             if (is_array($value)) {
+                $i = 0;
                 foreach ($value as $v) {
+                    if (empty($v)) {
+                        $this->logger->debug("Field {name} pos {i} is empty", ["name" => $field, "i" => $i]);
+                    }
                     $solrdoc->addField($field, $v);
+                    $i++;
                 }
                 continue;
+            }
+            if (empty($value)) {
+                $this->logger->debug("Field {name} is empty", ["name" => $field]);
+            }
+            if (in_array($field, $forcetostring)) {
+                $this->logger->debug("Forcing {name} to string", ["name" => $field]);
+                $value = "{$value}";
             }
             $solrdoc->addField($field, $value);
         }
@@ -337,45 +472,26 @@ class engine extends \search_solr\engine {
      * @throws \core_search\engine_exception
      */
     public function execute_query($filters, $accessinfo, $limit = 0) {
-
+        $this->logger->info("Entering execute_query");
         if (isset($filters->similarity) &&
             $filters->similarity
         ) {
             // Do a vector similarity search.
-            // debugging("Running similarity search", DEBUG_DEVELOPER);
+            $this->logger->info("Running similarity search");
+            $this->logger->info("Fetching Vector for {userquery}", (array)$filters);
+            $vector = $this->aiclient->embed_query($filters->userquery);
+            $filters->vector = $vector;
             // We may get accessinfo, but we actually should determine our own ones to apply too
             // But we can't access the "manager" class' get_areas_user_accesses function, and
             // that's already been called based on the configuration / data from the user
             $docs = $this->execute_similarity_query($filters, $accessinfo, $limit);
-            var_dump($docs);
+            // Really should run a process similar to the process_response() function.
+
             return $docs;
         } else {
-            // debugging("Running regular search", DEBUG_DEVELOPER);
-            // print_r($filters);
-            // print_r($accessinfo);
+            $this->logger->info("Executing regular search");
             return parent::execute_query($filters, $accessinfo, $limit);
         }
-    }
-    /**
-     * A logging function just to allow us to output all the things
-     * that the process is doing for verification / validation.
-     * 
-     * Probably not the most efficient way to do this, but Moodle's lacking
-     * a good generic logging framework.
-     * 
-     * @param mixed $message An object/array/string that will be turned into a string.
-     */
-    protected function log($message) {
-        $logfiledir = make_temp_directory('search_solrrag');
-        $file = $logfiledir . '/solr_knn_query.log';
-        $log = fopen($file, 'a');
-        if (is_object($message)) {
-            $message = print_r($message, true);
-        } else if (is_array($message)) {
-            $message = print_r($message, true);
-        } 
-        fwrite($log, date('Y-m-d H:i:s') . " " . $message . "\n");
-        fclose($log);
     }
 
     /**
@@ -393,9 +509,7 @@ class engine extends \search_solr\engine {
      */
     public function execute_similarity_query(\stdClass $filters, \stdClass $accessinfo, int $limit = null) {
         $data = clone($filters);
-        $this->log("Executing SOLR KNN QUery");
-        $this->log("Filters");
-        $this->log($filters);
+        $this->logger->info("Executing SOLR KNN QUery");
         $vector = $filters->vector;
         $topK = $limit > 0 ? $limit: 1; // We'll make the number of neighbours the same as search result limit.
 
@@ -406,17 +520,22 @@ class engine extends \search_solr\engine {
 
         $field = "solr_vector_" . count($vector);
         $requestbody = "{!knn f={$field} topK={$topK}}[" . implode(",", $vector) . "]";
-        $this->log($requestbody);
+
         $filters->mainquery = $requestbody;
         // Build filter restrictions.
         $filterqueries = [];
         if(!empty($data->areaids)) {
-            $filterqueries[] = '{!cache=false}areaid:(' . implode(' OR ', $data->areaids) . ')';
+            $r = '{!cache=false}areaid:(' . implode(' OR ', $data->areaids) . ')';
+            $this->logger->info("Attaching areid restriction: {areaid}", ['areaid' => $r]);
+            $filterqueries[] = $r;
         }
-
+        $r = null;
         if(!empty($data->excludeareaids)) {
-            $filterqueries[] = '{!cache=false}-areaid:(' . implode(' OR ', $data->excludeareaids) . ')';
+            $r ='{!cache=false}-areaid:(' . implode(' OR ', $data->excludeareaids) . ')';
+            $this->logger->info("Attaching areid restriction: {areaid}", ['areaid' => $r]);
+            $filterqueries[] = $r;
         }
+        $r = null;
         // Build access restrictions.
 
         // And finally restrict it to the context where the user can access, we want this one cached.
@@ -436,12 +555,15 @@ class engine extends \search_solr\engine {
                 }
             }
             if (empty($allcontexts)) {
+                $this->logger->warning("User has no contexts at all");
                 // This means there are no valid contexts for them, so they get no results.
                 return null;
             }
-            $filterqueries[] = 'contextid:(' . implode(' OR ', $allcontexts) . ')';
+            $contexts ='contextid:(' . implode(' OR ', $allcontexts) . ')';
+            $this->logger->info("Attaching context restriction: {contexts}", ['contexts' => $contexts]);
+            $filterqueries[] = $contexts;
         }
-
+        $r = null;
         if (!$accessinfo->everything && $accessinfo->separategroupscontexts) {
             // Add another restriction to handle group ids. If there are any contexts using separate
             // groups, then results in that context will not show unless you belong to the group.
@@ -462,48 +584,62 @@ class engine extends \search_solr\engine {
             if ($accessinfo->usergroups) {
                 // Either the document has no groupid, or the groupid is one that the user
                 // belongs to, or the context is not one of the separate groups contexts.
-                $filterqueries[] = '(*:* -groupid:[* TO *]) OR ' .
+                $r = '(*:* -groupid:[* TO *]) OR ' .
                         'groupid:(' . implode(' OR ', $accessinfo->usergroups) . ') OR ' .
                         '(*:* -contextid:(' . implode(' OR ', $accessinfo->separategroupscontexts) . '))' .
                         $exceptions;
+                $this->logger->info("attaching usergroup restriction: {usergroups}", ['usergroups' => $r]);
+                $filterqueries[] = $r;
             } else {
                 // Either the document has no groupid, or the context is not a restricted one.
-                $filterqueries[] = '(*:* -groupid:[* TO *]) OR ' .
+                $r = '(*:* -groupid:[* TO *]) OR ' .
                         '(*:* -contextid:(' . implode(' OR ', $accessinfo->separategroupscontexts) . '))' .
                         $exceptions;
+                $this->logger->info("attaching usergroup restriction: {usergroups}", ['usergroups' => $r]);
+                $filterqueries[] = $r;
             }
         }
 
+        $params = [
+            "query" => $requestbody,
+        ];
+        // Query String parameters.
+        $qsparams = [];
+
         if ($this->file_indexing_enabled()) {
             // Now group records by solr_filegroupingid. Limit to 3 results per group.
-            // TODO work out how to convert the following into query / filter parameters.
-            // $query->setGroup(true);
-            // $query->setGroupLimit(3);
-            // $query->setGroupNGroups(true);
-            // $query->addGroupField('solr_filegroupingid');
+            // TODO work out how to convert the following into query / filter parameters.#
+            $this->logger->info("Setting SOLR group parameters");
+            $qsparams['group'] = "true";
+            $qsparams['group.limit'] = 3;
+            $qsparams['group.ngroups'] = "true";
+            $qsparams['group.field'] = 'solr_filegroupingid';
         } else {
             // Make sure we only get text files, in case the index has pre-existing files.
             $filterqueries[] = 'type:'.\core_search\manager::TYPE_TEXT;
         }
 
-        // Finally perform the actaul search
+        // Finally perform the actual search.
 
         $curl = $this->get_curl_object();
         $requesturl = $this->get_connection_url('/select');
-        $requesturl->param('fl', 'id,areaid,score,content');
+//        $requesturl->param('fl', 'id,areaid,score,content, title');
+        // Title is added on the end so we didn't have to recode some indexes below.
         $requesturl->param('wt', 'xml');
+        foreach($qsparams as $qs => $value) {
+            $requesturl->param($qs, $value);
+        }
         foreach($filterqueries as $fq) {
             $requesturl->param('fq', $fq);
         }
-//        $requesturl->param('fq', implode("&", $filterqueries));
-
-        $params = [
-            "query" => $requestbody,
-        ];
 
         $curl->setHeader('Content-type: application/json');
+        $this->logger->info("Solr request: ".$requesturl->out(false));
+        $logparams =$params;
+        unset($logparams['query']); // unset query as it's got the full vector in it.
+        $this->logger->info("Solr request params: ". json_encode($logparams));
         $result = $curl->post($requesturl->out(false), json_encode($params));
-        $this->log($result);
+        $this->logger->info("Got SOLR result");
 
         // Probably have to duplicate error handling code from the add_stored_file() function.
         $code = $curl->get_errno();
@@ -514,6 +650,7 @@ class engine extends \search_solr\engine {
             $message = 'Curl error ' . $code . ' retrieving';
 //                . $filedoc['id'] . ': ' . $result . '.';
             debugging($message, DEBUG_DEVELOPER);
+            $this->logger->error($message);
         } else if (isset($info['http_code']) && ($info['http_code'] !== 200)) {
             // Unexpected HTTP response code.
             $message = 'Error while querying for documents ' ;
@@ -526,8 +663,10 @@ class engine extends \search_solr\engine {
             // This is a common error, happening whenever a file fails to index for any reason, so we will make it quieter.
             if (CLI_SCRIPT && !PHPUNIT_TEST) {
                 mtrace($message);
+                $this->logger->warning($message);
                 if (debugging()) {
                     mtrace($requesturl);
+                    $this->logger->info($requesturl);
                 }
                 // Suspiciion that this fails due to the file contents being PDFs.
             }
@@ -538,34 +677,64 @@ class engine extends \search_solr\engine {
                 // Now check for the expected status of 0, if not, error.
                 if ((int)$matches[1] !== 0) {
                     $message = 'Unexpected Solr status code ' . (int)$matches[1];
-                    debugging($message, DEBUG_DEVELOPER);
+                    $this->logger->warning($message);
                 } else {
+                    $this->logger->info("Parsing solr result");
                     // We got a result back.
 //                    echo htmlentities($result);
 //                    debugging("Got SOLR update/extract response");
                     $xml = simplexml_load_string($result);
-                    // echo "<pre>";
-                    // var_dump($xml->result);
-                    // echo "</pre>";
-                    $results = $xml->result->doc;
-                    $docs = [];
-                    foreach($results as $doc) {
-                        $docs[] = (object)[
-                            'id' => (string)$doc->str[0],
-                            'areaid' => (string)$doc->str[1],
-                            'content' => (string)$doc->str[2],
-                            'score' => (string)$doc->float,
-                        ];
+                    if ($this->file_indexing_enabled()) {
+                        $this->logger->info("File indexing enabled");
+                        // We'll just grab all of the <doc> elements that were found.
+                        $results = $xml->xpath("//doc");
+//                        $this->logger->debug(print_r($results, true));
+                    } else {
+                        $results = $xml->result->doc;
+//                        $this->logger->debug($result);
                     }
+                    $docs = [];
+                    $titles = [];
+                    if (!empty($results)) {
+//                        echo "<pre>";
+                        foreach ($results as $result) {
+                            $result->rewind();
+                            $doc = [];
+                            while($result->valid()) {
+                                $element = $result->current();
+                                $name = (string)$element["name"];
+                                $doc[$name] = trim((string)$element);
+                                $result->next();
+                            }
+                            $this->logger->debug("Outputting similarity search results");
+                            $this->logger->debug(print_r($doc, true));
+                            $searcharea = $this->get_search_area($doc['areaid']);
+                            $titles[] = $doc['title'];
+                            $doc = $this->to_document($searcharea, $doc);
+
+                            // we're now a "Document" object, so check for content.
+                            if ($doc->is_set('content')) {
+                                $docs[] = $doc;
+                            } else {
+                                $this->logger->info("Document {title} had no content in the end", ['title' => $doc->get('title')]);
+                            }
+                        }
+//                        echo "</pre>";
+                        // Just for audit/debugging we output the list of resource titles.
+                        $this->logger->info("Document titles: {titles}", ['titles'=> implode(",", $titles)]);
+                    } else {
+                        $this->logger->info("No results found");
+                    }
+
                     return $docs;
-                    // [0][1][2] as defined in the fl attribute above
-                    
+
                 }
             } else {
                 // We received an unprocessable response.
                 $message = 'Unexpected Solr response';
                 $message .= strtok($result, "\n");
                 debugging($message, DEBUG_DEVELOPER);
+                $this->logger->warning($message);
             }
         }
         return [];
@@ -605,5 +774,87 @@ class engine extends \search_solr\engine {
         }
 
         return true;
+    }
+    /**
+     * Index files attached to the docuemnt, ensuring the index matches the current document files.
+     *
+     * For documents that aren't known to be new, we check the index for existing files.
+     * - New files we will add.
+     * - Existing and unchanged files we will skip.
+     * - File that are in the index but not on the document will be deleted from the index.
+     * - Files that have changed will be re-indexed.
+     *
+     * @param \search_solr\document $document
+     */
+    protected function process_document_files($document) {
+        if (!$this->file_indexing_enabled()) {
+            return;
+        }
+
+        // Maximum rows to process at a time.
+        $rows = 500;
+
+        // Get the attached files.
+        $files = $document->get_files();
+
+        // If this isn't a new document, we need to check the exiting indexed files.
+        if (!$document->get_is_new()) {
+            // We do this progressively, so we can handle lots of files cleanly.
+            list($numfound, $indexedfiles) = $this->get_indexed_files($document, 0, $rows);
+            $count = 0;
+            $idstodelete = array();
+
+            do {
+                // Go through each indexed file. We want to not index any stored and unchanged ones, delete any missing ones.
+                foreach ($indexedfiles as $indexedfile) {
+                    $fileid = $indexedfile->solr_fileid;
+
+                    if (isset($files[$fileid])) {
+                        // Check for changes that would mean we need to re-index the file. If so, just leave in $files.
+                        // Filelib does not guarantee time modified is updated, so we will check important values.
+                        if ($indexedfile->modified != $files[$fileid]->get_timemodified()) {
+                            continue;
+                        }
+                        if (strcmp($indexedfile->title, $files[$fileid]->get_filename()) !== 0) {
+                            continue;
+                        }
+                        if ($indexedfile->solr_filecontenthash != $files[$fileid]->get_contenthash()) {
+                            continue;
+                        }
+                        if ($indexedfile->solr_fileindexstatus == document::INDEXED_FILE_FALSE &&
+                            $this->file_is_indexable($files[$fileid])) {
+                            // This means that the last time we indexed this file, filtering blocked it.
+                            // Current settings say it is indexable, so we will allow it to be indexed.
+                            continue;
+                        }
+
+                        // If the file is already indexed, we can just remove it from the files array and skip it.
+                        unset($files[$fileid]);
+                    } else {
+                        // This means we have found a file that is no longer attached, so we need to delete from the index.
+                        // We do it later, since this is progressive, and it could reorder results.
+                        $idstodelete[] = $indexedfile->id;
+                    }
+                }
+                $count += $rows;
+
+                if ($count < $numfound) {
+                    // If we haven't hit the total count yet, fetch the next batch.
+                    list($numfound, $indexedfiles) = $this->get_indexed_files($document, $count, $rows);
+                }
+
+            } while ($count < $numfound);
+
+            // Delete files that are no longer attached.
+            foreach ($idstodelete as $id) {
+                // We directly delete the item using the client, as the engine delete_by_id won't work on file docs.
+                $this->get_search_client()->deleteById($id);
+            }
+        }
+
+        // Now we can actually index all the remaining files.
+        foreach ($files as $file) {
+            $this->add_stored_file($document, $file);
+        }
     }
 }

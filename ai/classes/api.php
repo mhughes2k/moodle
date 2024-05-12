@@ -8,7 +8,6 @@ use core_ai\aiprovider;
  * AI Help API.
  */
 class api {
-
     const ACTION_ADD_PROVIDER = "add";
     const ACTION_REMOVE_PROVIDER = "remove";
     const ACTION_EDIT_PROVIDER = "edit";
@@ -24,9 +23,7 @@ class api {
         return array_values(aiprovider::get_records());
     }
     public static function get_provider(int $id): AIProvider {
-        $fakes = aiprovider::get_records();
-        return $fakes[0]; // Open AI
-        // return $fakes[1]; // Ollama
+        return aiprovider::get_record(['id' => $id]);
     }
 
     /**

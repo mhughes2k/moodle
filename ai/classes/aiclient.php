@@ -5,7 +5,8 @@ use core_ai\AiException;
 /**
  * Base client for AI providers that uses simple http request.
  */
-class AIClient extends \curl {
+class AIClient extends \curl implements LoggerAwareInterface {
+    use LoggerAwareTrait;
     /**
      * @var AIProvider
      */
@@ -14,11 +15,14 @@ class AIClient extends \curl {
         AIProvider $provider
     ) {
         $this->provider = $provider;
+        $this->setLogger($provider->get_logger());
         $settings = [];
         parent::__construct($settings);
         $this->setHeader('Authorization: Bearer ' . $this->provider->get('apikey'));
         $this->setHeader('Content-Type: application/json');
     }
+
+
 
     public function get_embeddings_url(): string {
         return $this->provider->get('baseurl') . $this->provider->get('embeddingsurl');
@@ -40,21 +44,31 @@ class AIClient extends \curl {
         ];
         $params = json_encode($params);
         $rawresult = $this->post($this->get_chat_completions_url(), $params);
+        $this->logger->info("Response rescieved from AI provider: {name}", ['name' => $this->provider->get('name')]);
         $jsonresult = json_decode($rawresult);
         if (isset($jsonresult->error)) {
+            $this->logger->error("Error: " . $jsonresult->error->message . ":". print_r($messages, true));
             throw new AiException("Error: " . $jsonresult->error->message . ":". print_r($messages, true));
             //return "Error: " . $jsonresult->error->message . ":". print_r($messages, true);
         }
         $result = [];
         if (isset($jsonresult->choices)) {
+            $this->logger->info("Starting Processing completions");
             $result = $this->convert_chat_completion($jsonresult->choices);
-            if (isset($jsonresult->usage)) {
-                $this->provider->increment_prompt_usage($jsonresult->usage->prompt_tokens);
-                $this->provider->increment_completion_tokens($jsonresult->usage->completion_tokens);
-                $this->provider->increment_total_tokens($jsonresult->usage->total_tokens);
-            }
+            $this->logger->info("Finished completions");
         }
-    
+        if (isset($jsonresult->usage)) {
+            $this->logger->info("Updating token usage");
+            $usage = $jsonresult->usage;
+            $updated = [
+                $this->provider->increment_prompt_usage($usage->prompt_tokens),
+                $this->provider->increment_completion_tokens($usage->completion_tokens),
+                $this->provider->increment_total_tokens($usage->total_tokens)
+            ];
+            $this->logger->info("Request Tokens-{prompt_tokens}. Total tokens: {total_tokens}", (array)$usage);
+            $this->logger->info("Tokens-Prompt:{$updated[0]}, Completion:{$updated[1]}, Total:{$updated[2]}");
+        }
+        //$this->logger->info($result);
         return $result;
     }
 
@@ -79,30 +93,43 @@ class AIClient extends \curl {
         $usedptokens = $this->provider->get_usage('prompt_tokens');
         $totaltokens = $this->provider->get_usage('total_tokens');
         // mtrace("Prompt tokens: $usedptokens. Total tokens: $totaltokens");
+        $content = $content ?? "";   // Fix "null" content to be "empty" string.
         $params = [
             "input" => htmlentities($content), // TODO need to do some length checking here!
-            "model" => $this->provider->get('embeddingmodel')
+            "model" => $this->provider->get('embeddingmodel'),
         ];
         $params = json_encode($params);
-//        var_dump($this->get_embeddings_url());
+        $embeddingsurl = $this->get_embeddings_url();
+        $this->logger->info("Embeddings URL: " . $embeddingsurl);
+        $urlisblocked = $this->check_securityhelper_blocklist($embeddingsurl);
+        if (!is_null($urlisblocked)) {
+            $this->logger->warning($urlisblocked);
+            throw new \moodle_exception("{$embeddingsurl} is blocked by policy");
+        }
+        $rawresult = $this->post($embeddingsurl, $params);
 
-        $rawresult = $this->post($this->get_embeddings_url(), $params);
-//        var_dump($rawresult);
         $result = json_decode($rawresult, true);
-        // var_dump($result);
-        $usage = $result['usage'];
-        $this->provider->increment_prompt_usage($usage['prompt_tokens']);
-        $this->provider->increment_total_tokens($usage['total_tokens']);
-        // mtrace("Used Prompt tokens: {$usage['prompt_tokens']}. Total tokens: {$usage['total_tokens']}");
-        $data = $result['data'];
-        foreach($data as $d) {
-            if ($d['object'] == "embedding") {
-                return $d['embedding'];
+        if (is_null($result)) {
+            throw new \moodle_exception('Failed to decode response from AI provider: {$a}', "", "", $rawresult);
+        }
+        if (isset($result['usage'])) {
+            $usage = $result['usage'];
+            $updated = [
+                $this->provider->increment_prompt_usage($usage['prompt_tokens']),
+                $this->provider->increment_total_tokens($usage['total_tokens'])
+            ];
+            $this->logger->info("Used Prompt tokens: {prompt_tokens}. Total tokens: {total_tokens}", $usage);
+            $this->logger->info("Tokens-Prompt:{$updated[0]}, Total:{$updated[1]}");
+        }
+        if (isset($result['data'])) {
+            $data = $result['data'];
+            foreach ($data as $d) {
+                if ($d['object'] == "embedding") {
+                    return $d['embedding'];
+                }
             }
         }
-        $usedptokens = $this->provider->get_usage('prompt_tokens');
-        $totaltokens = $this->provider->get_usage('total_tokens');
-        // mtrace("Total Used: Prompt tokens: $usedptokens. Total tokens: $totaltokens");
+
         return [];
     }
     public function embed_documents(array $documents) {

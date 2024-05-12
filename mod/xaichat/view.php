@@ -63,6 +63,7 @@ if (!isset($_SESSION[$aicontextkey])) {
 if (!($aiprovider = api::get_provider($moduleinstance->aiproviderid))){
     throw new moodle_exception("noaiproviderfound", 'xaichat');
 }
+$logger = $aiprovider->get_logger();
 
 $event = \mod_xaichat\event\course_module_viewed::create(array(
     'objectid' => $moduleinstance->id,
@@ -93,33 +94,46 @@ if ($data = $chatform->get_data()) {
         // a bunch of system and context specific prompts to constrain behaviour.
         $totalsteps++;
         $progress->update(1, $totalsteps,'Processing System Prompts');
+        $logger->info("Processing System Prompts");
     }
     $progress->update(1, $totalsteps,'Looking for relevant context');
-    $vector = $aiclient->embed_query($data->userprompt);
+    $logger->info("Looking for relevant context");
     $search = \core_search\manager::instance(true, true);
+
     // Some of these values can't be "trusted" to the end user to supply, via something
     // like a form, nor can they be entirely left to the plugin developer.
     $settings = $aiprovider->get_settings_for_user($USER);
-    $settings['vector'] = $vector;
     $settings['userquery'] = $data->userprompt;
+    // This limits the plugin's search scope.
+    $settings['courseids'] = [$course->id];
+
     $docs = $search->search((object)$settings);
-    
+
     // Perform "R" from RAG, finding documents from within the context that are similar to the user's prompt.
     // Add the retrieved documents to the context for this chat by generating some system messages with the content
     // returned
-    if (!empty($docs)) {
+    if (empty($docs)) {
+        $logger->info("No RAG content returned");
+        $prompt = (object)[
+            "role" => "system",
+            "content" => "I wasn't able to find anything relevant about this module"
+        ];
+        $_SESSION[$aicontextkey]['messages'][] = $prompt;
+    } else {
+//        print_r($docs);
         $context = [];
+        // Remember We've got a search_engine doc here!
         foreach ($docs as $doc) {
-            $context[] = $doc->content;
+            $context[] = $doc->get('content');
         }
         $prompt = (object)[
             "role" => "system",
             "content" => "Use the following context to answer following question:" . implode("\n",$context)
         ];
         $_SESSION[$aicontextkey]['messages'][] = $prompt;
-    } 
+    }
     $progress->update(2, $totalsteps,'Attaching user prompt');
-    // $_SESSION[$aicontextkey]['messages'][] 
+
     $prompt = (object)[
         "role" => "user",
         "content" => $data->userprompt
@@ -128,15 +142,21 @@ if ($data = $chatform->get_data()) {
     
     // Pass the whole context over the AI to summarise.    
     $progress->update(3, $totalsteps, 'Waiting for response');
+    $logger->info("Waiting for response from {providername}", ["providername" => $aiprovider->get('name')]);
     $airesults = $aiclient->chat($_SESSION[$aicontextkey]['messages']);
     $_SESSION[$aicontextkey]['messages'] = array_merge($_SESSION[$aicontextkey]['messages'],$airesults);
-    $progress->update(4, $totalsteps, 'Got Response');
+    //$progress->update(4, $totalsteps, 'Finished talking to AI');
+    $progress->update_full(100,'Finished talking to AI');
+    $logger->info("Finished talking to {providername}", ["providername" => $aiprovider->get('name')]);
+
+//    $logger->info("{response}", ['response' => print_r($airesults, 1)]);
 
     // We stash the data in the session temporarily (should go into an activity-user store in database) but this
     // is fast and dirty, and then we do a redirect so that we don't double up the request if the user hit's
     // refresh.
-    $next = new \moodle_url('/mod/xaichat/view.php', ['id' => $cm->id]);
-    redirect($next);
+//    $next = new \moodle_url('/mod/xaichat/view.php', ['id' => $cm->id]);
+
+    //redirect($next);
 } else if ($chatform->is_cancelled()) {
     $_SESSION[$aicontextkey] = [
         'messages'=>[]
@@ -177,7 +197,7 @@ $chatform->display();
 
 echo $OUTPUT->render_from_template("mod_xaichat/conversation", $tcontext);
 
-if (false) {
+if (true) {
     echo html_writer::tag("pre", print_r($_SESSION[$aicontextkey]['messages'],1));
 }
 

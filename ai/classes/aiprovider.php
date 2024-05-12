@@ -5,7 +5,8 @@ namespace core_ai;
 use core\persistent;
 use core_course_category;
 
-class AIProvider extends persistent {
+class AIProvider extends persistent implements LoggerAwareInterface  {
+    use LoggerAwareTrait;
 // Ultimately this would extend a persistent.
 
     const CONTEXT_ALL_MY_COURSES = -1;
@@ -38,6 +39,10 @@ class AIProvider extends persistent {
             'embeddingmodel' => [
                 'type' => PARAM_ALPHANUMEXT
             ],
+            'embeddingdimensions' => [
+                'type' => PARAM_INT,
+                'default' => 1536
+            ],
             'completionsurl' => [
                 'type' => PARAM_URL
             ],
@@ -57,7 +62,24 @@ class AIProvider extends persistent {
         ];
     }
 
+    /**
+     * @param string $prefix
+     * @return LoggerInterface
+     * @throws \coding_exception
+     */
+    public function get_logger(string $prefix = "") {
+        if (is_null($this->logger)) {
 
+            $id = $this->get('id');
+            $name = "aiprovider-{$id}";
+            if (!empty($prefix)) {
+                $name = $prefix . "-{$name}";
+            }
+            $name .= ".log";
+            $this->setLogger(new logger($name));
+        }
+        return $this->logger;
+    }
     /**
      * Work out the context path from the site to this AI Provider's context
      * @return void
@@ -74,17 +96,18 @@ class AIProvider extends persistent {
         return $this->get('allowquery');
     }
     public function get_usage($type) {
-        return "-";
+
         $key = [
             '$type',
             $this->get('id'),
             $this->get('apikey'),
         ];
+        $key = implode("_", $key);
         $current = get_config('ai', $key);
         return $current;
     }
     public function increment_prompt_usage($change) {
-        return;
+
         $key = [
             'prompttokens',
             $this->get('id'),
@@ -93,10 +116,12 @@ class AIProvider extends persistent {
         $key = implode("_", $key);
         $current = get_config('ai', $key);
         $new = $current + $change;
+        $this->logger->info("Incrementing prompt token usage from {$current} to {$new}");
         set_config($key, $new, 'ai');
+        return $new;
     }
     public function increment_completion_tokens($change) {
-        return;
+
         $key = [
             'completiontokens',
             $this->get('id'),
@@ -105,10 +130,12 @@ class AIProvider extends persistent {
         $key = implode("_", $key);
         $current = get_config('ai', $key);
         $new = $current + $change;
+        $this->logger->info("Incrementing completion token usage from {$current} to {$new}");
         set_config($key, $new, 'ai');
+        return $new;
     }
     public function increment_total_tokens($change) {
-        return;
+
         $key = [
             'totaltokens',
             $this->get('id'),
@@ -117,7 +144,9 @@ class AIProvider extends persistent {
         $key = implode("_", $key);
         $current = get_config('ai', $key);
         $new = $current + $change;
+        $this->logger->info("Incrementing total token usage from {$current} to {$new}");
         set_config($key, $new, 'ai');
+        return $new;
     }
 
     /**
@@ -191,39 +220,39 @@ class AIProvider extends persistent {
      */
     public static function get_records($filters = [], $sort = '', $order = 'ASC', $skip = 0, $limit = 0) {
         global $_ENV;
-//        $records = [];
-//        $fake = new static(0, (object) [
-//            'id' => 1,
-//            'name' => "Open AI Provider (hardcoded)",
-//            'enabled' => true,
-//            'allowembeddings' => true,
-//            'allowchat' => true,
-//            'baseurl' => 'https://api.openai.com/v1/',
-//            'embeddings' => 'embeddings',
-//            'embeddingmodel' => 'text-embedding-3-small',
-//            'completions' => 'chat/completions',
-//            'completionmodel' => 'gpt-4-turbo-preview',
-//            'apikey'=> $_ENV['OPENAIKEY'],
-//            'contextid' => \context_system::instance()->id,
-//            //null,  // Global AI Provider
-//            'onlyenrolledcourses' => true
-//        ]);
-//        array_push($records, $fake);
-//        $fake = new static(0, (object) [
-//            'id' => 2,
-//            'name' => "Ollama AI Provider (hard coded)",
-//            'enabled' => true,
-//            'allowembeddings' => true,
-//            'allowchat' => true,
-//            'baseurl' => 'http://127.0.0.1:11434/api/',
-//            'embeddings' => 'embeddings',
-//            'embeddingmodel' => '',
-//            'completions' => 'chat',
-//            'completionmodel' => 'llama2',
-//            'contextid' => null,  // Global AI Provider
-//            'onlyenrolledcourses' => true
-//        ]);
-//        array_push($records, $fake);
+/*        $records = [];
+        $fake = new static(0, (object) [
+            'id' => 1,
+            'name' => "Open AI Provider (hardcoded)",
+            'enabled' => true,
+            'allowembeddings' => true,
+            'allowchat' => true,
+            'baseurl' => 'https://api.openai.com/v1/',
+            'embeddings' => 'embeddings',
+            'embeddingmodel' => 'text-embedding-3-small',
+            'completions' => 'chat/completions',
+            'completionmodel' => 'gpt-4-turbo-preview',
+            'apikey'=> $_ENV['OPENAIKEY'],
+            'contextid' => \context_system::instance()->id,
+            //null,  // Global AI Provider
+            'onlyenrolledcourses' => true
+        ]);
+        array_push($records, $fake);
+        $fake = new static(0, (object) [
+            'id' => 2,
+            'name' => "Ollama AI Provider (hard coded)",
+            'enabled' => true,
+            'allowembeddings' => true,
+            'allowchat' => true,
+            'baseurl' => 'http://127.0.0.1:11434/api/',
+            'embeddings' => 'embeddings',
+            'embeddingmodel' => '',
+            'completions' => 'chat',
+            'completionmodel' => 'llama2',
+            'contextid' => null,  // Global AI Provider
+            'onlyenrolledcourses' => true
+        ]);
+        array_push($records, $fake);*/
 /*
         $fake = new static(0, (object) [
             'id' => 3,
@@ -258,25 +287,26 @@ class AIProvider extends persistent {
         $records = parent::get_records($filters, $sort, $order, $skip, $limit);
         $records = array_filter($records, function($record) use ($filters, $targetcontext) {
             $result = true;
+            $providercontextid = $record->get('contextid');
+            // System provider is already listed.
+            if ($providercontextid == 0) {
+                return false;
+            }
             foreach($filters as $key => $value) {
                 if ($key == "contextid") {
-                    $providercontextid = $record->get('contextid');
                     if ($providercontextid == self::CONTEXT_ALL_MY_COURSES) {
                         // More problematic.
                         $result = $result & true;
                     } else if ($providercontextid == 0) {
-                        // System provider so always matches.
-                        $result = $result & true;
+                        return false;
                     } else {
                         $providercontext = \context::instance_by_id(
                             $providercontextid
                         );
                         $ischild = $targetcontext->is_child_of($providercontext, true);
-//                        debugging("IS child ". (int)$ischild, DEBUG_DEVELOPER);
                         $result = $result & $ischild;
                     }
                 }else {
-//                    debugging('Filtering on '.$key. "' = {$value}", DEBUG_DEVELOPER);
                     if ($record->get($key) != $value) {
                         return false;
                     }

@@ -53,6 +53,21 @@ if ($ADMIN->fulltree) {
                 "",
                 $optproviders
             ));
+            $optextractors = [
+                "solrtika" => "Solr with internal Tika",
+                'tika' => "Standalone Tika"
+            ];
+            $settings->add(new admin_setting_configselect(
+                'search_solrrag/extractor',
+                'Choose File Content extractor',
+                'List of File Content Extractors',
+                "",
+                $optextractors
+            ));
+            $settings->add(new admin_setting_configtext('search_solrrag/extractorurl',
+                new lang_string('extractorpath', 'search_solrrag'),
+                new lang_string('extractorpath_desc', 'search_solrrag'), '', PARAM_RAW));
+
             $settings->add(new admin_setting_heading('search_solrrag_connection',
                 new lang_string('connectionsettings', 'search_solrrag'), ''));
             $settings->add(new admin_setting_configtext('search_solrrag/server_hostname', new lang_string('solrserverhostname', 'search_solrrag'), new lang_string('solrserverhostname_desc', 'search_solrrag'), '127.0.0.1', PARAM_HOST));

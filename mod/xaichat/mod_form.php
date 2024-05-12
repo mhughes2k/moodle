@@ -60,11 +60,9 @@ class mod_xaichat_mod_form extends moodleform_mod {
         $mform->addHelpButton('name', 'xaichatname', 'mod_xaichat');
 
         // Adding the standard "intro" and "introformat" fields.
-        if ($CFG->branch >= 29) {
-            $this->standard_intro_elements();
-        } else {
-            $this->add_intro_editor();
-        }
+
+        $this->standard_intro_elements();
+
 
         $this->standard_aiprovider_coursemodule_elements(true, true);
         // Add standard grading elements.

@@ -3,9 +3,12 @@ define('CLI_SCRIPT', true);
 
 require_once(__DIR__.'/../../config.php');
 require_once($CFG->libdir.'/clilib.php');
+// Load the "testable" version so we can get some of the internals back out.
+require_once($CFG->dirroot .'/search/tests/fixtures/testable_core_search.php');
 use core_ai\api;
 use core_ai\aiclient;
 use core_ai\aiprovider;
+
 [$options, $unrecognized] = cli_get_params(
     [
         'help' => false,
@@ -28,7 +31,9 @@ if ($unrecognized) {
     cli_error(get_string('cliunknowoption', 'admin', $unrecognized));
 }
 $help = <<<EOT
-Ad hoc cron tasks.
+This script will perform a RAG search using the given prompt and provider.
+
+It will output the contents of the documents identified as similar to the prompt.
 
 Options:
  -h, --help                Print out this help
@@ -73,19 +78,23 @@ function execute( $options) {
     $provider = api::get_provider($providerid);
     $client = new aiclient($provider);
 
-    $manager = \core_search\manager::instance();
+    $courseids = $options['courses'];
+    if (is_string($courseids)) {
+        $courseids = explode(",", $courseids);
+    }
+
+    $engine = \core_search\manager::search_engine_instance();
+    $manager = testable_core_search::instance($engine);
+        //\core_search\manager::instance();
     $formdata = new \stdClass();
     $formdata->userprompt = $options['prompt'];
     $formdata->contextids = [];
     $formdata->mycoursesonly = false;
-    $formdata->courseids = $options['courses'];
+    $formdata->courseids = $courseids;
 
     $settings = $provider->get_settings_for_user($user);
     $settings['userquery'] = $formdata->userprompt;
-    $settings['courseids'] = $options['courses'];
-    var_dump($settings);
-    $vector = $client->embed_query($formdata->userprompt);
-    $settings['vector'] = $vector;
+    $settings['courseids'] = $courseids;
 
     $limitcourseids = $manager->build_limitcourseids($formdata);
     $limitcontextids = $formdata->contextids;
