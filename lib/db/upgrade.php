@@ -1199,10 +1199,11 @@ function xmldb_main_upgrade($oldversion) {
             $dbman->create_table($table);
         }
 
-        // Main savepoint reached.
-//        upgrade_main_savepoint(true, 2024042200.01);
         // We're an unnamed version at this point.
 
     }
+
+    // Automatically generated Moodle v4.4.0 release upgrade line.
+    // Put any upgrade step following this.
     return true;
 }
