@@ -41,6 +41,7 @@ class helper_test extends \advanced_testcase {
      * This is executed before running any test in this file.
      */
     public function setUp(): void {
+        parent::setUp();
         $this->resetAfterTest();
 
         // Set this user as the admin.
@@ -54,7 +55,7 @@ class helper_test extends \advanced_testcase {
     /**
      * Test the update user profile image function.
      */
-    public function test_update_user_profile_image() {
+    public function test_update_user_profile_image(): void {
         global $DB, $CFG;
 
         // Set the profile image.
@@ -79,7 +80,7 @@ class helper_test extends \advanced_testcase {
     /**
      * Test that we can not enrol past the maximum number of users allowed.
      */
-    public function test_enrol_user_max_enrolled() {
+    public function test_enrol_user_max_enrolled(): void {
         global $DB;
 
         // Set up the LTI enrolment tool.
@@ -108,7 +109,7 @@ class helper_test extends \advanced_testcase {
     /**
      * Test that we can not enrol when the enrolment has not started.
      */
-    public function test_enrol_user_enrolment_not_started() {
+    public function test_enrol_user_enrolment_not_started(): void {
         global $DB;
 
         // Set up the LTI enrolment tool.
@@ -130,7 +131,7 @@ class helper_test extends \advanced_testcase {
     /**
      * Test that we can not enrol when the enrolment has finished.
      */
-    public function test_enrol_user_enrolment_finished() {
+    public function test_enrol_user_enrolment_finished(): void {
         global $DB;
 
         // Set up the LTI enrolment tool.
@@ -152,7 +153,7 @@ class helper_test extends \advanced_testcase {
     /**
      * Test returning the number of available tools.
      */
-    public function test_count_lti_tools() {
+    public function test_count_lti_tools(): void {
         $generator = $this->getDataGenerator();
         // Create two tools belonging to the same course.
         $course1 = $generator->create_course();
@@ -191,7 +192,7 @@ class helper_test extends \advanced_testcase {
     /**
      * Test returning the list of available tools.
      */
-    public function test_get_lti_tools() {
+    public function test_get_lti_tools(): void {
         $generator = $this->getDataGenerator();
         // Create two tools belonging to the same course.
         $course1 = $generator->create_course();
@@ -244,7 +245,7 @@ class helper_test extends \advanced_testcase {
     /**
      * Test getting the launch url of a tool.
      */
-    public function test_get_launch_url() {
+    public function test_get_launch_url(): void {
         $course1 = $this->getDataGenerator()->create_course();
         $data = new \stdClass();
         $data->courseid = $course1->id;
@@ -258,7 +259,7 @@ class helper_test extends \advanced_testcase {
     /**
      * Test getting the cartridge url of a tool.
      */
-    public function test_get_cartridge_url() {
+    public function test_get_cartridge_url(): void {
         global $CFG;
 
         $slasharguments = $CFG->slasharguments;
@@ -288,7 +289,7 @@ class helper_test extends \advanced_testcase {
     /**
      * Test getting the cartridge url of a tool.
      */
-    public function test_get_proxy_url() {
+    public function test_get_proxy_url(): void {
         global $CFG;
 
         $slasharguments = $CFG->slasharguments;
@@ -318,7 +319,7 @@ class helper_test extends \advanced_testcase {
     /**
      * Test getting the name of a tool.
      */
-    public function test_get_name() {
+    public function test_get_name(): void {
         $course1 = $this->getDataGenerator()->create_course();
         $data = new \stdClass();
         $data->courseid = $course1->id;
@@ -335,7 +336,7 @@ class helper_test extends \advanced_testcase {
     /**
      * Test getting the description of a tool.
      */
-    public function test_get_description() {
+    public function test_get_description(): void {
         $generator = $this->getDataGenerator();
         $course1 = $generator->create_course();
         $data = new \stdClass();
@@ -358,7 +359,7 @@ class helper_test extends \advanced_testcase {
     /**
      * Test getting the icon of a tool.
      */
-    public function test_get_icon() {
+    public function test_get_icon(): void {
         global $CFG;
 
         $course1 = $this->getDataGenerator()->create_course();
@@ -376,7 +377,7 @@ class helper_test extends \advanced_testcase {
     /**
      * Test verifying a cartridge token.
      */
-    public function test_verify_cartridge_token() {
+    public function test_verify_cartridge_token(): void {
         $course1 = $this->getDataGenerator()->create_course();
         $data = new \stdClass();
         $data->courseid = $course1->id;
@@ -390,7 +391,7 @@ class helper_test extends \advanced_testcase {
     /**
      * Test verifying a proxy token.
      */
-    public function test_verify_proxy_token() {
+    public function test_verify_proxy_token(): void {
         $course1 = $this->getDataGenerator()->create_course();
         $data = new \stdClass();
         $data->courseid = $course1->id;
@@ -474,7 +475,7 @@ class helper_test extends \advanced_testcase {
      * @param array $parameters A hash of parameters represented by a heirarchy of xpath expressions
      * @param string $expected The name of the fixture file containing the expected result.
      */
-    public function test_set_xpath($parameters, $expected) {
+    public function test_set_xpath($parameters, $expected): void {
         $helper = new \ReflectionClass('enrol_lti\\helper');
         $function = $helper->getMethod('set_xpath');
 
@@ -490,7 +491,7 @@ class helper_test extends \advanced_testcase {
     /**
      * Test set_xpath when an incorrect xpath expression is given.
      */
-    public function test_set_xpath_incorrect_xpath() {
+    public function test_set_xpath_incorrect_xpath(): void {
         $parameters = [
             "/root" => [
                 "/firstnode" => null,
@@ -513,7 +514,7 @@ class helper_test extends \advanced_testcase {
     /**
      * Test create cartridge.
      */
-    public function test_create_cartridge() {
+    public function test_create_cartridge(): void {
         global $CFG;
 
         $course1 = $this->getDataGenerator()->create_course();

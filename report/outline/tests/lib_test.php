@@ -62,6 +62,7 @@ class lib_test extends \advanced_testcase {
     private $roleid;
 
     public function setUp(): void {
+        parent::setUp();
         $this->user = $this->getDataGenerator()->create_user();
         $this->course = $this->getDataGenerator()->create_course();
         $this->tree = new \core_user\output\myprofile\tree();
@@ -73,7 +74,7 @@ class lib_test extends \advanced_testcase {
     /**
      * Test report_log_supports_logstore.
      */
-    public function test_report_participation_supports_logstore() {
+    public function test_report_participation_supports_logstore(): void {
         $logmanager = get_log_manager();
         $allstores = \core_component::get_plugin_list_with_class('logstore', 'log\store');
 
@@ -93,7 +94,7 @@ class lib_test extends \advanced_testcase {
     /**
      * Tests the report_outline_myprofile_navigation() function as an admin user.
      */
-    public function test_report_outline_myprofile_navigation() {
+    public function test_report_outline_myprofile_navigation(): void {
         $this->setAdminUser();
         $iscurrentuser = false;
 
@@ -107,7 +108,7 @@ class lib_test extends \advanced_testcase {
     /**
      * Tests the report_outline_myprofile_navigation() function as a user without permission.
      */
-    public function test_report_outline_myprofile_navigation_without_permission() {
+    public function test_report_outline_myprofile_navigation_without_permission(): void {
         $this->setUser($this->user);
         $iscurrentuser = true;
 
@@ -121,7 +122,7 @@ class lib_test extends \advanced_testcase {
     /**
      * Test that the current user can not access user report without report/outline:viewuserreport permission.
      */
-    public function test_report_outline_can_not_access_user_report_without_viewuserreport_permission() {
+    public function test_report_outline_can_not_access_user_report_without_viewuserreport_permission(): void {
         $this->getDataGenerator()->role_assign($this->roleid, $this->user->id, $this->coursecontext->id);
         $this->setUser($this->user);
 
@@ -131,7 +132,7 @@ class lib_test extends \advanced_testcase {
     /**
      * Test that the current user can access user report with report/outline:viewuserreport permission.
      */
-    public function test_report_outline_can_access_user_report_with_viewuserreport_permission() {
+    public function test_report_outline_can_access_user_report_with_viewuserreport_permission(): void {
         assign_capability('report/outline:viewuserreport', CAP_ALLOW, $this->roleid, $this->coursecontext->id, true);
         $this->getDataGenerator()->role_assign($this->roleid, $this->user->id, $this->coursecontext->id);
         $this->setUser($this->user);

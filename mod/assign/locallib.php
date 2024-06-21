@@ -45,8 +45,15 @@ define('ASSIGN_FILTER_DRAFT', 'draft');
 define('ASSIGN_MARKER_FILTER_NO_MARKER', -1);
 
 // Reopen attempt methods.
+/**
+ * ASSIGN_ATTEMPT_REOPEN_METHOD_NONE - Reopening attempts is not allowed.
+ *
+ * @deprecated since Moodle 4.4
+ * @todo MDL-81977 This will be deleted in Moodle 4.8.
+ */
 define('ASSIGN_ATTEMPT_REOPEN_METHOD_NONE', 'none');
 define('ASSIGN_ATTEMPT_REOPEN_METHOD_MANUAL', 'manual');
+define('ASSIGN_ATTEMPT_REOPEN_METHOD_AUTOMATIC', 'automatic');
 define('ASSIGN_ATTEMPT_REOPEN_METHOD_UNTILPASS', 'untilpass');
 
 // Special value means allow unlimited attempts.
@@ -164,6 +171,9 @@ class assign {
 
     /** @var array of marking workflow states for the current user */
     private $markingworkflowstates = null;
+
+    /** @var array of all marking workflow states */
+    private $allmarkingworkflowstates = null;
 
     /** @var bool whether to exclude users with inactive enrolment */
     private $showonlyactiveenrol = null;
@@ -753,13 +763,8 @@ class assign {
         if (isset($formdata->hidegrader)) {
             $update->hidegrader = $formdata->hidegrader;
         }
-        $update->attemptreopenmethod = ASSIGN_ATTEMPT_REOPEN_METHOD_NONE;
-        if (!empty($formdata->attemptreopenmethod)) {
-            $update->attemptreopenmethod = $formdata->attemptreopenmethod;
-        }
-        if (!empty($formdata->maxattempts)) {
-            $update->maxattempts = $formdata->maxattempts;
-        }
+        $update->maxattempts = $formdata->maxattempts ?? 1;
+        $update->attemptreopenmethod = $formdata->attemptreopenmethod ?? ASSIGN_ATTEMPT_REOPEN_METHOD_UNTILPASS;
         if (isset($formdata->preventsubmissionnotingroup)) {
             $update->preventsubmissionnotingroup = $formdata->preventsubmissionnotingroup;
         }
@@ -1183,13 +1188,13 @@ class assign {
         global $CFG, $DB;
 
         $componentstr = get_string('modulenameplural', 'assign');
-        $status = array();
+        $status = [];
 
         $fs = get_file_storage();
         if (!empty($data->reset_assign_submissions)) {
             // Delete files associated with this assignment.
             foreach ($this->submissionplugins as $plugin) {
-                $fileareas = array();
+                $fileareas = [];
                 $plugincomponent = $plugin->get_subtype() . '_' . $plugin->get_type();
                 $fileareas = $plugin->get_file_areas();
                 foreach ($fileareas as $filearea => $notused) {
@@ -1197,9 +1202,11 @@ class assign {
                 }
 
                 if (!$plugin->delete_instance()) {
-                    $status[] = array('component'=>$componentstr,
-                                      'item'=>get_string('deleteallsubmissions', 'assign'),
-                                      'error'=>$plugin->get_error());
+                    $status[] = [
+                        'component' => $componentstr,
+                        'item' => get_string('deleteallsubmissions', 'assign'),
+                        'error' => $plugin->get_error(),
+                    ];
                 }
             }
 
@@ -1212,32 +1219,36 @@ class assign {
                 }
 
                 if (!$plugin->delete_instance()) {
-                    $status[] = array('component'=>$componentstr,
-                                      'item'=>get_string('deleteallsubmissions', 'assign'),
-                                      'error'=>$plugin->get_error());
+                    $status[] = [
+                        'component' => $componentstr,
+                        'item ' => get_string('deleteallsubmissions', 'assign'),
+                        'error' => $plugin->get_error(),
+                    ];
                 }
             }
 
-            $assignids = $DB->get_records('assign', array('course' => $data->courseid), '', 'id');
+            $assignids = $DB->get_records('assign', ['course' => $data->courseid], '', 'id');
             list($sql, $params) = $DB->get_in_or_equal(array_keys($assignids));
 
             $DB->delete_records_select('assign_submission', "assignment $sql", $params);
             $DB->delete_records_select('assign_user_flags', "assignment $sql", $params);
 
-            $status[] = array('component'=>$componentstr,
-                              'item'=>get_string('deleteallsubmissions', 'assign'),
-                              'error'=>false);
+            $status[] = [
+                'component' => $componentstr,
+                'item' => get_string('deleteallsubmissions', 'assign'),
+                'error' => false,
+            ];
 
             if (!empty($data->reset_gradebook_grades)) {
                 $DB->delete_records_select('assign_grades', "assignment $sql", $params);
                 // Remove all grades from gradebook.
-                require_once($CFG->dirroot.'/mod/assign/lib.php');
+                require_once($CFG->dirroot . '/mod/assign/lib.php');
                 assign_reset_gradebook($data->courseid);
             }
 
             // Reset revealidentities for assign if blindmarking is enabled.
             if ($this->get_instance()->blindmarking) {
-                $DB->set_field('assign', 'revealidentities', 0, array('id' => $this->get_instance()->id));
+                $DB->set_field('assign', 'revealidentities', 0, ['id' => $this->get_instance()->id]);
             }
         }
 
@@ -1246,50 +1257,65 @@ class assign {
         // Remove user overrides.
         if (!empty($data->reset_assign_user_overrides)) {
             $DB->delete_records_select('assign_overrides',
-                'assignid IN (SELECT id FROM {assign} WHERE course = ?) AND userid IS NOT NULL', array($data->courseid));
-            $status[] = array(
+                'assignid IN (SELECT id FROM {assign} WHERE course = ?) AND userid IS NOT NULL', [$data->courseid]);
+            $status[] = [
                 'component' => $componentstr,
-                'item' => get_string('useroverridesdeleted', 'assign'),
-                'error' => false);
+                'item' => get_string('useroverrides', 'assign'),
+                'error' => false,
+            ];
             $purgeoverrides = true;
         }
         // Remove group overrides.
         if (!empty($data->reset_assign_group_overrides)) {
             $DB->delete_records_select('assign_overrides',
-                'assignid IN (SELECT id FROM {assign} WHERE course = ?) AND groupid IS NOT NULL', array($data->courseid));
-            $status[] = array(
+                'assignid IN (SELECT id FROM {assign} WHERE course = ?) AND groupid IS NOT NULL', [$data->courseid]);
+            $status[] = [
                 'component' => $componentstr,
-                'item' => get_string('groupoverridesdeleted', 'assign'),
-                'error' => false);
+                'item' => get_string('groupoverrides', 'assign'),
+                'error' => false,
+            ];
             $purgeoverrides = true;
         }
 
         // Updating dates - shift may be negative too.
         if ($data->timeshift) {
-            $DB->execute("UPDATE {assign_overrides}
-                         SET allowsubmissionsfromdate = allowsubmissionsfromdate + ?
-                       WHERE assignid = ? AND allowsubmissionsfromdate <> 0",
-                array($data->timeshift, $this->get_instance()->id));
-            $DB->execute("UPDATE {assign_overrides}
-                         SET duedate = duedate + ?
-                       WHERE assignid = ? AND duedate <> 0",
-                array($data->timeshift, $this->get_instance()->id));
-            $DB->execute("UPDATE {assign_overrides}
-                         SET cutoffdate = cutoffdate + ?
-                       WHERE assignid =? AND cutoffdate <> 0",
-                array($data->timeshift, $this->get_instance()->id));
+            $sql = "UPDATE {assign_overrides}
+                       SET allowsubmissionsfromdate = allowsubmissionsfromdate + ?
+                     WHERE assignid = ? AND allowsubmissionsfromdate <> 0";
+            $DB->execute(
+                $sql,
+                [$data->timeshift, $this->get_instance()->id],
+            );
+            $sql = "UPDATE {assign_overrides}
+                       SET duedate = duedate + ?
+                     WHERE assignid = ? AND duedate <> 0";
+            $DB->execute(
+                $sql,
+                [$data->timeshift, $this->get_instance()->id],
+            );
+            $sql = "UPDATE {assign_overrides}
+                       SET cutoffdate = cutoffdate + ?
+                     WHERE assignid =? AND cutoffdate <> 0";
+            $DB->execute(
+                $sql,
+                [$data->timeshift, $this->get_instance()->id],
+            );
 
             $purgeoverrides = true;
 
             // Any changes to the list of dates that needs to be rolled should be same during course restore and course reset.
             // See MDL-9367.
-            shift_course_mod_dates('assign',
-                                    array('duedate', 'allowsubmissionsfromdate', 'cutoffdate'),
-                                    $data->timeshift,
-                                    $data->courseid, $this->get_instance()->id);
-            $status[] = array('component'=>$componentstr,
-                              'item'=>get_string('datechanged'),
-                              'error'=>false);
+            shift_course_mod_dates(
+                'assign',
+                ['duedate', 'allowsubmissionsfromdate', 'cutoffdate'],
+                $data->timeshift,
+                $data->courseid, $this->get_instance()->id,
+            );
+            $status[] = [
+                'component' => $componentstr,
+                'item' => get_string('date'),
+                'error' => false,
+            ];
         }
 
         if ($purgeoverrides) {
@@ -1528,13 +1554,8 @@ class assign {
             $update->hidegrader = $formdata->hidegrader;
         }
         $update->blindmarking = $formdata->blindmarking;
-        $update->attemptreopenmethod = ASSIGN_ATTEMPT_REOPEN_METHOD_NONE;
-        if (!empty($formdata->attemptreopenmethod)) {
-            $update->attemptreopenmethod = $formdata->attemptreopenmethod;
-        }
-        if (!empty($formdata->maxattempts)) {
-            $update->maxattempts = $formdata->maxattempts;
-        }
+        $update->maxattempts = $formdata->maxattempts ?? 1;
+        $update->attemptreopenmethod = $formdata->attemptreopenmethod ?? ASSIGN_ATTEMPT_REOPEN_METHOD_UNTILPASS;
         if (isset($formdata->preventsubmissionnotingroup)) {
             $update->preventsubmissionnotingroup = $formdata->preventsubmissionnotingroup;
         }
@@ -4519,6 +4540,7 @@ class assign {
         $batchformparams = array('cm'=>$cmid,
                                  'submissiondrafts'=>$this->get_instance()->submissiondrafts,
                                  'duedate'=>$this->get_instance()->duedate,
+                                 'maxattempts' => $this->get_instance()->maxattempts,
                                  'attemptreopenmethod'=>$this->get_instance()->attemptreopenmethod,
                                  'feedbackplugins'=>$this->get_feedback_plugins(),
                                  'context'=>$this->get_context(),
@@ -4545,9 +4567,13 @@ class assign {
         $buttons = new \mod_assign\output\grading_actionmenu($this->get_course_module()->id,
              $this->is_any_submission_plugin_enabled(), $this->count_submissions());
         $actionformtext = $this->get_renderer()->render($buttons);
+        $currenturl = new moodle_url('/mod/assign/view.php', ['id' => $this->get_course_module()->id, 'action' => 'grading']);
         $PAGE->activityheader->set_attrs(['hidecompletion' => true]);
 
-        $currenturl = new moodle_url('/mod/assign/view.php', ['id' => $this->get_course_module()->id, 'action' => 'grading']);
+        // Conditionally add the group JS if we have groups enabled.
+        if ($this->get_course()->groupmode) {
+            $PAGE->requires->js_call_amd('core_course/actionbar/group', 'init', [$currenturl->out(false)]);
+        }
 
         $header = new assign_header($this->get_instance(),
                                     $this->get_context(),
@@ -4561,10 +4587,7 @@ class assign {
 
         $o .= $actionformtext;
 
-        $o .= $this->get_renderer()->heading(get_string('gradeitem:submissions', 'mod_assign'), 2);
         $o .= $this->get_renderer()->render($gradingactions);
-
-        $o .= groups_print_activity_menu($this->get_course_module(), $currenturl, true);
 
         // Plagiarism update status apearring in the grading book.
         if (!empty($CFG->enableplagiarism)) {
@@ -5000,6 +5023,7 @@ class assign {
         $batchformparams = array('cm'=>$this->get_course_module()->id,
                                  'submissiondrafts'=>$this->get_instance()->submissiondrafts,
                                  'duedate'=>$this->get_instance()->duedate,
+                                 'maxattempts' => $this->get_instance()->maxattempts,
                                  'attemptreopenmethod'=>$this->get_instance()->attemptreopenmethod,
                                  'feedbackplugins'=>$this->get_feedback_plugins(),
                                  'context'=>$this->get_context(),
@@ -7891,8 +7915,15 @@ class assign {
         if ($this->get_instance()->markingworkflow) {
             $states = $this->get_marking_workflow_states_for_current_user();
             $options = array('' => get_string('markingworkflowstatenotmarked', 'assign')) + $states;
-            $mform->addElement('select', 'workflowstate', get_string('markingworkflowstate', 'assign'), $options);
+            $select = $mform->addElement('select', 'workflowstate', get_string('markingworkflowstate', 'assign'), $options);
             $mform->addHelpButton('workflowstate', 'markingworkflowstate', 'assign');
+            if (!empty($data->workflowstate) && !array_key_exists($data->workflowstate, $states)) {
+                // In a workflow state that user should not be able to change, so freeze workflow selector.
+                // Have to add the state so it shows in the frozen selector.
+                $allworkflowstates = $this->get_all_marking_workflow_states();
+                $select->addOption($allworkflowstates[$data->workflowstate], $data->workflowstate);
+                $mform->freeze('workflowstate');
+            }
             $gradingstatus = $this->get_grading_status($userid);
             if ($gradingstatus != ASSIGN_MARKING_WORKFLOW_STATE_RELEASED) {
                 if ($grade->grade && $grade->grade != -1) {
@@ -7962,9 +7993,8 @@ class assign {
         }
 
         // Do not show if we are editing a previous attempt.
-        if (($attemptnumber == -1 ||
-            ($attemptnumber + 1) == count($this->get_all_submissions($userid))) &&
-            $this->get_instance()->attemptreopenmethod != ASSIGN_ATTEMPT_REOPEN_METHOD_NONE) {
+        if (($attemptnumber == -1 || ($attemptnumber + 1) == count($this->get_all_submissions($userid))) &&
+                ($this->get_instance()->maxattempts > 1 || $this->get_instance()->maxattempts == ASSIGN_UNLIMITED_ATTEMPTS)) {
             $mform->addElement('header', 'attemptsettings', get_string('attemptsettings', 'assign'));
             $attemptreopenmethod = get_string('attemptreopenmethod_' . $this->get_instance()->attemptreopenmethod, 'assign');
             $mform->addElement('static', 'attemptreopenmethod', get_string('attemptreopenmethod', 'assign'), $attemptreopenmethod);
@@ -8147,7 +8177,8 @@ class assign {
         // Only show submission statement if we are editing our own submission.
         if ($requiresubmissionstatement && !$draftsenabled && $userid == $USER->id) {
             $mform->addElement('checkbox', 'submissionstatement', '', $submissionstatement);
-            $mform->addRule('submissionstatement', get_string('required'), 'required', null, 'client');
+            $mform->addRule('submissionstatement', get_string('submissionstatementrequired', 'mod_assign'),
+                'required', null, 'client');
         }
 
         $this->add_plugin_submission_elements($submission, $mform, $data, $userid);
@@ -8670,21 +8701,27 @@ class assign {
                               $submission->attemptnumber >= ($instance->maxattempts - 1) &&
                               $instance->maxattempts != ASSIGN_UNLIMITED_ATTEMPTS;
         $shouldreopen = false;
-        if ($instance->attemptreopenmethod == ASSIGN_ATTEMPT_REOPEN_METHOD_UNTILPASS) {
-            // Check the gradetopass from the gradebook.
-            $gradeitem = $this->get_grade_item();
-            if ($gradeitem) {
-                $gradegrade = grade_grade::fetch(array('userid' => $userid, 'itemid' => $gradeitem->id));
+        switch ($instance->attemptreopenmethod) {
+            case ASSIGN_ATTEMPT_REOPEN_METHOD_AUTOMATIC:
+                $shouldreopen = true;
+                break;
+            case ASSIGN_ATTEMPT_REOPEN_METHOD_UNTILPASS:
+                // Check the gradetopass from the gradebook.
+                $gradeitem = $this->get_grade_item();
+                if ($gradeitem) {
+                    $gradegrade = grade_grade::fetch(['userid' => $userid, 'itemid' => $gradeitem->id]);
 
-                // Do not reopen if is_passed returns null, e.g. if there is no pass criterion set.
-                if ($gradegrade && ($gradegrade->is_passed() === false)) {
+                    // Do not reopen if is_passed returns null, e.g. if there is no pass criterion set.
+                    if ($gradegrade && ($gradegrade->is_passed() === false)) {
+                        $shouldreopen = true;
+                    }
+                }
+                break;
+            case ASSIGN_ATTEMPT_REOPEN_METHOD_MANUAL:
+                if (!empty($addattempt)) {
                     $shouldreopen = true;
                 }
-            }
-        }
-        if ($instance->attemptreopenmethod == ASSIGN_ATTEMPT_REOPEN_METHOD_MANUAL &&
-                !empty($addattempt)) {
-            $shouldreopen = true;
+                break;
         }
         if ($shouldreopen && !$maxattemptsreached) {
             $this->add_attempt($userid);
@@ -8935,7 +8972,8 @@ class assign {
     protected function add_attempt($userid) {
         require_capability('mod/assign:grade', $this->context);
 
-        if ($this->get_instance()->attemptreopenmethod == ASSIGN_ATTEMPT_REOPEN_METHOD_NONE) {
+        // If additional attempts are disallowed.
+        if ($this->get_instance()->maxattempts == 1) {
             return false;
         }
 
@@ -9204,6 +9242,28 @@ class assign {
     }
 
     /**
+     * Get the list of marking_workflow states.
+     *
+     * @return array Array of multiple state => description.
+     */
+    public function get_all_marking_workflow_states(): array {
+        if (!empty($this->allmarkingworkflowstates)) {
+            return $this->allmarkingworkflowstates;
+        }
+
+        $this->allmarkingworkflowstates = [
+            ASSIGN_MARKING_WORKFLOW_STATE_NOTMARKED => get_string('markingworkflowstatenotmarked', 'assign'),
+            ASSIGN_MARKING_WORKFLOW_STATE_INMARKING => get_string('markingworkflowstateinmarking', 'assign'),
+            ASSIGN_MARKING_WORKFLOW_STATE_READYFORREVIEW => get_string('markingworkflowstatereadyforreview', 'assign'),
+            ASSIGN_MARKING_WORKFLOW_STATE_INREVIEW => get_string('markingworkflowstateinreview', 'assign'),
+            ASSIGN_MARKING_WORKFLOW_STATE_READYFORRELEASE => get_string('markingworkflowstatereadyforrelease', 'assign'),
+            ASSIGN_MARKING_WORKFLOW_STATE_RELEASED => get_string('markingworkflowstatereleased', 'assign'),
+        ];
+
+        return $this->allmarkingworkflowstates;
+    }
+
+    /**
      * Check is only active users in course should be shown.
      *
      * @return bool true if only active users should be shown.
@@ -9431,20 +9491,22 @@ class assign {
         $confirm = optional_param('confirm', 0, PARAM_BOOL);
 
         if ($confirm) {
-            confirm_sesskey();
-
-            // Fix the grades.
-            $this->fix_null_grades();
-            unset_config('has_rescaled_null_grades_' . $instance->id, 'assign');
-
-            // Display the notice.
-            $o .= $this->get_renderer()->notification(get_string('fixrescalednullgradesdone', 'assign'), 'notifysuccess');
+            if (confirm_sesskey()) {
+                // Fix the grades.
+                $this->fix_null_grades();
+                unset_config('has_rescaled_null_grades_' . $instance->id, 'assign');
+                // Display the success notice.
+                $o .= $this->get_renderer()->notification(get_string('fixrescalednullgradesdone', 'assign'), 'notifysuccess');
+            } else {
+                // If the sesskey is not valid, then display the error notice.
+                $o .= $this->get_renderer()->notification(get_string('invalidsesskey', 'error'), 'notifyerror');
+            }
             $url = new moodle_url(
-                '/mod/assign/view.php',
-                array(
+                url: '/mod/assign/view.php',
+                params: [
                     'id' => $this->get_course_module()->id,
-                    'action' => 'grading'
-                )
+                    'action' => 'grading',
+                ],
             );
             $o .= $this->get_renderer()->continue_button($url);
         } else {

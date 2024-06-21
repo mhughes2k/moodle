@@ -66,10 +66,10 @@ $CFG->dboptions = array(
     'dbcollation' => 'utf8mb4_unicode_ci', // MySQL has partial and full UTF-8
                                 // support. If you wish to use partial UTF-8
                                 // (three bytes) then set this option to
-                                // 'utf8_unicode_ci', otherwise this option
-                                // can be removed for MySQL (by default it will
-                                // use 'utf8mb4_unicode_ci'. This option should
-                                // be removed for all other databases.
+                                // 'utf8_unicode_ci'. If using the recommended
+                                // settings with full UTF-8 support this should
+                                // be set to 'utf8mb4_unicode_ci'. This option
+                                // should be removed for all other databases.
     // 'versionfromdb' => false,   // On MySQL and MariaDB, this can force
                                 // the DB version to be evaluated using
                                 // the VERSION function instead of the version
@@ -721,7 +721,7 @@ $CFG->admin = 'admin';
 //
 // Uninstall plugins from CLI only. This stops admins from uninstalling plugins from the graphical admin
 // user interface, and forces plugins to be uninstalled from the Command Line tool only, found at
-// admin/cli/plugin_uninstall.php.
+// admin/cli/uninstall_plugins.php.
 //
 //      $CFG->uninstallclionly = true;
 //

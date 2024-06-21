@@ -41,13 +41,14 @@ class provider_test extends provider_testcase {
      * Overriding setUp() function to always reset after tests.
      */
     public function setUp(): void {
+        parent::setUp();
         $this->resetAfterTest(true);
     }
 
     /**
      * Test for provider::export_user_preferences().
      */
-    public function test_export_user_preferences() {
+    public function test_export_user_preferences(): void {
         global $DB;
 
         // Test setup.

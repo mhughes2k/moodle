@@ -57,6 +57,7 @@ class externallib_test extends externallib_advanced_testcase {
      * Setup function- we will create some policy docs.
      */
     public function setUp(): void {
+        parent::setUp();
         $this->resetAfterTest(true);
         $this->setAdminUser();
 
@@ -99,7 +100,7 @@ class externallib_test extends externallib_advanced_testcase {
     /**
      * Test for the get_policy_version() function.
      */
-    public function test_get_policy_version() {
+    public function test_get_policy_version(): void {
         $this->setUser($this->adult);
 
         // View current policy version.
@@ -151,7 +152,7 @@ class externallib_test extends externallib_advanced_testcase {
     /**
      * Test tool_mobile\external callback to site_policy_handler.
      */
-    public function test_get_config_with_site_policy_handler() {
+    public function test_get_config_with_site_policy_handler(): void {
         global $CFG;
 
         $this->resetAfterTest(true);
@@ -173,7 +174,7 @@ class externallib_test extends externallib_advanced_testcase {
     /**
      * Test for core_privacy\sitepolicy\manager::accept() when site policy handler is set.
      */
-    public function test_agree_site_policy_with_handler() {
+    public function test_agree_site_policy_with_handler(): void {
         global $CFG, $DB, $USER;
 
         $this->resetAfterTest(true);
@@ -210,7 +211,7 @@ class externallib_test extends externallib_advanced_testcase {
     /**
      * Test for core_privacy\sitepolicy\manager::accept() when site policy handler is set.
      */
-    public function test_checkcanaccept_with_handler() {
+    public function test_checkcanaccept_with_handler(): void {
         global $CFG;
 
         $this->resetAfterTest(true);
@@ -243,7 +244,7 @@ class externallib_test extends externallib_advanced_testcase {
     /**
      * Test for external function get_user_acceptances().
      */
-    public function test_external_get_user_acceptances() {
+    public function test_external_get_user_acceptances(): void {
         global $CFG;
 
         $this->resetAfterTest(true);
@@ -320,7 +321,7 @@ class externallib_test extends externallib_advanced_testcase {
     /**
      * Test for external function set_acceptances_status().
      */
-    public function test_external_set_acceptances_status() {
+    public function test_external_set_acceptances_status(): void {
         global $CFG;
 
         $this->resetAfterTest(true);
@@ -431,7 +432,7 @@ class externallib_test extends externallib_advanced_testcase {
     /**
      * Test for external function set_acceptances_status decline mandatory.
      */
-    public function test_external_set_acceptances_status_decline_mandatory() {
+    public function test_external_set_acceptances_status_decline_mandatory(): void {
         global $CFG;
 
         $this->resetAfterTest(true);

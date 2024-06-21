@@ -314,12 +314,8 @@ a.autolink {
     display: none;
 }
 
-.visibleifjs {
+body:not(.jsenabled) .visibleifjs {
     display: none;
-}
-
-.jsenabled .visibleifjs {
-    display: inline;
 }
 
 .jsenabled .collapsibleregion {
@@ -1521,8 +1517,8 @@ audio.mediaplugin_html5audio {
         .icon {
             display: block;
             font-size: 3em;
-            height: 1em;
-            width: 1em;
+            max-height: 3em;
+            max-width: 3em;
         }
     }
     .carousel-item .loading-icon .icon {
@@ -1955,24 +1951,14 @@ nav.navbar .logo img {
     overflow: hidden;
     padding: 0.25rem 0;
 
-    display: flex;
-
     .page-header-image {
         & > a {
             display: inline-block;
         }
-    }
-
-    .page-header-headings,
-    .header-button-group {
-        position: relative;
-        line-height: 24px;
-        vertical-align: middle;
-    }
-
-    .header-button-group {
-        display: block;
-        float: left;
+        .userinitials,
+        .userpicture {
+            margin-right: map-get($spacers, 3);
+        }
     }
 }
 
@@ -1986,6 +1972,10 @@ a.disabled {
     cursor: default;
     font-style: italic;
     color: $text-muted;
+}
+
+a.btn.disabled {
+    opacity: 1;
 }
 
 body.lockscroll {
@@ -2214,6 +2204,8 @@ $footer-link-color: $bg-inverse-link-color !default;
     a {
         color: $footer-link-color;
         text-decoration: underline;
+        padding-top: map-get($spacers, 1);
+        padding-bottom: map-get($spacers, 1);
 
         .icon {
             color: $footer-link-color;
@@ -2338,9 +2330,9 @@ $footer-link-color: $bg-inverse-link-color !default;
         transform: translate(-50%, -50%);
 
         .icon {
-            height: 30px;
-            width: 30px;
-            font-size: 30px;
+            max-height: 2em;
+            max-width: 2em;
+            font-size: 2em;
         }
     }
 }
@@ -3090,9 +3082,6 @@ blockquote {
 /* Showmore component */
 .showmore-container {
     &.collapsed {
-        .collapsed-content {
-            display: block;
-        }
         .expanded-content {
             display: none;
         }
@@ -3100,9 +3089,6 @@ blockquote {
     &:not(.collapsed) {
         .collapsed-content {
             display: none;
-        }
-        .expanded-content {
-            display: block;
         }
     }
     button {

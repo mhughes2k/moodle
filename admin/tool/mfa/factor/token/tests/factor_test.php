@@ -35,6 +35,7 @@ class factor_test extends \advanced_testcase {
     public \factor_token\factor $factor;
 
     public function setUp(): void {
+        parent::setUp();
         $this->resetAfterTest();
         $this->factor = new \factor_token\factor('token');
     }
@@ -45,7 +46,7 @@ class factor_test extends \advanced_testcase {
      * @covers ::calculate_expiry_time
      * @return void
      */
-    public function test_calculate_expiry_time_in_general() {
+    public function test_calculate_expiry_time_in_general(): void {
         $timestamp = 1642213800; // 1230 UTC.
 
         set_config('expireovernight', 0, 'factor_token');
@@ -91,7 +92,7 @@ class factor_test extends \advanced_testcase {
      * @param int $timestamp
      * @dataProvider timestamp_provider
      */
-    public function test_calculate_expiry_time_for_overnight_expiry_with_one_day_expiry($timestamp) {
+    public function test_calculate_expiry_time_for_overnight_expiry_with_one_day_expiry($timestamp): void {
         // Setup configuration.
         $method = new \ReflectionMethod($this->factor, 'calculate_expiry_time');
         set_config('expireovernight', 1, 'factor_token');
@@ -139,7 +140,7 @@ class factor_test extends \advanced_testcase {
      * @param int $timestamp
      * @dataProvider timestamp_provider
      */
-    public function test_calculate_expiry_time_for_overnight_expiry_with_two_day_expiry($timestamp) {
+    public function test_calculate_expiry_time_for_overnight_expiry_with_two_day_expiry($timestamp): void {
         // Setup configuration.
         $method = new \ReflectionMethod($this->factor, 'calculate_expiry_time');
         set_config('expireovernight', 1, 'factor_token');
@@ -189,7 +190,7 @@ class factor_test extends \advanced_testcase {
      * @param int $timestamp
      * @dataProvider timestamp_provider
      */
-    public function test_calculate_expiry_time_for_overnight_expiry_with_three_hour_expiry($timestamp) {
+    public function test_calculate_expiry_time_for_overnight_expiry_with_three_hour_expiry($timestamp): void {
         // Setup configuration.
         $method = new \ReflectionMethod($this->factor, 'calculate_expiry_time');
         set_config('expireovernight', 1, 'factor_token');
@@ -233,7 +234,7 @@ class factor_test extends \advanced_testcase {
      * @param int $timestamp
      * @dataProvider timestamp_provider
      */
-    public function test_calculate_expiry_time_for_overnight_expiry_with_an_hour_expiry($timestamp) {
+    public function test_calculate_expiry_time_for_overnight_expiry_with_an_hour_expiry($timestamp): void {
         // Setup configuration.
         $method = new \ReflectionMethod($this->factor, 'calculate_expiry_time');
         set_config('expireovernight', 1, 'factor_token');

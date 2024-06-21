@@ -306,17 +306,7 @@ class core_component {
             if (is_readable($cachefile)) {
                 $cache = false;
                 include($cachefile);
-                if (!is_array($cache)) {
-                    // Something is very wrong.
-                } else if (!isset($cache['version'])) {
-                    // Something is very wrong.
-                } else if ((float) $cache['version'] !== (float) self::fetch_core_version()) {
-                    // Outdated cache. We trigger an error log to track an eventual repetitive failure of float comparison.
-                    error_log('Resetting core_component cache after core upgrade to version ' . self::fetch_core_version());
-                } else if ($cache['plugintypes']['mod'] !== "$CFG->dirroot/mod") {
-                    // phpcs:ignore moodle.Commenting.InlineComment.NotCapital
-                    // $CFG->dirroot was changed.
-                } else {
+                if (is_array($cache) && self::is_cache_valid($cache)) {
                     // The cache looks ok, let's use it.
                     self::$plugintypes      = $cache['plugintypes'];
                     self::$plugins          = $cache['plugins'];
@@ -365,6 +355,53 @@ class core_component {
             @unlink($cachefile . '.tmp'); // Just in case anything fails (race condition).
             self::invalidate_opcode_php_cache($cachefile);
         }
+    }
+
+    /**
+     * Check whether the cache content in the supplied cache is valid.
+     *
+     * @param array $cache The content being loaded
+     * @return bool Whether it is valid
+     */
+    protected static function is_cache_valid(array $cache): bool {
+        global $CFG;
+
+        if (!isset($cache['version'])) {
+            // Something is very wrong.
+            return false;
+        }
+
+        if ((float) $cache['version'] !== (float) self::fetch_core_version()) {
+            // Outdated cache. We trigger an error log to track an eventual repetitive failure of float comparison.
+            error_log('Resetting core_component cache after core upgrade to version ' . self::fetch_core_version());
+            return false;
+        }
+
+        if ($cache['plugintypes']['mod'] !== "$CFG->dirroot/mod") {
+            // phpcs:ignore moodle.Commenting.InlineComment.NotCapital
+            // $CFG->dirroot was changed.
+            return false;
+        }
+
+        // Check for key classes which block access to the upgrade in some way.
+        // Note: This list should be kept _extremely_ minimal and generally
+        // when adding a newly discovered classes older ones should be removed.
+        // Always keep moodle_exception in place.
+        $keyclasses = [
+            \core\exception\moodle_exception::class,
+            \core\output\bootstrap_renderer::class,
+        ];
+        foreach ($keyclasses as $classname) {
+            if (!array_key_exists($classname, $cache['classmap'])) {
+                // The cache is missing some key classes. This is likely before the upgrade has run.
+                error_log(
+                    "The '{$classname}' class was not found in the component class cache. Resetting the classmap.",
+                );
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
@@ -690,17 +727,20 @@ $cache = ' . var_export($cache, true) . ';
         self::$classmap = [];
 
         self::load_classes('core', "$CFG->dirroot/lib/classes");
+        self::load_legacy_classes($CFG->libdir);
 
         foreach (self::$subsystems as $subsystem => $fulldir) {
             if (!$fulldir) {
                 continue;
             }
             self::load_classes('core_' . $subsystem, "$fulldir/classes");
+            self::load_legacy_classes($fulldir);
         }
 
         foreach (self::$plugins as $plugintype => $plugins) {
             foreach ($plugins as $pluginname => $fulldir) {
                 self::load_classes($plugintype . '_' . $pluginname, "$fulldir/classes");
+                self::load_legacy_classes($fulldir);
             }
         }
         ksort(self::$classmap);
@@ -1396,6 +1436,31 @@ $cache = ' . var_export($cache, true) . ';
             if (is_array($renamedclasses)) {
                 foreach ($renamedclasses as $oldclass => $newclass) {
                     self::$classmaprenames[(string)$oldclass] = (string)$newclass;
+                }
+            }
+        }
+    }
+
+    /**
+     * Load legacy classes based upon the db/legacyclasses.php file.
+     *
+     * The legacyclasses.php should contain a key => value array ($legacyclasses) where the key is the class name,
+     * and the value is the path to the class file within the relative ../classes/ directory.
+     *
+     * @param string|null $fulldir The directory to the legacy classes.
+     */
+    protected static function load_legacy_classes(?string $fulldir): void {
+        if (is_null($fulldir)) {
+            return;
+        }
+
+        $file = $fulldir . '/db/legacyclasses.php';
+        if (is_readable($file)) {
+            $legacyclasses = null;
+            require($file);
+            if (is_array($legacyclasses)) {
+                foreach ($legacyclasses as $classname => $path) {
+                    self::$classmap[$classname] = "{$fulldir}/classes/{$path}";
                 }
             }
         }

@@ -34,6 +34,7 @@ class dataset_manager_test extends \advanced_testcase {
      * @return null
      */
     public function setUp(): void {
+        parent::setUp();
         $this->resetAfterTest(true);
 
         $this->sharedtoprows = array(
@@ -48,7 +49,7 @@ class dataset_manager_test extends \advanced_testcase {
      *
      * @return null
      */
-    public function test_create_dataset() {
+    public function test_create_dataset(): void {
 
         $dataset1 = new \core_analytics\dataset_manager(1, 1, 'whatever', \core_analytics\dataset_manager::LABELLED_FILEAREA, false);
         $dataset1data = array_merge($this->sharedtoprows, array(array('yeah', 'yeah', 'yeah')));
@@ -66,7 +67,7 @@ class dataset_manager_test extends \advanced_testcase {
      *
      * @return null
      */
-    public function test_merge_datasets() {
+    public function test_merge_datasets(): void {
 
         $dataset1 = new \core_analytics\dataset_manager(1, 1, 'whatever', \core_analytics\dataset_manager::LABELLED_FILEAREA, false);
         $dataset1data = array_merge($this->sharedtoprows, array(array('yeah', 'yeah', 'yeah')));
@@ -93,7 +94,7 @@ class dataset_manager_test extends \advanced_testcase {
      *
      * @return null
      */
-    public function test_get_pending_files() {
+    public function test_get_pending_files(): void {
         global $DB;
 
         $this->resetAfterTest();

@@ -89,15 +89,18 @@ $string['attemptheading'] = 'Attempt {$a->attemptnumber}: {$a->submissionsummary
 $string['attempthistory'] = 'Previous attempts';
 $string['attemptnumber'] = 'Attempt number';
 $string['attemptsettings'] = 'Attempt settings';
-$string['attemptreopenmethod'] = 'Additional attempts';
-$string['attemptreopenmethod_help'] = 'This setting determines whether a student can make additional attempts at the assignment. For each attempt, the grade and feedback are saved, and can be viewed by the teacher and the student. The available options are:
+$string['attemptreopenmethod'] = 'Grant attempts';
+$string['attemptreopenmethod_automatic'] = 'Automatically';
+$string['attemptreopenmethod_automatic_help'] = 'After each attempt, the next is granted automatically.';
+$string['attemptreopenmethod_help'] = 'This setting controls how students are granted attempts for this assignment. For each attempt, the grade and feedback are saved, and can be viewed by the teacher and the student. The available options are:
 
-* Never - Only one attempt is possible.
-* Manually - Additional attempts may be allowed by a teacher.
-* Automatically until pass - Additional attempts are allowed automatically until the student achieves the grade to pass set in the gradebook for this assignment.';
+* Manually - After each attempt, you can grant the next one through the Submissions page or the Grader page.
+* Automatically - After each attempt, the next is granted automatically.
+* Automatically until pass - After each attempt, the next will be granted automatically, until the student achieves the passing grade.';
 $string['attemptreopenmethod_manual'] = 'Manually';
-$string['attemptreopenmethod_none'] = 'Never';
+$string['attemptreopenmethod_manual_help'] = 'After each attempt, you can grant the next one through the Submissions page or the Grader page.';
 $string['attemptreopenmethod_untilpass'] = 'Automatically until pass';
+$string['attemptreopenmethod_untilpass_help'] = 'After each attempt, the next will be granted automatically, until the student achieves the passing grade.';
 $string['availability'] = 'Availability';
 $string['back'] = 'Back';
 $string['backtoassignment'] = 'Back to assignment';
@@ -155,11 +158,15 @@ $string['cutoffdatecolon'] = 'Cut-off date: {$a}';
 $string['cutoffdate_help'] = 'If set, submissions will not be accepted after this date without an extension. If not set, submissions will always be accepted.';
 $string['cutoffdatevalidation'] = 'Cut-off date cannot be earlier than the due date.';
 $string['cutoffdatefromdatevalidation'] = 'Cut-off date cannot be earlier than the allow submissions from date.';
+$string['defaultgradescale'] = 'Default grade scale';
+$string['defaultgradescale_help'] = 'The default grade scale to be used when creating new assignments. Only site level scales can be used as the default.';
+$string['defaultgradetype'] = 'Default grade type';
+$string['defaultgradetype_help'] = 'The default grade type to be used when creating new assignments';
 $string['defaultlayout'] = 'Restore default layout';
 $string['defaultsettings'] = 'Default assignment settings';
 $string['defaultsettings_help'] = 'These settings define the defaults for all new assignments.';
 $string['defaultteam'] = 'Default group';
-$string['deleteallsubmissions'] = 'Delete all submissions';
+$string['deleteallsubmissions'] = 'All submissions';
 $string['description'] = 'Description';
 $string['disabled'] = 'Disabled';
 $string['downloadall'] = 'Download all submissions';
@@ -305,7 +312,6 @@ $string['gradingstatus'] = 'Grading status';
 $string['gradingstudent'] = 'Grading student';
 $string['gradingsummary'] = 'Grading summary';
 $string['groupoverrides'] = 'Group overrides';
-$string['groupoverridesdeleted'] = 'Group overrides deleted';
 $string['groupsnone'] = 'No groups you can access.';
 $string['hidegrader'] = 'Hide grader identity from students';
 $string['hidegrader_help'] = 'If enabled, the identity of any user who grades an assignment submission is not shown, so students can\'t see who marked their work.
@@ -363,7 +369,7 @@ $string['markingworkflowstatenotmarked'] = 'Not marked';
 $string['markingworkflowstatereadyforreview'] = 'Marking completed';
 $string['markingworkflowstatereadyforrelease'] = 'Ready for release';
 $string['markingworkflowstatereleased'] = 'Released';
-$string['maxattempts'] = 'Maximum attempts';
+$string['maxattempts'] = 'Allowed attempts';
 $string['maxattempts_help'] = 'The maximum number of submission attempts that can be made by a student. After this number has been reached, the submission can no longer be reopened.';
 $string['maxgrade'] = 'Maximum grade';
 $string['maxgrade'] = 'Maximum Grade';
@@ -471,8 +477,8 @@ $string['quickgradingresult'] = 'Quick grading';
 $string['quickgradingchangessaved'] = 'The grade changes were saved';
 $string['quickgrading_help'] = 'Quick grading allows you to assign grades (and outcomes) directly in the submissions table. Quick grading is not compatible with advanced grading and is not recommended when there are multiple markers.';
 $string['relativedatessubmissiontimeleft'] = 'Calculated for each student';
-$string['removeallgroupoverrides'] = 'Delete all group overrides';
-$string['removealluseroverrides'] = 'Delete all user overrides';
+$string['removeallgroupoverrides'] = 'All group overrides';
+$string['removealluseroverrides'] = 'All user overrides';
 $string['reopenuntilpassincompatiblewithblindmarking'] = 'Reopen until pass option is incompatible with anonymous submissions, because the grades are not released to the gradebook until the student identities are revealed.';
 $string['requiresubmissionstatement'] = 'Require that students accept the submission statement';
 $string['requiresubmissionstatement_help'] = 'Require that students accept the submission statement for all submissions to this assignment.';
@@ -574,9 +580,9 @@ $string['submissionslockedshort'] = 'Submission changes not allowed';
 $string['submissionsclosed'] = 'Submissions closed';
 $string['submissionsettings'] = 'Submission settings';
 $string['submissionstatement'] = 'Submission statement';
-$string['submissionstatement_help'] = 'Assignment submission confirmation statement';
 $string['submissionstatementdefault'] = 'This submission is my own work, except where I have acknowledged the use of the works of other people.';
 $string['submissionstatement_help'] = 'Statement that each student must accept in order to submit their work.';
+$string['submissionstatementrequired'] = 'You are required to agree to this statement before you can submit.';
 $string['submissionstatementteamsubmission'] = 'Group submission statement';
 $string['submissionstatementteamsubmissiondefault'] = 'This submission is the work of my group, except where we have acknowledged the use of the works of other people.';
 $string['submissionstatementteamsubmission_help'] = 'Statement that each student must accept in order to submit the work of their group.';
@@ -641,7 +647,6 @@ $string['userextensiondate'] = 'Extension granted until: {$a}';
 $string['userassignmentdefaults'] = 'User assignment defaults';
 $string['useridlistnotcached'] = 'The grade changes were NOT saved, as it was not possible to determine which submission they were for.';
 $string['useroverrides'] = 'User overrides';
-$string['useroverridesdeleted'] = 'User overrides deleted';
 $string['usersubmissioncannotberemoved'] = 'The submission of {$a} cannot be removed.';
 $string['usersnone'] = 'No students have access to this assignment.';
 $string['userswhoneedtosubmit'] = 'Users who need to submit: {$a}';
@@ -666,3 +671,8 @@ $string['viewsubmissiongradingtable'] = 'View submission grading table.';
 $string['viewrevealidentitiesconfirm'] = 'View reveal student identities confirmation page.';
 $string['workflowfilter'] = 'Workflow filter';
 $string['xofy'] = '{$a->x} of {$a->y}';
+
+// Deprecated since Moodle 4.5.
+$string['attemptreopenmethod_none'] = 'Never';
+$string['groupoverridesdeleted'] = 'Group overrides deleted';
+$string['useroverridesdeleted'] = 'User overrides deleted';

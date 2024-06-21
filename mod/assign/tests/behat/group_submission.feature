@@ -58,7 +58,7 @@ Feature: Group assignment submissions
     And I should see "This submission is the work of my group, except where we have acknowledged the use of the works of other people."
     And I press "Continue"
     And I should see "Confirm submission"
-    And I should see "- Required"
+    And I should see "You are required to agree to this statement before you can submit."
     And I set the field "submissionstatement" to "1"
     And I press "Continue"
     And I should see "Submitted for grading" in the "Submission status" "table_row"
@@ -97,11 +97,11 @@ Feature: Group assignment submissions
       | student1 | G1    |
     And I am on the "Test assignment name" "assign activity" page
     And I follow "View all submissions"
-    And I set the field "Separate groups" to "Group 1"
+    And I click on "Group 1" in the "group" search widget
     And I should see "Group 1" in the "Student 0" "table_row"
     And I should see "Group 1" in the "Student 1" "table_row"
     And I should not see "Student 2"
-    And I set the field "Separate groups" to "All participants"
+    And I click on "All participants" in the "group" search widget
     And I should see "Group 1" in the "Student 0" "table_row"
     And I should see "Group 1" in the "Student 1" "table_row"
     And I should see "Default group" in the "Student 2" "table_row"
@@ -154,6 +154,7 @@ Feature: Group assignment submissions
       | assignsubmission_onlinetext_enabled | 1                           |
       | assignsubmission_file_enabled       | 0                           |
       | teamsubmission                      | 1                           |
+      | maxattempts                         | -1                          |
       | attemptreopenmethod                 | manual                      |
       | requireallteammemberssubmit         | 0                           |
     And the following "mod_assign > submissions" exist:

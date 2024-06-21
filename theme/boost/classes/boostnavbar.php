@@ -68,6 +68,7 @@ class boostnavbar implements \renderable {
             }
         }
         if ($this->page->context->contextlevel == CONTEXT_COURSE) {
+            $removesections = course_get_format($this->page->course)->can_sections_be_removed_from_navigation();
             // Remove any duplicate navbar nodes.
             $this->remove_duplicate_items();
             // Remove 'My courses' and 'Courses' if we are in the course context.
@@ -79,7 +80,7 @@ class boostnavbar implements \renderable {
                 $this->remove($item->key, \breadcrumb_navigation_node::TYPE_CATEGORY);
             }
             // Remove the course breadcrumb node.
-            if (!str_starts_with($this->page->pagetype, 'section-view-')) {
+            if (!str_starts_with($this->page->pagetype, 'course-view-section-')) {
                 $this->remove($this->page->course->id, \breadcrumb_navigation_node::TYPE_COURSE);
             }
             // Remove the navbar nodes that already exist in the secondary navigation menu.

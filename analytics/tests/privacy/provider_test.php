@@ -88,6 +88,7 @@ class provider_test extends \core_privacy\tests\provider_testcase {
     protected $c2;
 
     public function setUp(): void {
+        parent::setUp();
 
         $this->resetAfterTest(true);
         $this->setAdminUser();
@@ -159,7 +160,7 @@ class provider_test extends \core_privacy\tests\provider_testcase {
     /**
      * Test fetching users within a context.
      */
-    public function test_get_users_in_context() {
+    public function test_get_users_in_context(): void {
         global $CFG;
 
         $component = 'core_analytics';
@@ -198,7 +199,7 @@ class provider_test extends \core_privacy\tests\provider_testcase {
      *
      * @return null
      */
-    public function test_delete_context_data() {
+    public function test_delete_context_data(): void {
         global $DB;
 
         // We have 4 predictions for model1 and 8 predictions for model2.
@@ -228,7 +229,7 @@ class provider_test extends \core_privacy\tests\provider_testcase {
      *
      * @return null
      */
-    public function test_delete_user_data() {
+    public function test_delete_user_data(): void {
         global $DB;
 
         $usercontexts = provider::get_contexts_for_userid($this->u3->id);
@@ -257,7 +258,7 @@ class provider_test extends \core_privacy\tests\provider_testcase {
     /**
      * Test deleting multiple users in a context.
      */
-    public function test_delete_data_for_users() {
+    public function test_delete_data_for_users(): void {
         global $DB;
 
         $component = 'core_analytics';
@@ -412,7 +413,7 @@ class provider_test extends \core_privacy\tests\provider_testcase {
      *
      * @return null
      */
-    public function test_export_data() {
+    public function test_export_data(): void {
         global $DB;
 
         $system = \context_system::instance();

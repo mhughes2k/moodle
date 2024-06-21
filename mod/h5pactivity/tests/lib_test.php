@@ -35,6 +35,7 @@ class lib_test extends advanced_testcase {
     public static function setUpBeforeClass(): void {
         global $CFG;
         require_once("{$CFG->dirroot}/mod/h5pactivity/lib.php");
+        parent::setUpBeforeClass();
     }
 
     /**
@@ -42,7 +43,7 @@ class lib_test extends advanced_testcase {
      *
      * @covers ::h5pactivity_delete_instance
      */
-    public function test_h5pactivity_delete_instance() {
+    public function test_h5pactivity_delete_instance(): void {
         global $DB;
         $this->resetAfterTest();
         $this->setAdminUser();
@@ -111,7 +112,7 @@ class lib_test extends advanced_testcase {
      *
      * @covers ::h5pactivity_print_recent_activity
      */
-    public function test_print_recent_activity() {
+    public function test_print_recent_activity(): void {
         $this->resetAfterTest();
         $this->setAdminUser();
 
@@ -138,7 +139,7 @@ class lib_test extends advanced_testcase {
      *
      * @covers ::h5pactivity_print_recent_activity
      */
-    public function test_print_recent_activity_fullname() {
+    public function test_print_recent_activity_fullname(): void {
         $this->resetAfterTest();
         $this->setAdminUser();
 
@@ -169,7 +170,7 @@ class lib_test extends advanced_testcase {
      *
      * @covers ::h5pactivity_get_recent_mod_activity
      */
-    public function test_h5pactivity_get_recent_mod_activity() {
+    public function test_h5pactivity_get_recent_mod_activity(): void {
         $this->resetAfterTest();
         $this->setAdminUser();
 
@@ -209,7 +210,7 @@ class lib_test extends advanced_testcase {
      *
      * @covers ::h5pactivity_fetch_recent_activity
      */
-    public function test_h5pactivity_fetch_recent_activity() {
+    public function test_h5pactivity_fetch_recent_activity(): void {
         global $DB;
 
         $this->resetAfterTest();
@@ -336,7 +337,7 @@ class lib_test extends advanced_testcase {
      *
      * @covers ::h5pactivity_reset_userdata
      */
-    public function test_h5pactivity_reset_userdata() {
+    public function test_h5pactivity_reset_userdata(): void {
         global $DB;
         $this->resetAfterTest();
         $this->setAdminUser();

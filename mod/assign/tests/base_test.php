@@ -83,6 +83,7 @@ class base_test extends \advanced_testcase {
      */
     protected function setUp(): void {
         global $DB;
+        parent::setUp();
 
         $this->resetAfterTest(true);
 
@@ -210,7 +211,7 @@ class base_test extends \advanced_testcase {
         return new mod_assign_testable_assign($context, $cm, $this->course);
     }
 
-    public function test_create_instance() {
+    public function test_create_instance(): void {
         $this->assertNotEmpty($this->create_instance());
     }
 

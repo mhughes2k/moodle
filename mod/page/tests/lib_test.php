@@ -46,13 +46,14 @@ class lib_test extends \advanced_testcase {
     public static function setUpBeforeClass(): void {
         global $CFG;
         require_once($CFG->dirroot . '/mod/page/lib.php');
+        parent::setUpBeforeClass();
     }
 
     /**
      * Test page_view
      * @return void
      */
-    public function test_page_view() {
+    public function test_page_view(): void {
         global $CFG;
 
         $CFG->enablecompletion = 1;
@@ -90,7 +91,7 @@ class lib_test extends \advanced_testcase {
         $this->assertEquals(1, $completiondata->completionstate);
     }
 
-    public function test_page_core_calendar_provide_event_action() {
+    public function test_page_core_calendar_provide_event_action(): void {
         $this->resetAfterTest();
         $this->setAdminUser();
 
@@ -116,7 +117,7 @@ class lib_test extends \advanced_testcase {
         $this->assertTrue($actionevent->is_actionable());
     }
 
-    public function test_page_core_calendar_provide_event_action_already_completed() {
+    public function test_page_core_calendar_provide_event_action_already_completed(): void {
         global $CFG;
 
         $this->resetAfterTest();
@@ -153,7 +154,7 @@ class lib_test extends \advanced_testcase {
     /**
      * Test mod_page_core_calendar_provide_event_action with user override
      */
-    public function test_page_core_calendar_provide_event_action_user_override() {
+    public function test_page_core_calendar_provide_event_action_user_override(): void {
         global $CFG, $USER;
 
         $this->resetAfterTest();

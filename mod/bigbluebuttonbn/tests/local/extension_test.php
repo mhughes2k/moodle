@@ -46,6 +46,7 @@ class extension_test extends \advanced_testcase {
      * @return void
      */
     public function setUp(): void {
+        parent::setUp();
         $this->resetAfterTest(true);
         $this->setup_fake_plugin('simple');
         $this->resetDebugging(); // We might have debugging messages issued from setup_fake_plugin here that we need to get rid of.
@@ -59,6 +60,7 @@ class extension_test extends \advanced_testcase {
      */
     public function tearDown(): void {
         $this->uninstall_fake_plugin('simple');
+        parent::tearDown();
     }
 
     /**
@@ -92,7 +94,7 @@ class extension_test extends \advanced_testcase {
      * @return void
      * @covers \mod_bigbluebuttonbn\local\extension\mod_instance_helper
      */
-    public function test_mod_instance_helper_add() {
+    public function test_mod_instance_helper_add(): void {
         global $DB;
         // Enable plugin.
         $this->enable_plugins(true);
@@ -111,7 +113,7 @@ class extension_test extends \advanced_testcase {
      * @return void
      * @covers \mod_bigbluebuttonbn\local\extension\mod_instance_helper
      */
-    public function test_mod_instance_helper_update() {
+    public function test_mod_instance_helper_update(): void {
         global $DB;
         $this->setAdminUser();
         // Enable plugin.
@@ -132,7 +134,7 @@ class extension_test extends \advanced_testcase {
      * @return void
      * @covers \mod_bigbluebuttonbn\local\extension\mod_instance_helper
      */
-    public function test_mod_instance_helper_delete() {
+    public function test_mod_instance_helper_delete(): void {
         global $DB;
         $this->initialise_mock_server();
         // Enable plugin.
@@ -151,7 +153,7 @@ class extension_test extends \advanced_testcase {
      * @return void
      * @covers \mod_bigbluebuttonbn\extension::action_url_addons
      */
-    public function test_action_url_addons() {
+    public function test_action_url_addons(): void {
         // Enable plugin.
         $this->enable_plugins(true);
         $course = $this->get_course();
@@ -174,7 +176,7 @@ class extension_test extends \advanced_testcase {
      * @return void
      * @covers \mod_bigbluebuttonbn\extension::action_url_addons
      */
-    public function test_join_url_with_additional_field() {
+    public function test_join_url_with_additional_field(): void {
         $this->initialise_mock_server();
         // Enable plugin.
         $this->enable_plugins(true);

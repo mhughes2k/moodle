@@ -36,10 +36,11 @@ namespace booktool_exportimscp\event;
 class events_test extends \advanced_testcase {
 
     public function setUp(): void {
+        parent::setUp();
         $this->resetAfterTest();
     }
 
-    public function test_book_exported() {
+    public function test_book_exported(): void {
         // There is no proper API to call to test the event, so what we are
         // doing here is simply making sure that the events returns the right information.
 

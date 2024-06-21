@@ -3536,7 +3536,12 @@ abstract class enrol_plugin {
             $errors['errorunsupportedmethod'] =
                 new lang_string('errorunsupportedmethod', 'tool_uploadcourse',
                     get_class($this));
-
+        } else {
+            $plugin = $this->get_name();
+            if (!enrol_is_enabled($plugin)) {
+                $pluginname = get_string('pluginname', 'enrol_' . $plugin);
+                $errors['plugindisabled'] = new lang_string('plugindisabled', 'enrol', $pluginname);
+            }
         }
         return $errors;
     }
@@ -3657,7 +3662,7 @@ abstract class enrol_plugin {
         );
 
         $a = new stdClass();
-        $a->coursename = format_string($course->fullname, true, ['context' => $context]);
+        $a->coursename = format_string($course->fullname, true, ['context' => $context, 'escape' => false]);
         $a->profileurl = (new moodle_url(
             url: '/user/view.php',
             params: [
@@ -3702,7 +3707,6 @@ abstract class enrol_plugin {
             $messagehtml = text_to_html($messagetext, null, false, true);
         }
 
-        $subject = get_string('welcometocourse', 'moodle', format_string($course->fullname, true, ['context' => $context]));
         $contact = $this->get_welcome_message_contact(
             sendoption: $sendoption,
             context: $context,
@@ -3718,7 +3722,7 @@ abstract class enrol_plugin {
         $message->name = 'enrolcoursewelcomemessage';
         $message->userfrom = $contact;
         $message->userto = $user;
-        $message->subject = $subject;
+        $message->subject = get_string('welcometocourse', 'moodle', $a->coursename);
         $message->fullmessage = $messagetext;
         $message->fullmessageformat = FORMAT_MARKDOWN;
         $message->fullmessagehtml = $messagehtml;
@@ -3727,5 +3731,57 @@ abstract class enrol_plugin {
         $message->contexturlname = $course->fullname;
 
         message_send($message);
+    }
+
+    /**
+     * Updates enrol plugin instance with provided data.
+     * @param int $courseid Course ID.
+     * @param array $enrolmentdata enrolment data.
+     * @param stdClass $instance Instance to update.
+     *
+     * @return stdClass updated instance
+     */
+    public function update_enrol_plugin_data(int $courseid, array $enrolmentdata, stdClass $instance): stdClass {
+        global $DB;
+
+        // Sort out the start, end and date.
+        $instance->enrolstartdate = (isset($enrolmentdata['startdate']) ? strtotime($enrolmentdata['startdate']) : 0);
+        $instance->enrolenddate = (isset($enrolmentdata['enddate']) ? strtotime($enrolmentdata['enddate']) : 0);
+
+        // Is the enrolment period set?
+        if (!empty($enrolmentdata['enrolperiod'])) {
+            if (preg_match('/^\d+$/', $enrolmentdata['enrolperiod'])) {
+                $enrolmentdata['enrolperiod'] = (int)$enrolmentdata['enrolperiod'];
+            } else {
+                // Try and convert period to seconds.
+                $enrolmentdata['enrolperiod'] = strtotime('1970-01-01 GMT + ' . $enrolmentdata['enrolperiod']);
+            }
+            $instance->enrolperiod = $enrolmentdata['enrolperiod'];
+        }
+        if ($instance->enrolstartdate > 0 && isset($enrolmentdata['enrolperiod'])) {
+            $instance->enrolenddate = $instance->enrolstartdate + $enrolmentdata['enrolperiod'];
+        }
+        if ($instance->enrolenddate > 0) {
+            $instance->enrolperiod = $instance->enrolenddate - $instance->enrolstartdate;
+        }
+        if ($instance->enrolenddate < $instance->enrolstartdate) {
+            $instance->enrolenddate = $instance->enrolstartdate;
+        }
+
+        // Sort out the given role.
+        if (isset($enrolmentdata['role']) || isset($enrolmentdata['roleid'])) {
+            if (isset($enrolmentdata['role'])) {
+                $roleid = $DB->get_field('role', 'id', ['shortname' => $enrolmentdata['role']], MUST_EXIST);
+            } else {
+                $roleid = $enrolmentdata['roleid'];
+            }
+            $instance->roleid = $roleid;
+        }
+
+        // Sort out custom instance name.
+        if (isset($enrolmentdata['name'])) {
+            $instance->name = $enrolmentdata['name'];
+        }
+        return $instance;
     }
 }

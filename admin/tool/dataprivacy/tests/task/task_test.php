@@ -38,6 +38,7 @@ class task_test extends \data_privacy_testcase {
      */
     public function tearDown(): void {
         \core_privacy\local\request\writer::reset();
+        parent::tearDown();
     }
 
     /**
@@ -45,7 +46,7 @@ class task_test extends \data_privacy_testcase {
      * is created when there are not any existing data requests
      * for that particular user.
      */
-    public function test_delete_existing_deleted_users_task_no_previous_requests() {
+    public function test_delete_existing_deleted_users_task_no_previous_requests(): void {
         global $DB;
 
         $this->resetAfterTest();
@@ -74,7 +75,7 @@ class task_test extends \data_privacy_testcase {
      * Ensure that a delete data request for pre-existing deleted users
      * is not being created when automatic creation of delete data requests is disabled.
      */
-    public function test_delete_existing_deleted_users_task_automatic_creation_disabled() {
+    public function test_delete_existing_deleted_users_task_automatic_creation_disabled(): void {
         global $DB;
 
         $this->resetAfterTest();
@@ -104,7 +105,7 @@ class task_test extends \data_privacy_testcase {
      * is created when there are existing non-delete data requests
      * for that particular user.
      */
-    public function test_delete_existing_deleted_users_task_existing_export_data_requests() {
+    public function test_delete_existing_deleted_users_task_existing_export_data_requests(): void {
         global $DB;
 
         $this->resetAfterTest();
@@ -139,7 +140,7 @@ class task_test extends \data_privacy_testcase {
      * is not created when there are existing ongoing delete data requests
      * for that particular user.
      */
-    public function test_delete_existing_deleted_users_task_existing_ongoing_delete_data_requests() {
+    public function test_delete_existing_deleted_users_task_existing_ongoing_delete_data_requests(): void {
         global $DB;
 
         $this->resetAfterTest();
@@ -179,7 +180,7 @@ class task_test extends \data_privacy_testcase {
      * is not created when there are existing finished delete data requests
      * for that particular user.
      */
-    public function test_delete_existing_deleted_users_task_existing_finished_delete_data_requests() {
+    public function test_delete_existing_deleted_users_task_existing_finished_delete_data_requests(): void {
         global $DB;
 
         $this->resetAfterTest();

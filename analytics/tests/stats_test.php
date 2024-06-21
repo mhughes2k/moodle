@@ -35,6 +35,7 @@ class stats_test extends \advanced_testcase {
      * Set up the test environment.
      */
     public function setUp(): void {
+        parent::setUp();
 
         $this->setAdminUser();
     }
@@ -42,7 +43,7 @@ class stats_test extends \advanced_testcase {
     /**
      * Test the {@link \core_analytics\stats::enabled_models()} implementation.
      */
-    public function test_enabled_models() {
+    public function test_enabled_models(): void {
 
         $this->resetAfterTest(true);
 
@@ -68,7 +69,7 @@ class stats_test extends \advanced_testcase {
     /**
      * Test the {@link \core_analytics\stats::predictions()} implementation.
      */
-    public function test_predictions() {
+    public function test_predictions(): void {
 
         $this->resetAfterTest(true);
 
@@ -113,7 +114,7 @@ class stats_test extends \advanced_testcase {
     /**
      * Test the {@link \core_analytics\stats::actions()} and {@link \core_analytics\stats::actions_not_useful()} implementation.
      */
-    public function test_actions() {
+    public function test_actions(): void {
         global $DB;
         $this->resetAfterTest(true);
 

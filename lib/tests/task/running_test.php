@@ -27,12 +27,13 @@ namespace core\task;
 final class running_test extends \advanced_testcase {
     public static function setUpBeforeClass(): void {
         require_once(__DIR__ . '/../fixtures/task_fixtures.php');
+        parent::setUpBeforeClass();
     }
 
     /**
      * Test for ad-hoc tasks.
      */
-    public function test_adhoc_task_running() {
+    public function test_adhoc_task_running(): void {
         $this->resetAfterTest();
 
         // Specify lock factory. The reason is that Postgres locks don't work within a single
@@ -86,7 +87,7 @@ final class running_test extends \advanced_testcase {
     /**
      * Test for scheduled tasks.
      */
-    public function test_scheduled_task_running() {
+    public function test_scheduled_task_running(): void {
         global $DB;
         $this->resetAfterTest();
 

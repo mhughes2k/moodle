@@ -285,7 +285,7 @@ All rights reserved.</copyright>
     <location>amd/src/loglevel.js</location>
     <name>loglevel.js</name>
     <description>Minimal lightweight simple logging for JavaScript.</description>
-    <version>1.8.1</version>
+    <version>1.9.1</version>
     <license>MIT</license>
     <repository>https://github.com/pimterry/loglevel/</repository>
     <copyrights>
@@ -388,7 +388,7 @@ All rights reserved.</copyright>
     <location>maxmind/GeoIp2</location>
     <name>GeoIP2 PHP API</name>
     <description>Library for processing of GeoIP data files.</description>
-    <version>2.13.0</version>
+    <version>3.0.0</version>
     <license>Apache</license>
     <licenseversion>2.0</licenseversion>
     <repository>https://github.com/maxmind/GeoIP2-php</repository>
@@ -400,7 +400,7 @@ All rights reserved.</copyright>
     <location>maxmind/MaxMind</location>
     <name>MaxMind DB Reader API</name>
     <description>PHP API for reading MaxMind DB files.</description>
-    <version>1.11.0</version>
+    <version>1.11.1</version>
     <license>Apache</license>
     <licenseversion>2.0</licenseversion>
     <repository>https://github.com/maxmind/MaxMind-DB-Reader-php/</repository>
@@ -513,7 +513,7 @@ All rights reserved.</copyright>
   </library>
   <library>
     <location>php-jwt</location>
-    <name>A simple library to encode and decode JSON Web Tokens (JWT) in PHP, conforming to RFC 7519</name>
+    <name>PHP-JWT</name>
     <description>A simple library to encode and decode JSON Web Tokens (JWT) in PHP, conforming to RFC 7519</description>
     <version>6.10.0</version>
     <license>BSD</license>
@@ -551,7 +551,7 @@ All rights reserved.</copyright>
     <location>emoji-data</location>
     <name>Emoji data</name>
     <description>Library to parse easily data and sprite sheets for emoji.</description>
-    <version>15.0.1</version>
+    <version>15.1.2</version>
     <license>MIT</license>
     <repository>https://github.com/iamcal/emoji-data/</repository>
     <copyrights>
@@ -632,7 +632,7 @@ All rights reserved.</copyright>
     <location>psr/http-factory</location>
     <name>http-factory</name>
     <description>Provides interfaces that describe the components of a HTTP Factory.</description>
-    <version>1.0.1</version>
+    <version>1.1.0</version>
     <license>MIT</license>
     <repository>https://github.com/php-fig/http-factory</repository>
   </library>
@@ -669,7 +669,7 @@ All rights reserved.</copyright>
     <location>guzzlehttp/guzzle</location>
     <name>GuzzleHttp/Guzzle</name>
     <description>Guzzle is a PHP HTTP client library</description>
-    <version>7.5.0</version>
+    <version>7.8.1</version>
     <license>MIT</license>
     <repository>https://github.com/guzzle/guzzle</repository>
   </library>
@@ -677,7 +677,7 @@ All rights reserved.</copyright>
     <location>guzzlehttp/promises</location>
     <name>GuzzleHttp/Promises</name>
     <description>Guzzle promises library</description>
-    <version>1.5.2</version>
+    <version>2.0.2</version>
     <license>MIT</license>
     <repository>https://github.com/guzzle/promises</repository>
   </library>
@@ -693,7 +693,7 @@ All rights reserved.</copyright>
     <location>guzzlehttp/psr7</location>
     <name>GuzzleHttp/PSR7</name>
     <description>PSR-7 message implementation that also provides common utility methods</description>
-    <version>2.4.3</version>
+    <version>2.6.2</version>
     <license>MIT</license>
     <repository>https://github.com/guzzle/psr7</repository>
   </library>
@@ -709,7 +709,7 @@ All rights reserved.</copyright>
     <location>guzzlehttp/kevinrob/guzzlecache</location>
     <name>Guzzle cache middleware</name>
     <description>A HTTP Cache for Guzzle as a simple Middleware to be added in the HandlerStack.</description>
-    <version>4.0.2</version>
+    <version>5.1.0</version>
     <license>MIT</license>
     <repository>https://github.com/Kevinrob/guzzle-cache-middleware</repository>
   </library>

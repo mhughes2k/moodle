@@ -81,3 +81,28 @@ Feature: Varify section visibility interface
     And I log out
     And I am on the "C2" "Course" page logged in as "teacher1"
     And I should see "Hidden from students" in the "Section 1" "section"
+
+  @javascript
+  Scenario: The visibility badge can show a hidden section in a the section page
+    Given I hide section "1"
+    When I am on the "C1 > Section 1" "course > section" page
+    And I click on "Hidden from students" "button" in the "[data-region='sectionbadges']" "css_element"
+    And I should see "Show on course page" in the "[data-region='sectionbadges']" "css_element"
+    And I should see "Hide on course page" in the "[data-region='sectionbadges']" "css_element"
+    And I click on "Show on course page" "link" in the "[data-region='sectionbadges']" "css_element"
+    Then I should not see "Hidden from students" in the "[data-region='sectionbadges']" "css_element"
+    And I open the action menu in "page-header" "region"
+    And I choose "Hide" in the open action menu
+    And I should see "Hidden from students" in the "[data-region='sectionbadges']" "css_element"
+
+  @javascript
+  Scenario: The section action menu should be updated properly when a section is hidden/shown
+    Given I open section "1" edit menu
+    When I choose "Hide" in the open action menu
+    Then I should see "Hidden from students" in the "Section 1" "section"
+    And I open section "1" edit menu
+    And I should see "Show" in the "Section 1" "section"
+    And I press the escape key
+    # Confirm the Section 2 menu hasn't been updated.
+    And I open section "2" edit menu
+    And I should see "Hide" in the "Section 2" "section"

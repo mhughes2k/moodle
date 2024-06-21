@@ -2872,24 +2872,16 @@ function get_array_of_activities() {
 }
 
 /**
- * Abort execution by throwing of a general exception,
- * default exception handler displays the error message in most cases.
- *
  * @deprecated since Moodle 4.1
- * @todo MDL-74484 Final deprecation in Moodle 4.5.
- * @param string $errorcode The name of the language string containing the error message.
- *      Normally this should be in the error.php lang file.
- * @param string $module The language file to get the error message from.
- * @param string $link The url where the user will be prompted to continue.
- *      If no url is provided the user will be directed to the site index page.
- * @param object $a Extra words and phrases that might be required in the error string
- * @param string $debuginfo optional debugging information
- * @return void, always throws exception!
  */
-function print_error($errorcode, $module = 'error', $link = '', $a = null, $debuginfo = null) {
-    debugging("The function print_error() is deprecated. " .
-            "Please throw a new moodle_exception instance instead.", DEBUG_DEVELOPER);
-    throw new \moodle_exception($errorcode, $module, $link, $a, $debuginfo);
+#[\core\attribute\deprecated(
+    'Please throw a new moodle_exception instance instead.',
+    since: '4.1',
+    mdl: 'MDL-71062',
+    final: true
+)]
+function print_error(): void {
+    \core\deprecation::emit_deprecation_if_present([__FUNCTION__]);
 }
 
 /**
@@ -3127,6 +3119,95 @@ function random_bytes_emulate($length) {
 }
 
 /**
+ * rc4encrypt
+ *
+ * @param string $data        Data to encrypt.
+ * @return string             The now encrypted data.
+ *
+ * @deprecated since Moodle 4.5 - please do not use this function any more, {@see \core\encryption::encrypt}
+ */
+#[\core\attribute\deprecated('\core\encryption::encrypt', since: '4.5', mdl: 'MDL-81940')]
+function rc4encrypt($data) {
+    // No initial deprecation notice here, as the following method triggers its own.
+    return endecrypt(get_site_identifier(), $data, '');
+}
+
+/**
+ * rc4decrypt
+ *
+ * @param string $data        Data to decrypt.
+ * @return string             The now decrypted data.
+ *
+ * @deprecated since Moodle 4.5 - please do not use this function any more, {@see \core\encryption::decrypt}
+ */
+#[\core\attribute\deprecated('\core\encryption::decrypt', since: '4.5', mdl: 'MDL-81940')]
+function rc4decrypt($data) {
+    // No initial deprecation notice here, as the following method triggers its own.
+    return endecrypt(get_site_identifier(), $data, 'de');
+}
+
+/**
+ * Based on a class by Mukul Sabharwal [mukulsabharwal @ yahoo.com]
+ *
+ * @param string $pwd The password to use when encrypting or decrypting
+ * @param string $data The data to be decrypted/encrypted
+ * @param string $case Either 'de' for decrypt or '' for encrypt
+ * @return string
+ *
+ * @deprecated since Moodle 4.5 - please do not use this function any more, {@see \core\encryption}
+ */
+#[\core\attribute\deprecated(\core\encryption::class, since: '4.5', mdl: 'MDL-81940')]
+function endecrypt($pwd, $data, $case) {
+    \core\deprecation::emit_deprecation_if_present(__FUNCTION__);
+
+    if ($case == 'de') {
+        $data = urldecode($data);
+    }
+
+    $key[] = '';
+    $box[] = '';
+    $pwdlength = strlen($pwd);
+
+    for ($i = 0; $i <= 255; $i++) {
+        $key[$i] = ord(substr($pwd, ($i % $pwdlength), 1));
+        $box[$i] = $i;
+    }
+
+    $x = 0;
+
+    for ($i = 0; $i <= 255; $i++) {
+        $x = ($x + $box[$i] + $key[$i]) % 256;
+        $tempswap = $box[$i];
+        $box[$i] = $box[$x];
+        $box[$x] = $tempswap;
+    }
+
+    $cipher = '';
+
+    $a = 0;
+    $j = 0;
+
+    for ($i = 0; $i < strlen($data); $i++) {
+        $a = ($a + 1) % 256;
+        $j = ($j + $box[$a]) % 256;
+        $temp = $box[$a];
+        $box[$a] = $box[$j];
+        $box[$j] = $temp;
+        $k = $box[(($box[$a] + $box[$j]) % 256)];
+        $cipherby = ord(substr($data, $i, 1)) ^ $k;
+        $cipher .= chr($cipherby);
+    }
+
+    if ($case == 'de') {
+        $cipher = urldecode(urlencode($cipher));
+    } else {
+        $cipher = urlencode($cipher);
+    }
+
+    return $cipher;
+}
+
+/**
  * @deprecated since Moodle 4.0
  */
 function question_preview_url() {
@@ -3215,4 +3296,68 @@ function question_add_context_in_key() {
  */
 function question_fix_top_names() {
     throw new coding_exception(__FUNCTION__ . '() has been removed.');
+}
+
+/**
+ * @deprecated since Moodle 2.9
+ */
+#[\core\attribute\deprecated('search_generate_SQL', since: '2.9', mdl: 'MDL-48939', final: true)]
+function search_generate_text_SQL() {
+    \core\deprecation::emit_deprecation_if_present(__FUNCTION__);
+}
+
+/**
+ * @deprecated Since Moodle 4.5
+ */
+#[\core\attribute\deprecated('This method should not be used', since: '4.5', mdl: 'MDL-80275', final: true)]
+function disable_output_buffering(): void {
+    \core\deprecation::emit_deprecation_if_present(__FUNCTION__);
+}
+
+
+/**
+ * Prints a grade menu (as part of an existing form) with help showing all possible numerical grades and scales.
+ *
+ * @todo Finish documenting this function
+ * @todo Deprecate: this is only used in a few contrib modules
+ *
+ * @param int $courseid The course ID
+ * @param string $name
+ * @param string $current
+ * @param boolean $includenograde Include those with no grades
+ * @param boolean $return If set to true returns rather than echo's
+ * @return string|bool|null Depending on value of $return
+ * @deprecated Since Moodle 4.5
+ */
+#[\core\attribute\deprecated('This method should not be used', since: '4.5', mdl: 'MDL-82157')]
+function print_grade_menu($courseid, $name, $current, $includenograde=true, $return=false) {
+    \core\deprecation::emit_deprecation_if_present(__FUNCTION__);
+    global $OUTPUT;
+
+    $output = '';
+    $strscale = get_string('scale');
+    $strscales = get_string('scales');
+
+    $scales = get_scales_menu($courseid);
+    foreach ($scales as $i => $scalename) {
+        $grades[-$i] = $strscale .': '. $scalename;
+    }
+    if ($includenograde) {
+        $grades[0] = get_string('nograde');
+    }
+    for ($i=100; $i>=1; $i--) {
+        $grades[$i] = $i;
+    }
+    $output .= html_writer::select($grades, $name, $current, false);
+
+    $linkobject = '<span class="helplink">' . $OUTPUT->pix_icon('help', $strscales) . '</span>';
+    $link = new moodle_url('/course/scales.php', array('id' => $courseid, 'list' => 1));
+    $action = new popup_action('click', $link, 'ratingscales', array('height' => 400, 'width' => 500));
+    $output .= $OUTPUT->action_link($link, $linkobject, $action, array('title' => $strscales));
+
+    if ($return) {
+        return $output;
+    } else {
+        echo $output;
+    }
 }

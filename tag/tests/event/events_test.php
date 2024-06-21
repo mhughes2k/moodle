@@ -40,13 +40,14 @@ class events_test extends \advanced_testcase {
      * This is executed before running any test in this file.
      */
     public function setUp(): void {
+        parent::setUp();
         $this->resetAfterTest();
     }
 
     /**
      * Test the tag updated event.
      */
-    public function test_tag_updated() {
+    public function test_tag_updated(): void {
         $this->setAdminUser();
 
         // Save the system context.
@@ -95,7 +96,7 @@ class events_test extends \advanced_testcase {
     /**
      * Test the tag added event.
      */
-    public function test_tag_added() {
+    public function test_tag_added(): void {
         global $DB;
 
         // Create a course to tag.
@@ -134,7 +135,7 @@ class events_test extends \advanced_testcase {
     /**
      * Test the tag removed event.
      */
-    public function test_tag_removed() {
+    public function test_tag_removed(): void {
         global $DB;
 
         $this->setAdminUser();
@@ -251,7 +252,7 @@ class events_test extends \advanced_testcase {
     /**
      * Test the tag flagged event.
      */
-    public function test_tag_flagged() {
+    public function test_tag_flagged(): void {
         global $DB;
 
         $this->setAdminUser();
@@ -306,7 +307,7 @@ class events_test extends \advanced_testcase {
     /**
      * Test the tag unflagged event.
      */
-    public function test_tag_unflagged() {
+    public function test_tag_unflagged(): void {
         global $DB;
 
         $this->setAdminUser();
@@ -364,7 +365,7 @@ class events_test extends \advanced_testcase {
     /**
      * Test the tag deleted event
      */
-    public function test_tag_deleted() {
+    public function test_tag_deleted(): void {
         global $DB;
 
         $this->setAdminUser();
@@ -452,7 +453,7 @@ class events_test extends \advanced_testcase {
     /**
      * Test the tag created event.
      */
-    public function test_tag_created() {
+    public function test_tag_created(): void {
         global $DB;
 
         // Trigger and capture the event for creating a tag.

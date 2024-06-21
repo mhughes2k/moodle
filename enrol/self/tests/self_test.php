@@ -36,7 +36,7 @@ require_once($CFG->dirroot.'/enrol/self/locallib.php');
  */
 class self_test extends \advanced_testcase {
 
-    public function test_basics() {
+    public function test_basics(): void {
         $this->assertTrue(enrol_is_enabled('self'));
         $plugin = enrol_get_plugin('self');
         $this->assertInstanceOf('enrol_self_plugin', $plugin);
@@ -44,7 +44,7 @@ class self_test extends \advanced_testcase {
         $this->assertEquals(ENROL_EXT_REMOVED_KEEP, get_config('enrol_self', 'expiredaction'));
     }
 
-    public function test_sync_nothing() {
+    public function test_sync_nothing(): void {
         global $SITE;
 
         $selfplugin = enrol_get_plugin('self');
@@ -56,7 +56,7 @@ class self_test extends \advanced_testcase {
         $selfplugin->sync($trace, $SITE->id);
     }
 
-    public function test_longtimnosee() {
+    public function test_longtimnosee(): void {
         global $DB;
         $this->resetAfterTest();
 
@@ -316,7 +316,7 @@ class self_test extends \advanced_testcase {
         $this->assertDebuggingCalled('send_expiry_notifications() in self enrolment plugin needs expirynotifyhour setting');
     }
 
-    public function test_expired() {
+    public function test_expired(): void {
         global $DB;
         $this->resetAfterTest();
 
@@ -433,7 +433,7 @@ class self_test extends \advanced_testcase {
         $this->assertEquals(1, $DB->count_records('role_assignments', array('roleid'=>$teacherrole->id)));
     }
 
-    public function test_send_expiry_notifications() {
+    public function test_send_expiry_notifications(): void {
         global $DB, $CFG;
         $this->resetAfterTest();
         $this->preventResetByRollback(); // Messaging does not like transactions...
@@ -608,7 +608,7 @@ class self_test extends \advanced_testcase {
         $this->assertEquals(6, $sink->count());
     }
 
-    public function test_show_enrolme_link() {
+    public function test_show_enrolme_link(): void {
         global $DB, $CFG;
         $this->resetAfterTest();
         $this->preventResetByRollback(); // Messaging does not like transactions...
@@ -740,7 +740,7 @@ class self_test extends \advanced_testcase {
     /**
      * This will check user enrolment only, rest has been tested in test_show_enrolme_link.
      */
-    public function test_can_self_enrol() {
+    public function test_can_self_enrol(): void {
         global $DB, $CFG, $OUTPUT;
         $this->resetAfterTest();
         $this->preventResetByRollback();
@@ -785,7 +785,7 @@ class self_test extends \advanced_testcase {
      *
      * @covers ::is_self_enrol_available
      */
-    public function test_is_self_enrol_available() {
+    public function test_is_self_enrol_available(): void {
         global $DB, $CFG;
 
         $this->resetAfterTest();
@@ -952,7 +952,7 @@ class self_test extends \advanced_testcase {
     /**
      * Test enrol_self_check_group_enrolment_key
      */
-    public function test_enrol_self_check_group_enrolment_key() {
+    public function test_enrol_self_check_group_enrolment_key(): void {
         global $DB;
         self::resetAfterTest(true);
 
@@ -989,7 +989,7 @@ class self_test extends \advanced_testcase {
     /**
      * Test get_welcome_email_contact().
      */
-    public function test_get_welcome_email_contact() {
+    public function test_get_welcome_email_contact(): void {
         global $DB;
         self::resetAfterTest(true);
 
@@ -1072,7 +1072,7 @@ class self_test extends \advanced_testcase {
     /**
      * Test for getting user enrolment actions.
      */
-    public function test_get_user_enrolment_actions() {
+    public function test_get_user_enrolment_actions(): void {
         global $CFG, $DB, $PAGE;
         $this->resetAfterTest();
 
@@ -1121,7 +1121,7 @@ class self_test extends \advanced_testcase {
      *
      * @covers ::find_instance
      */
-    public function test_find_instance() {
+    public function test_find_instance(): void {
         global $DB;
         $this->resetAfterTest();
 
@@ -1141,6 +1141,88 @@ class self_test extends \advanced_testcase {
         // The first instance should be returned - due to sorting in enrol_get_instances().
         $actual = $selfplugin->find_instance($enrolmentdata, $course->id);
         $this->assertEquals($instanceid1->id, $actual->id);
+    }
+
+    /**
+     * Test the behaviour of validate_enrol_plugin_data().
+     *
+     * @covers ::validate_enrol_plugin_data
+     */
+    public function test_validate_enrol_plugin_data(): void {
+        global $CFG;
+
+        $this->resetAfterTest();
+
+        // Test in course with groups.
+        $course = self::getDataGenerator()->create_course(['groupmode' => SEPARATEGROUPS, 'groupmodeforce' => 1]);
+
+        $selfplugin = enrol_get_plugin('self');
+
+        $selfplugin->set_config('usepasswordpolicy', false);
+        $enrolmentdata = [];
+        $errors = $selfplugin->validate_enrol_plugin_data($enrolmentdata);
+        $this->assertEmpty($errors);
+
+        // Now enable some controls, and check that the policy responds with policy text.
+        $selfplugin->set_config('usepasswordpolicy', true);
+        $CFG->minpasswordlength = 8;
+        $CFG->minpassworddigits = 1;
+        $CFG->minpasswordlower = 1;
+        $CFG->minpasswordupper = 1;
+        $CFG->minpasswordnonalphanum = 1;
+        $CFG->maxconsecutiveidentchars = 1;
+        $errors = $selfplugin->validate_enrol_plugin_data($enrolmentdata);
+        // If password is omitted it will be autocreated so nothing to validate.
+        $this->assertEmpty($errors);
+
+        $enrolmentdata = ['password' => 'test'];
+        $errors = $selfplugin->validate_enrol_plugin_data($enrolmentdata);
+        $this->assertCount(4, $errors);
+        $this->assertEquals(get_string('errorminpasswordlength', 'auth', $CFG->minpasswordlength), $errors['enrol_self0']);
+        $this->assertEquals(get_string('errorminpassworddigits', 'auth', $CFG->minpassworddigits), $errors['enrol_self1']);
+        $this->assertEquals(get_string('errorminpasswordupper', 'auth', $CFG->minpasswordupper), $errors['enrol_self2']);
+        $this->assertEquals(get_string('errorminpasswordnonalphanum', 'auth', $CFG->minpasswordnonalphanum), $errors['enrol_self3']);
+
+        $enrolmentdata = ['password' => 'Testingtest123@'];
+        $errors = $selfplugin->validate_enrol_plugin_data($enrolmentdata);
+        $this->assertEmpty($errors);
+
+        $this->getDataGenerator()->create_group(['courseid' => $course->id, 'enrolmentkey' => 'Abirvalg123@']);
+        $instance = $selfplugin->find_instance([], $course->id);
+        $instance->customint1 = 1;
+        $selfplugin->update_instance($instance, $instance);
+        $enrolmentdata = ['password' => 'Abirvalg123@'];
+        $errors = $selfplugin->validate_enrol_plugin_data($enrolmentdata, $course->id);
+        $this->assertArrayHasKey('errorpasswordmatchesgroupkey', $errors);
+    }
+
+    /**
+     * Test the behaviour of update_enrol_plugin_data().
+     *
+     * @covers ::update_enrol_plugin_data
+     */
+    public function test_update_enrol_plugin_data(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $manualplugin = enrol_get_plugin('self');
+
+        $admin = get_admin();
+        $this->setUser($admin);
+
+        $enrolmentdata = [];
+
+        $cat = $this->getDataGenerator()->create_category();
+        $course = $this->getDataGenerator()->create_course(['category' => $cat->id, 'shortname' => 'ANON']);
+        $instance = $DB->get_record('enrol', ['courseid' => $course->id, 'enrol' => 'self'], '*', MUST_EXIST);
+
+        $expectedinstance = $instance;
+        $modifiedinstance = $manualplugin->update_enrol_plugin_data($course->id, $enrolmentdata, $instance);
+        $this->assertEquals($expectedinstance, $modifiedinstance);
+
+        $enrolmentdata['password'] = 'test';
+        $expectedinstance->password = 'test';
+        $modifiedinstance = $manualplugin->update_enrol_plugin_data($course->id, $enrolmentdata, $instance);
+        $this->assertEquals($expectedinstance, $modifiedinstance);
     }
 
 }

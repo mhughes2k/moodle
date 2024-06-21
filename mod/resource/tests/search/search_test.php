@@ -46,6 +46,7 @@ class search_test extends \advanced_testcase {
     protected $resourceareaid = null;
 
     public function setUp(): void {
+        parent::setUp();
         $this->resetAfterTest(true);
         set_config('enableglobalsearch', true);
 
@@ -60,7 +61,7 @@ class search_test extends \advanced_testcase {
      *
      * @return void
      */
-    public function test_attach_files() {
+    public function test_attach_files(): void {
         global $USER;
 
         $this->setAdminUser();

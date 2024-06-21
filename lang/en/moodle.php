@@ -262,6 +262,7 @@ $string['changesmadereallygoaway'] = 'You have made changes. Are you sure you wa
 $string['city'] = 'City/town';
 $string['cleaningtempdata'] = 'Cleaning temp data';
 $string['clear'] = 'Clear';
+$string['clearall'] = 'Clear all';
 $string['clearfilterrow'] = 'Remove filter row';
 $string['clearfilters'] = 'Clear filters';
 $string['clearsearch'] = 'Clear search input';
@@ -494,7 +495,6 @@ $string['databaseupgradelocal'] = 'Local database customisations version is now 
 $string['databaseupgrades'] = 'Upgrading database';
 $string['dataformats'] = 'Data formats';
 $string['date'] = 'Date';
-$string['datechanged'] = 'Date changed';
 $string['datemostrecentfirst'] = 'Date - most recent first';
 $string['datemostrecentlast'] = 'Date - most recent last';
 $string['day'] = 'day';
@@ -520,8 +520,8 @@ $string['delete'] = 'Delete';
 $string['deleteablock'] = 'Delete a block';
 $string['deleteall'] = 'Delete all';
 $string['deleteallcannotundo'] = 'Delete all - cannot be undone';
-$string['deleteallcomments'] = 'Delete all comments';
-$string['deleteallratings'] = 'Delete all ratings';
+$string['deleteallcomments'] = 'All comments';
+$string['deleteallratings'] = 'All ratings';
 $string['deletecategory'] = 'Delete category: {$a}';
 $string['deletecategoryempty'] = 'This category is empty.';
 $string['deletecategorycheck'] = 'Are you absolutely sure you want to completely delete this category <b>\'{$a}\'</b>?<br />This will move all courses into the parent category if there is one, or into Miscellaneous.';
@@ -762,7 +762,7 @@ $string['emailresetconfirmation'] = 'Hi {$a->firstname},
 A password reset was requested for your account \'{$a->username}\' at {$a->sitename}.
 
 To confirm this request, and set a new password for your account, please go to the following web address:
-{$a->link}
+<a href="{$a->link}">{$a->link}</a>
 
 (This link is valid for {$a->resetminutes} minutes from the time this reset was first requested.)
 
@@ -968,6 +968,7 @@ $string['general'] = 'General';
 $string['geolocation'] = 'latitude - longitude';
 $string['gettheselogs'] = 'Get these logs';
 $string['go'] = 'Go';
+$string['gobacktosite'] = 'Go back to site';
 $string['gpl'] = 'Copyright (C) 1999 onwards Martin Dougiamas (https://moodle.com)
 
 This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -1863,12 +1864,13 @@ $string['reset'] = 'Reset';
 $string['resetcomponent'] = 'Component';
 $string['resetcourse'] = 'Reset course';
 $string['resetinfo'] = 'Delete all user data and reset this course to its original state, keeping activities and settings intact.';
-$string['resetnotimplemented'] = 'Reset not implemented';
+$string['resetnotimplemented'] = 'Reset not supported';
+$string['resetnotimplementedinfo'] = 'These activities can\'t be reset:';
 $string['resetrecordexpired'] = 'The password reset link you used is more than {$a} minutes old and has expired. Please initiate a new password reset.';
 $string['resetstartdate'] = 'Reset start date';
 $string['resetstatus'] = 'Status';
 $string['resettable'] = 'Reset table preferences';
-$string['resettask'] = 'Task';
+$string['resettask'] = 'Reset';
 $string['resettodefaults'] = 'Reset to defaults';
 $string['resortsubcategoriesby'] = 'Sort subcategories by {$a} ascending';
 $string['resortsubcategoriesbyreverse'] = 'Sort subcategories by {$a} descending';
@@ -2170,6 +2172,7 @@ $string['statswrites'] = 'Posts';
 $string['status'] = 'Status';
 $string['statuschecks'] = 'Status checks';
 $string['statuscritical'] = 'Critical';
+$string['statusdone'] = 'Done';
 $string['statusinfo'] = 'Info';
 $string['statusna'] = 'N/A';
 $string['statusok'] = 'OK';
@@ -2511,3 +2514,6 @@ $string['coursesearch_help'] = 'You can search for multiple words at once and ca
 * word - find any match of this word within the text
 * +word - only exact matching words will be found
 * -word - don\'t include results containing this word.';
+
+// Deprecated since Moodle 4.5.
+$string['datechanged'] = 'Date changed';

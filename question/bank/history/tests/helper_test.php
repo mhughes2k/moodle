@@ -54,6 +54,7 @@ class helper_test extends \advanced_testcase {
      * This is executed before running any test in this file.
      */
     public function setUp(): void {
+        parent::setUp();
         $this->setAdminUser();
         $generator = $this->getDataGenerator();
         $questiongenerator = $generator->get_plugin_generator('core_question');
@@ -75,7 +76,7 @@ class helper_test extends \advanced_testcase {
      *
      * @covers ::question_history_url
      */
-    public function test_question_history_url() {
+    public function test_question_history_url(): void {
         $this->resetAfterTest();
         $filter = urlencode('filters[]');
         $actionurl = helper::question_history_url(
@@ -99,7 +100,7 @@ class helper_test extends \advanced_testcase {
      *
      * @covers ::question_history_url
      */
-    public function test_question_history_url_null_filter() {
+    public function test_question_history_url_null_filter(): void {
         $this->resetAfterTest();
         $actionurl = helper::question_history_url(
             $this->questiondata->questionbankentryid,

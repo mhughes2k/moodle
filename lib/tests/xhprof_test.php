@@ -29,6 +29,7 @@ class xhprof_test extends \advanced_testcase {
     public static function setUpBeforeClass(): void {
         global $CFG;
         require_once($CFG->libdir . '/xhprof/xhprof_moodle.php');
+        parent::setUpBeforeClass();
     }
 
     /**
@@ -72,7 +73,7 @@ class xhprof_test extends \advanced_testcase {
      * @param   string $patterns
      * @param   bool   $expected
      */
-    public function test_profiling_string_matches($string, $patterns, $expected) {
+    public function test_profiling_string_matches($string, $patterns, $expected): void {
         $result = profiling_string_matches($string, $patterns);
         $this->assertSame($result, $expected);
     }
@@ -173,7 +174,7 @@ class xhprof_test extends \advanced_testcase {
      * @param array $rundata The run data to be sorted.
      * @param array $expectations The expected results.
      */
-    public function test_xhprof_topo_sort(array $rundata, array $expectations) {
+    public function test_xhprof_topo_sort(array $rundata, array $expectations): void {
         // Make sure all the examples in the provider are the same size.
         $this->assertSame($expectations['topocount'], count($rundata));
 
@@ -217,7 +218,7 @@ class xhprof_test extends \advanced_testcase {
      * @param array $rundata The run data to be reduced.
      * @param array $expectations The expected results.
      */
-    public function test_reduce_run_data(array $rundata, array $expectations) {
+    public function test_reduce_run_data(array $rundata, array $expectations): void {
         // Make sure that the expected keys that will be removed are present.
         foreach ($expectations['reduceremoved'] as $key) {
             $this->assertArrayHasKey($key, $rundata);

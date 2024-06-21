@@ -1415,6 +1415,7 @@ function quiz_questions_in_use($questionids) {
  */
 function quiz_reset_course_form_definition($mform) {
     $mform->addElement('header', 'quizheader', get_string('modulenameplural', 'quiz'));
+    $mform->addElement('static', 'quizdelete', get_string('delete'));
     $mform->addElement('advcheckbox', 'reset_quiz_attempts',
             get_string('removeallquizattempts', 'quiz'));
     $mform->addElement('advcheckbox', 'reset_quiz_user_overrides',
@@ -1482,7 +1483,7 @@ function quiz_reset_userdata($data) {
                 'quiz IN (SELECT id FROM {quiz} WHERE course = ?)', [$data->courseid]);
         $status[] = [
             'component' => $componentstr,
-            'item' => get_string('attemptsdeleted', 'quiz'),
+            'item' => get_string('removeallquizattempts', 'quiz'),
             'error' => false];
 
         // Remove all grades from gradebook.
@@ -1493,7 +1494,7 @@ function quiz_reset_userdata($data) {
         }
         $status[] = [
             'component' => $componentstr,
-            'item' => get_string('gradesdeleted', 'quiz'),
+            'item' => get_string('grades'),
             'error' => false];
     }
 
@@ -1505,7 +1506,7 @@ function quiz_reset_userdata($data) {
                 'quiz IN (SELECT id FROM {quiz} WHERE course = ?) AND userid IS NOT NULL', [$data->courseid]);
         $status[] = [
             'component' => $componentstr,
-            'item' => get_string('useroverridesdeleted', 'quiz'),
+            'item' => get_string('useroverrides', 'quiz'),
             'error' => false];
         $purgeoverrides = true;
     }
@@ -1515,7 +1516,7 @@ function quiz_reset_userdata($data) {
                 'quiz IN (SELECT id FROM {quiz} WHERE course = ?) AND groupid IS NOT NULL', [$data->courseid]);
         $status[] = [
             'component' => $componentstr,
-            'item' => get_string('groupoverridesdeleted', 'quiz'),
+            'item' => get_string('groupoverrides', 'quiz'),
             'error' => false];
         $purgeoverrides = true;
     }
@@ -2405,6 +2406,9 @@ function mod_quiz_output_fragment_add_random_question_form($args) {
         'questioncategoryoptions' => $catoptions,
     ];
 
+    $helpicon = new \help_icon('parentcategory', 'question');
+    $data['questioncategoryhelp'] = $helpicon->export_for_template($renderer);
+
     $result = $OUTPUT->render_from_template('mod_quiz/add_random_question_form', $data);
 
     return $result;
@@ -2434,24 +2438,24 @@ function mod_quiz_core_calendar_get_event_action_string(string $eventtype): stri
 }
 
 /**
- * Delete question reference data.
+ * Delete all question references for a quiz.
  *
  * @param int $quizid The id of quiz.
  */
 function quiz_delete_references($quizid): void {
     global $DB;
-    $slots = $DB->get_records('quiz_slots', ['quizid' => $quizid]);
-    foreach ($slots as $slot) {
-        $params = [
-            'itemid' => $slot->id,
-            'component' => 'mod_quiz',
-            'questionarea' => 'slot'
-        ];
-        // Delete any set references.
-        $DB->delete_records('question_set_references', $params);
-        // Delete any references.
-        $DB->delete_records('question_references', $params);
-    }
+
+    $cm = get_coursemodule_from_instance('quiz', $quizid);
+    $context = context_module::instance($cm->id);
+
+    $conditions = [
+        'usingcontextid' => $context->id,
+        'component' => 'mod_quiz',
+        'questionarea' => 'slot',
+    ];
+
+    $DB->delete_records('question_references', $conditions);
+    $DB->delete_records('question_set_references', $conditions);
 }
 
 /**

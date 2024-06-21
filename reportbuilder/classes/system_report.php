@@ -20,6 +20,7 @@ namespace core_reportbuilder;
 
 use action_menu_filler;
 use coding_exception;
+use core_reportbuilder\exception\report_access_exception;
 use html_writer;
 use stdClass;
 use core\output\checkbox_toggleall;
@@ -123,8 +124,6 @@ abstract class system_report extends base {
 
     /**
      * Add list of fields that have to be always included in SQL query for actions and row classes
-     *
-     * Base fields are only available in system reports because they are not compatible with aggregation
      *
      * @param string $sql SQL clause for the list of fields that only uses main table or base joins
      */

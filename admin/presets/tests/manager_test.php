@@ -30,6 +30,15 @@ use stdClass;
  */
 class manager_test extends \advanced_testcase {
     /**
+     * Include required libraries.
+     */
+    public static function setUpBeforeClass(): void {
+        global $CFG;
+        require_once($CFG->libdir.'/adminlib.php');
+        parent::setUpBeforeClass();
+    }
+
+    /**
      * Test the behaviour of protected get_site_settings method.
      *
      * @covers ::get_site_settings

@@ -34,6 +34,7 @@ require_once("{$CFG->dirroot}/iplookup/lib.php");
  */
 class geoip_test extends \advanced_testcase {
     public function setUp(): void {
+        parent::setUp();
         $this->resetAfterTest();
     }
 
@@ -51,7 +52,7 @@ class geoip_test extends \advanced_testcase {
      * @dataProvider ip_provider
      * @param   string  $ip The IP to test
      */
-    public function test_ip($ip) {
+    public function test_ip($ip): void {
         $this->setup_geoip2file();
 
         // Note: The results we get from the iplookup tests are beyond our control.

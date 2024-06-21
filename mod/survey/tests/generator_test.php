@@ -30,12 +30,13 @@ class generator_test extends \advanced_testcase {
      * Setup testcase.
      */
     public function setUp(): void {
+        parent::setUp();
         // Survey module is disabled by default, enable it for testing.
         $manager = \core_plugin_manager::resolve_plugininfo_class('mod');
         $manager::enable_plugin('survey', 1);
     }
 
-    public function test_create_instance() {
+    public function test_create_instance(): void {
         global $DB;
         $this->resetAfterTest();
         $this->setAdminUser();
@@ -55,7 +56,7 @@ class generator_test extends \advanced_testcase {
         $this->assertEquals('Another survey', $records[$survey->id]->name);
     }
 
-    public function test_create_instance_with_template() {
+    public function test_create_instance_with_template(): void {
         global $DB;
         $this->resetAfterTest();
         $this->setAdminUser();

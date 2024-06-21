@@ -36,13 +36,14 @@ namespace mod_glossary\event;
 class events_test extends \advanced_testcase {
 
     public function setUp(): void {
+        parent::setUp();
         $this->resetAfterTest();
     }
 
     /**
      * Test comment_created event.
      */
-    public function test_comment_created() {
+    public function test_comment_created(): void {
         global $CFG;
         require_once($CFG->dirroot . '/comment/lib.php');
 
@@ -84,7 +85,7 @@ class events_test extends \advanced_testcase {
     /**
      * Test comment_deleted event.
      */
-    public function test_comment_deleted() {
+    public function test_comment_deleted(): void {
         global $CFG;
         require_once($CFG->dirroot . '/comment/lib.php');
 
@@ -124,7 +125,7 @@ class events_test extends \advanced_testcase {
         $this->assertEventContextNotUsed($event);
     }
 
-    public function test_course_module_viewed() {
+    public function test_course_module_viewed(): void {
         global $DB;
         // There is no proper API to call to trigger this event, so what we are
         // doing here is simply making sure that the events returns the right information.
@@ -162,7 +163,7 @@ class events_test extends \advanced_testcase {
         $this->assertEventContextNotUsed($event);
     }
 
-    public function test_course_module_instance_list_viewed() {
+    public function test_course_module_instance_list_viewed(): void {
         // There is no proper API to call to trigger this event, so what we are
         // doing here is simply making sure that the events returns the right information.
 
@@ -186,7 +187,7 @@ class events_test extends \advanced_testcase {
         $this->assertEventContextNotUsed($event);
     }
 
-    public function test_entry_created() {
+    public function test_entry_created(): void {
         // There is no proper API to call to trigger this event, so what we are
         // doing here is simply making sure that the events returns the right information.
 
@@ -219,7 +220,7 @@ class events_test extends \advanced_testcase {
         $this->assertEventContextNotUsed($event);
     }
 
-    public function test_entry_updated() {
+    public function test_entry_updated(): void {
         // There is no proper API to call to trigger this event, so what we are
         // doing here is simply making sure that the events returns the right information.
 
@@ -252,7 +253,7 @@ class events_test extends \advanced_testcase {
         $this->assertEventContextNotUsed($event);
     }
 
-    public function test_entry_deleted() {
+    public function test_entry_deleted(): void {
         global $DB;
         // There is no proper API to call to trigger this event, so what we are
         // doing here is simply making sure that the events returns the right information.
@@ -294,7 +295,7 @@ class events_test extends \advanced_testcase {
         $this->assertEventContextNotUsed($event);
     }
 
-    public function test_category_created() {
+    public function test_category_created(): void {
         global $DB;
         // There is no proper API to call to trigger this event, so what we are
         // doing here is simply making sure that the events returns the right information.
@@ -372,7 +373,7 @@ class events_test extends \advanced_testcase {
         $this->assertEventContextNotUsed($event);
     }
 
-    public function test_entry_approved() {
+    public function test_entry_approved(): void {
         global $DB;
         // There is no proper API to call to trigger this event, so what we are
         // doing here is simply making sure that the events returns the right information.
@@ -448,7 +449,7 @@ class events_test extends \advanced_testcase {
         $this->assertEventContextNotUsed($event);
     }
 
-    public function test_entry_viewed() {
+    public function test_entry_viewed(): void {
         // There is no proper API to call to trigger this event, so what we are
         // doing here is simply making sure that the events returns the right information.
 

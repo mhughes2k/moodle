@@ -417,9 +417,9 @@ if (($mode == 'new') && (!empty($newtype))) { // Adding a new field.
             $OUTPUT->render_from_template('core/action_menu', $actionmenutemplate)
         ];
 
-        if (!empty($missingfieldtypes)) {
-            echo $OUTPUT->notification(get_string('missingfieldtypes', 'data') . html_writer::alist($missingfieldtypes));
-        }
+    }
+    if (!empty($missingfieldtypes)) {
+        echo $OUTPUT->notification(get_string('missingfieldtypes', 'data') . html_writer::alist($missingfieldtypes));
     }
     echo html_writer::table($table);
 
@@ -469,9 +469,6 @@ if (($mode == 'new') && (!empty($newtype))) { // Adding a new field.
     echo '<input type="submit" class="btn btn-secondary ml-1" value="'.get_string('save', 'data').'" />';
     echo '</div>';
     echo '</form>';
-
-    // Add a sticky footer.
-    echo $renderer->render_fields_footer($manager);
 
     echo '</div>';
 }

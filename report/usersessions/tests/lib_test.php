@@ -54,6 +54,7 @@ class lib_test extends \advanced_testcase {
     private $tree;
 
     public function setUp(): void {
+        parent::setUp();
         $this->user = $this->getDataGenerator()->create_user();
         $this->course = $this->getDataGenerator()->create_course();
         $this->tree = new \core_user\output\myprofile\tree();
@@ -63,7 +64,7 @@ class lib_test extends \advanced_testcase {
     /**
      * Tests the report_userssesions_myprofile_navigation() function as an admin.
      */
-    public function test_report_usersessions_myprofile_navigation_as_admin() {
+    public function test_report_usersessions_myprofile_navigation_as_admin(): void {
         $this->setAdminUser();
         $iscurrentuser = false;
 
@@ -77,7 +78,7 @@ class lib_test extends \advanced_testcase {
     /**
      * Tests the report_userssesions_myprofile_navigation() function as the currently logged in user.
      */
-    public function test_report_usersessions_myprofile_navigation_as_current_user() {
+    public function test_report_usersessions_myprofile_navigation_as_current_user(): void {
         $this->setUser($this->user);
         $iscurrentuser = true;
 
@@ -90,7 +91,7 @@ class lib_test extends \advanced_testcase {
     /**
      * Tests the report_userssesions_myprofile_navigation() function as a guest.
      */
-    public function test_report_usersessions_myprofile_navigation_as_guest() {
+    public function test_report_usersessions_myprofile_navigation_as_guest(): void {
         $this->setGuestUser();
         $iscurrentuser = true;
 
@@ -103,7 +104,7 @@ class lib_test extends \advanced_testcase {
     /**
      * Tests the report_userssesions_myprofile_navigation() function as a user without permission.
      */
-    public function test_report_usersessions_myprofile_navigation_without_permission() {
+    public function test_report_usersessions_myprofile_navigation_without_permission(): void {
         // Try to see as a user without permission.
         $user2 = $this->getDataGenerator()->create_user();
         $this->setUser($user2);

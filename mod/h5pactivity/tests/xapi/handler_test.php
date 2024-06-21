@@ -43,6 +43,7 @@ class handler_test extends \advanced_testcase {
     public static function setUpBeforeClass(): void {
         global $CFG;
         require_once($CFG->dirroot.'/lib/xapi/tests/helper.php');
+        parent::setUpBeforeClass();
     }
 
     /**
@@ -79,7 +80,7 @@ class handler_test extends \advanced_testcase {
     /**
      * Test for xapi_handler with valid statements.
      */
-    public function test_xapi_handler() {
+    public function test_xapi_handler(): void {
         global $DB;
 
         $data = $this->generate_testing_scenario();
@@ -141,7 +142,7 @@ class handler_test extends \advanced_testcase {
      * @param bool $generateattempt if generates an empty attempt
      */
     public function test_xapi_handler_errors(bool $hasverb, bool $hasdefinition, bool $hasresult,
-            bool $hascontext, bool $hasuser, bool $generateattempt) {
+            bool $hascontext, bool $hasuser, bool $generateattempt): void {
         global $DB, $CFG;
 
         $data = $this->generate_testing_scenario();
@@ -286,7 +287,7 @@ class handler_test extends \advanced_testcase {
     /**
      * Test xapi_handler stored statements.
      */
-    public function test_stored_statements() {
+    public function test_stored_statements(): void {
         global $DB;
 
         $data = $this->generate_testing_scenario();

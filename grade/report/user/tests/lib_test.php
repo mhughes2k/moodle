@@ -53,6 +53,7 @@ class lib_test extends \advanced_testcase {
     private $tree;
 
     public function setUp(): void {
+        parent::setUp();
         $this->user = $this->getDataGenerator()->create_user();
         $this->course = $this->getDataGenerator()->create_course();
         $this->tree = new \core_user\output\myprofile\tree();
@@ -62,7 +63,7 @@ class lib_test extends \advanced_testcase {
     /**
      * Tests the gradereport_user_myprofile_navigation() function.
      */
-    public function test_gradereport_user_myprofile_navigation() {
+    public function test_gradereport_user_myprofile_navigation(): void {
         $this->setAdminUser();
         $iscurrentuser = false;
 
@@ -76,7 +77,7 @@ class lib_test extends \advanced_testcase {
      * Tests the gradereport_user_myprofile_navigation() function for a user
      * without permission to view the grade node.
      */
-    public function test_gradereport_user_myprofile_navigation_without_permission() {
+    public function test_gradereport_user_myprofile_navigation_without_permission(): void {
         $this->setUser($this->user);
         $iscurrentuser = true;
 

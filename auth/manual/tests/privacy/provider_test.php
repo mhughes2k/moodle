@@ -47,6 +47,7 @@ class provider_test extends \core_privacy\tests\provider_testcase {
      * Basic setup for these tests.
      */
     public function setUp(): void {
+        parent::setUp();
         $this->resetAfterTest(true);
         $this->authplugin = new \auth_plugin_manual();
     }
@@ -55,7 +56,7 @@ class provider_test extends \core_privacy\tests\provider_testcase {
      * Test to check export_user_preferences.
      * returns user preferences data.
      */
-    public function test_export_user_preferences() {
+    public function test_export_user_preferences(): void {
         $user = $this->getDataGenerator()->create_user();
         $this->authplugin->user_update_password($user, 'MyPrivacytestPassword*');
 

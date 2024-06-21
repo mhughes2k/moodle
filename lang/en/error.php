@@ -483,6 +483,7 @@ $string['nostartdatenoenddate'] = 'A course end date can only be set if a start 
 $string['nostatstodisplay'] = 'Sorry, there is no available data to display';
 $string['notallowedtoupdateprefremotely'] = 'You are not allowed to update this user preference remotely';
 $string['notavailable'] = 'That is not currently available';
+$string['notfound'] = 'Not found';
 $string['notlocalisederrormessage'] = '{$a}';
 $string['notmemberofgroup'] = 'You are not a member of this course group';
 $string['notownerofkey'] = 'You are not owner of this key';
@@ -503,6 +504,7 @@ $string['pagenotexist'] = '<p>An unusual error occurred trying to view a page th
 $string['passwordexceeded'] = 'The password can\'t be more than {$a} characters.';
 $string['pathdoesnotstartslash'] = 'No valid arguments supplied, path does not start with slash!';
 $string['pleasereport'] = 'If you have time, please let us know what you were trying to do when the error occurred:';
+$string['pluginnotexist'] = '{$a} plugin doesn\'t exist';
 $string['pluginrequirementsnotmet'] = 'Plugin "{$a->pluginname}" ({$a->pluginversion}) could not be installed.  It requires a newer version of Moodle (currently you are using {$a->currentmoodle}, you need {$a->requiremoodle}).';
 $string['pluginunsupported'] = 'Plugin "{$a->pluginname}" {$a->pluginversion} does not support this version of Moodle {$a->moodleversion}. Seek plugin information to find supported versions.';
 $string['prefixcannotbeempty'] = '<p>Error: database table prefix cannot be empty ({$a})</p>
@@ -529,6 +531,7 @@ $string['restricteduser'] = 'Sorry, but your current account "{$a}" is restricte
 $string['reverseproxyabused'] = 'Reverse proxy enabled so the server cannot be accessed directly.<br />Please contact the server administrator.';
 $string['rpcerror'] = 'Ooops! Your MNET communication has failed! Here\'s that error message to pass on to your administrator: {$a}';
 $string['secretalreadyused'] = 'Change password confirmation link was already used, password was not changed';
+$string['sectioncantbefound'] = '<p><strong>This content can\'t be found.</strong></p><p>It may have been deleted, or the URL may be incorrect.</p>';
 $string['sectionnotexist'] = 'This section does not exist';
 $string['sendmessage'] = 'Send message';
 $string['sendmessagesent'] = 'Thanks for your feedback about:<br>{$a}';
@@ -647,9 +650,6 @@ $string['xmldberror'] = 'XMLDB error!';
 $string['alreadyloggedin'] = 'You are already logged in as {$a}, you need to log out before logging in as different user.';
 $string['youcannotdeletecategory'] = 'You cannot delete category \'{$a}\' because you can neither delete the contents, nor move them elsewhere.';
 $string['protected_cc_not_supported'] = 'Protected cartridges not supported.';
-
-// Deprecated since Moodle 4.1.
-$string['cannotswitcheditmodeon'] = 'Could not switch edit mode on';
 
 // Deprecated since Moodle 4.3.
 $string['prefixtoolong'] = '<p>Error: database table prefix is too long ({$a->dbfamily})</p>

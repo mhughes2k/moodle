@@ -37,18 +37,20 @@ class question_type_test extends \basic_testcase {
     protected $qtype;
 
     protected function setUp(): void {
+        parent::setUp();
         $this->qtype = question_bank::get_qtype('ddimageortext');;
     }
 
     protected function tearDown(): void {
         $this->qtype = null;
+        parent::tearDown();
     }
 
-    public function test_name() {
+    public function test_name(): void {
         $this->assertEquals($this->qtype->name(), 'ddimageortext');
     }
 
-    public function test_can_analyse_responses() {
+    public function test_can_analyse_responses(): void {
         $this->assertTrue($this->qtype->can_analyse_responses());
     }
 }

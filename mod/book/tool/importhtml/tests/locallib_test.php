@@ -40,10 +40,11 @@ require_once($CFG->dirroot.'/mod/book/tool/importhtml/locallib.php');
 class locallib_test extends \advanced_testcase {
 
     public function setUp(): void {
+        parent::setUp();
         $this->resetAfterTest();
     }
 
-    public function test_import_chapters_events() {
+    public function test_import_chapters_events(): void {
         $course = $this->getDataGenerator()->create_course();
         $book = $this->getDataGenerator()->create_module('book', array('course' => $course->id));
         $context = \context_module::instance($book->cmid);

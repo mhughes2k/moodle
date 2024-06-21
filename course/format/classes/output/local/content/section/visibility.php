@@ -105,6 +105,7 @@ class visibility implements named_templatable, renderable {
         $baseurl = course_get_url($this->section->course, $this->section);
         $baseurl->param('sesskey', sesskey());
         $baseurl->param($action,  $this->section->section);
+
         return [
             'description' => get_string("availability_{$name}_help", 'core_courseformat'),
             'icon' => $this->get_icon($name),

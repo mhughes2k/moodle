@@ -52,6 +52,7 @@ class course_enrolment_manager_test extends \advanced_testcase {
     protected function setUp(): void {
         global $CFG;
         require_once($CFG->dirroot . '/enrol/locallib.php');
+        parent::setUp();
         $this->setAdminUser();
 
         $users = array();
@@ -118,7 +119,7 @@ class course_enrolment_manager_test extends \advanced_testcase {
     /**
      * Verify get_total_users() returned number of users expected in every situation.
      */
-    public function test_get_total_users() {
+    public function test_get_total_users(): void {
         global $PAGE;
 
         $this->resetAfterTest();
@@ -172,7 +173,7 @@ class course_enrolment_manager_test extends \advanced_testcase {
     /**
      * Verify get_users() returned number of users expected in every situation.
      */
-    public function test_get_users() {
+    public function test_get_users(): void {
         global $PAGE;
 
         $this->resetAfterTest();
@@ -270,7 +271,7 @@ class course_enrolment_manager_test extends \advanced_testcase {
     /**
      * Checks that the get_users function returns the correct user fields.
      */
-    public function test_get_users_fields() {
+    public function test_get_users_fields(): void {
         global $PAGE;
 
         $this->resetAfterTest();
@@ -302,7 +303,7 @@ class course_enrolment_manager_test extends \advanced_testcase {
     /**
      * Checks that the get_other_users function returns the correct user fields.
      */
-    public function test_get_other_users_fields() {
+    public function test_get_other_users_fields(): void {
         global $PAGE, $DB;
 
         $this->resetAfterTest();
@@ -336,7 +337,7 @@ class course_enrolment_manager_test extends \advanced_testcase {
     /**
      * Checks that the get_potential_users function returns the correct user fields.
      */
-    public function test_get_potential_users_fields() {
+    public function test_get_potential_users_fields(): void {
         global $PAGE;
 
         $this->resetAfterTest();
@@ -381,7 +382,7 @@ class course_enrolment_manager_test extends \advanced_testcase {
      * @param int $expectedtotalusers Expected total of users in database.
      * @param bool $expectedmoreusers Expected for more users return or not.
      */
-    public function test_get_potential_users($perpage, $returnexactcount, $expectedusers, $expectedtotalusers, $expectedmoreusers) {
+    public function test_get_potential_users($perpage, $returnexactcount, $expectedusers, $expectedtotalusers, $expectedmoreusers): void {
         global $DB, $PAGE;
         $this->resetAfterTest();
         $this->setAdminUser();
@@ -409,7 +410,7 @@ class course_enrolment_manager_test extends \advanced_testcase {
     /**
      * Tests get_potential_users when the search term includes a custom field.
      */
-    public function test_get_potential_users_search_fields() {
+    public function test_get_potential_users_search_fields(): void {
         global $PAGE;
 
         $this->resetAfterTest();
@@ -475,7 +476,7 @@ class course_enrolment_manager_test extends \advanced_testcase {
      * @param int $expectedtotalusers Expected total of users in database.
      * @param bool $expectedmoreusers Expected for more users return or not.
      */
-    public function test_search_other_users($perpage, $returnexactcount, $expectedusers, $expectedtotalusers, $expectedmoreusers) {
+    public function test_search_other_users($perpage, $returnexactcount, $expectedusers, $expectedtotalusers, $expectedmoreusers): void {
         global $PAGE;
         $this->resetAfterTest();
         $this->setAdminUser();
@@ -523,7 +524,7 @@ class course_enrolment_manager_test extends \advanced_testcase {
      * @param int $expectedtotalusers Expected total of users in database.
      * @param bool $expectedmoreusers Expected for more users return or not.
      */
-    public function test_search_users($perpage, $returnexactcount, $expectedusers, $expectedtotalusers, $expectedmoreusers) {
+    public function test_search_users($perpage, $returnexactcount, $expectedusers, $expectedtotalusers, $expectedmoreusers): void {
         global $PAGE;
         $this->resetAfterTest();
 

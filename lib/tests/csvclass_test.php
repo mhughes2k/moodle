@@ -41,6 +41,7 @@ class csvclass_test extends \advanced_testcase {
     protected $teststring4 = '';
 
     protected function setUp(): void {
+        parent::setUp();
 
         $this->resetAfterTest();
 
@@ -82,7 +83,7 @@ class csvclass_test extends \advanced_testcase {
 ';
     }
 
-    public function test_csv_functions() {
+    public function test_csv_functions(): void {
         global $CFG;
         $csvexport = new csv_export_writer();
         $csvexport->set_filename('unittest');

@@ -36,6 +36,7 @@ class subscription_test extends \advanced_testcase {
      * Test set up.
      */
     public function setUp(): void {
+        parent::setUp();
         $this->resetAfterTest(true);
 
         // Create the mock subscription.
@@ -52,7 +53,7 @@ class subscription_test extends \advanced_testcase {
     /**
      * Test for the magic __isset method.
      */
-    public function test_magic_isset() {
+    public function test_magic_isset(): void {
         $this->assertEquals(true, isset($this->subscription->name));
         $this->assertEquals(true, isset($this->subscription->courseid));
         $this->assertEquals(false, isset($this->subscription->ruleid));
@@ -61,7 +62,7 @@ class subscription_test extends \advanced_testcase {
     /**
      * Test for the magic __get method.
      */
-    public function test_magic_get() {
+    public function test_magic_get(): void {
         $this->assertEquals(20, $this->subscription->courseid);
         $this->expectException(\coding_exception::class);
         $this->subscription->ruleid;

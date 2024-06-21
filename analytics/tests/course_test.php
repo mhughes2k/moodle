@@ -54,6 +54,7 @@ class course_test extends \advanced_testcase {
 
     public function setUp(): void {
         global $DB;
+        parent::setUp();
 
         $this->course = $this->getDataGenerator()->create_course(['startdate' => 0]);
         $this->stu1 = $this->getDataGenerator()->create_user();
@@ -77,7 +78,7 @@ class course_test extends \advanced_testcase {
     /**
      * Users tests.
      */
-    public function test_users() {
+    public function test_users(): void {
         global $DB;
 
         $this->resetAfterTest(true);
@@ -97,7 +98,7 @@ class course_test extends \advanced_testcase {
      *
      * @return void
      */
-    public function test_course_validation() {
+    public function test_course_validation(): void {
         global $DB;
 
         $this->resetAfterTest(true);

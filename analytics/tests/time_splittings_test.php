@@ -47,6 +47,7 @@ class time_splittings_test extends \advanced_testcase {
      * @return void
      */
     public function setUp(): void {
+        parent::setUp();
 
         $this->resetAfterTest(true);
 
@@ -64,7 +65,7 @@ class time_splittings_test extends \advanced_testcase {
      *
      * @return void
      */
-    public function test_valid_ranges() {
+    public function test_valid_ranges(): void {
 
         // All core time splitting methods.
         $timesplittings = array(
@@ -89,7 +90,7 @@ class time_splittings_test extends \advanced_testcase {
      *
      * @return void
      */
-    public function test_range_dates() {
+    public function test_range_dates(): void {
 
         $nov2015 = mktime(0, 0, 0, 11, 24, 2015);
         $aug2016 = mktime(0, 0, 0, 8, 29, 2016);
@@ -158,7 +159,7 @@ class time_splittings_test extends \advanced_testcase {
      *
      * @return void
      */
-    public function test_ready_predict() {
+    public function test_ready_predict(): void {
 
         $quarters = new \core\analytics\time_splitting\quarters();
         $nosplitting = new \core\analytics\time_splitting\no_splitting();
@@ -194,7 +195,7 @@ class time_splittings_test extends \advanced_testcase {
      *
      * @return void
      */
-    public function test_periodic() {
+    public function test_periodic(): void {
 
         // Using a finished course.
 

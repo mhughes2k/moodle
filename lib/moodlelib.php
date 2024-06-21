@@ -4549,55 +4549,71 @@ function get_complete_user_data($field, $value, $mnethostid = null, $throwexcept
  * Validate a password against the configured password policy
  *
  * @param string $password the password to be checked against the password policy
- * @param string $errmsg the error message to display when the password doesn't comply with the policy.
- * @param stdClass $user the user object to perform password validation against. Defaults to null if not provided.
+ * @param string|null $errmsg the error message to display when the password doesn't comply with the policy.
+ * @param stdClass|null $user the user object to perform password validation against. Defaults to null if not provided.
  *
  * @return bool true if the password is valid according to the policy. false otherwise.
  */
-function check_password_policy($password, &$errmsg, $user = null) {
+function check_password_policy(string $password, ?string &$errmsg, ?stdClass $user = null) {
+    global $CFG;
+    if (!empty($CFG->passwordpolicy) && !isguestuser($user)) {
+        $errors = get_password_policy_errors($password, $user);
+
+        foreach ($errors as $error) {
+            $errmsg .= '<div>' . $error . '</div>';
+        }
+    }
+
+    return $errmsg == '';
+}
+
+/**
+ * Validate a password against the configured password policy.
+ * Note: This function is unaffected by whether the password policy is enabled or not.
+ *
+ * @param string $password the password to be checked against the password policy
+ * @param stdClass|null $user the user object to perform password validation against. Defaults to null if not provided.
+ *
+ * @return string[] Array of error messages.
+ */
+function get_password_policy_errors(string $password, ?stdClass $user = null) : array {
     global $CFG;
 
-    if (!empty($CFG->passwordpolicy) && !isguestuser($user)) {
-        $errmsg = '';
-        if (core_text::strlen($password) < $CFG->minpasswordlength) {
-            $errmsg .= '<div>'. get_string('errorminpasswordlength', 'auth', $CFG->minpasswordlength) .'</div>';
-        }
-        if (preg_match_all('/[[:digit:]]/u', $password, $matches) < $CFG->minpassworddigits) {
-            $errmsg .= '<div>'. get_string('errorminpassworddigits', 'auth', $CFG->minpassworddigits) .'</div>';
-        }
-        if (preg_match_all('/[[:lower:]]/u', $password, $matches) < $CFG->minpasswordlower) {
-            $errmsg .= '<div>'. get_string('errorminpasswordlower', 'auth', $CFG->minpasswordlower) .'</div>';
-        }
-        if (preg_match_all('/[[:upper:]]/u', $password, $matches) < $CFG->minpasswordupper) {
-            $errmsg .= '<div>'. get_string('errorminpasswordupper', 'auth', $CFG->minpasswordupper) .'</div>';
-        }
-        if (preg_match_all('/[^[:upper:][:lower:][:digit:]]/u', $password, $matches) < $CFG->minpasswordnonalphanum) {
-            $errmsg .= '<div>'. get_string('errorminpasswordnonalphanum', 'auth', $CFG->minpasswordnonalphanum) .'</div>';
-        }
-        if (!check_consecutive_identical_characters($password, $CFG->maxconsecutiveidentchars)) {
-            $errmsg .= '<div>'. get_string('errormaxconsecutiveidentchars', 'auth', $CFG->maxconsecutiveidentchars) .'</div>';
-        }
+    $errors = [];
 
-        // Fire any additional password policy functions from plugins.
-        // Plugin functions should output an error message string or empty string for success.
-        $pluginsfunction = get_plugins_with_function('check_password_policy');
-        foreach ($pluginsfunction as $plugintype => $plugins) {
-            foreach ($plugins as $pluginfunction) {
-                $pluginerr = $pluginfunction($password, $user);
-                if ($pluginerr) {
-                    $errmsg .= '<div>'. $pluginerr .'</div>';
-                }
+    if (core_text::strlen($password) < $CFG->minpasswordlength) {
+        $errors[] = get_string('errorminpasswordlength', 'auth', $CFG->minpasswordlength);
+    }
+    if (preg_match_all('/[[:digit:]]/u', $password, $matches) < $CFG->minpassworddigits) {
+        $errors[] = get_string('errorminpassworddigits', 'auth', $CFG->minpassworddigits);
+    }
+    if (preg_match_all('/[[:lower:]]/u', $password, $matches) < $CFG->minpasswordlower) {
+        $errors[] = get_string('errorminpasswordlower', 'auth', $CFG->minpasswordlower);
+    }
+    if (preg_match_all('/[[:upper:]]/u', $password, $matches) < $CFG->minpasswordupper) {
+        $errors[] = get_string('errorminpasswordupper', 'auth', $CFG->minpasswordupper);
+    }
+    if (preg_match_all('/[^[:upper:][:lower:][:digit:]]/u', $password, $matches) < $CFG->minpasswordnonalphanum) {
+        $errors[] = get_string('errorminpasswordnonalphanum', 'auth', $CFG->minpasswordnonalphanum);
+    }
+    if (!check_consecutive_identical_characters($password, $CFG->maxconsecutiveidentchars)) {
+        $errors[] = get_string('errormaxconsecutiveidentchars', 'auth', $CFG->maxconsecutiveidentchars);
+    }
+
+    // Fire any additional password policy functions from plugins.
+    // Plugin functions should output an error message string or empty string for success.
+    $pluginsfunction = get_plugins_with_function('check_password_policy');
+    foreach ($pluginsfunction as $plugintype => $plugins) {
+        foreach ($plugins as $pluginfunction) {
+            $pluginerr = $pluginfunction($password, $user);
+            if ($pluginerr) {
+                $errors[] = $pluginerr;
             }
         }
     }
 
-    if ($errmsg == '') {
-        return true;
-    } else {
-        return false;
-    }
+    return $errors;
 }
-
 
 /**
  * When logging in, this function is run to set certain preferences for the current SESSION.
@@ -5097,7 +5113,7 @@ function reset_course_userdata($data) {
             \completion_criteria_date::update_date($data->courseid, $data->timeshift);
         }
 
-        $status[] = array('component' => $componentstr, 'item' => get_string('datechanged'), 'error' => false);
+        $status[] = ['component' => $componentstr, 'item' => get_string('date'), 'error' => false];
     }
 
     if (!empty($data->reset_end_date)) {
@@ -7276,87 +7292,6 @@ class emoticon_manager {
             'altcomponent'   => $altcomponent,
         );
     }
-}
-
-// ENCRYPTION.
-
-/**
- * rc4encrypt
- *
- * @param string $data        Data to encrypt.
- * @return string             The now encrypted data.
- */
-function rc4encrypt($data) {
-    return endecrypt(get_site_identifier(), $data, '');
-}
-
-/**
- * rc4decrypt
- *
- * @param string $data        Data to decrypt.
- * @return string             The now decrypted data.
- */
-function rc4decrypt($data) {
-    return endecrypt(get_site_identifier(), $data, 'de');
-}
-
-/**
- * Based on a class by Mukul Sabharwal [mukulsabharwal @ yahoo.com]
- *
- * @todo Finish documenting this function
- *
- * @param string $pwd The password to use when encrypting or decrypting
- * @param string $data The data to be decrypted/encrypted
- * @param string $case Either 'de' for decrypt or '' for encrypt
- * @return string
- */
-function endecrypt ($pwd, $data, $case) {
-
-    if ($case == 'de') {
-        $data = urldecode($data);
-    }
-
-    $key[] = '';
-    $box[] = '';
-    $pwdlength = strlen($pwd);
-
-    for ($i = 0; $i <= 255; $i++) {
-        $key[$i] = ord(substr($pwd, ($i % $pwdlength), 1));
-        $box[$i] = $i;
-    }
-
-    $x = 0;
-
-    for ($i = 0; $i <= 255; $i++) {
-        $x = ($x + $box[$i] + $key[$i]) % 256;
-        $tempswap = $box[$i];
-        $box[$i] = $box[$x];
-        $box[$x] = $tempswap;
-    }
-
-    $cipher = '';
-
-    $a = 0;
-    $j = 0;
-
-    for ($i = 0; $i < strlen($data); $i++) {
-        $a = ($a + 1) % 256;
-        $j = ($j + $box[$a]) % 256;
-        $temp = $box[$a];
-        $box[$a] = $box[$j];
-        $box[$j] = $temp;
-        $k = $box[(($box[$a] + $box[$j]) % 256)];
-        $cipherby = ord(substr($data, $i, 1)) ^ $k;
-        $cipher .= chr($cipherby);
-    }
-
-    if ($case == 'de') {
-        $cipher = urldecode(urlencode($cipher));
-    } else {
-        $cipher = urlencode($cipher);
-    }
-
-    return $cipher;
 }
 
 // ENVIRONMENT CHECKING.
@@ -10146,18 +10081,18 @@ function mnet_get_idp_jump_url($user) {
 function get_home_page() {
     global $CFG;
 
-    if (isloggedin() && !isguestuser() && !empty($CFG->defaulthomepage)) {
+    if (isloggedin() && !empty($CFG->defaulthomepage)) {
         // If dashboard is disabled, home will be set to default page.
         $defaultpage = get_default_home_page();
-        if ($CFG->defaulthomepage == HOMEPAGE_MY) {
+        if ($CFG->defaulthomepage == HOMEPAGE_MY && (!isguestuser() || !empty($CFG->allowguestmymoodle))) {
             if (!empty($CFG->enabledashboard)) {
                 return HOMEPAGE_MY;
             } else {
                 return $defaultpage;
             }
-        } else if ($CFG->defaulthomepage == HOMEPAGE_MYCOURSES) {
+        } else if ($CFG->defaulthomepage == HOMEPAGE_MYCOURSES && !isguestuser()) {
             return HOMEPAGE_MYCOURSES;
-        } else {
+        } else if ($CFG->defaulthomepage == HOMEPAGE_USER && !isguestuser()) {
             $userhomepage = (int) get_user_preferences('user_home_page_preference', $defaultpage);
             if (empty($CFG->enabledashboard) && $userhomepage == HOMEPAGE_MY) {
                 // If the user was using the dashboard but it's disabled, return the default home page.

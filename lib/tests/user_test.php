@@ -30,10 +30,11 @@ class user_test extends \advanced_testcase {
      * Setup test data.
      */
     protected function setUp(): void {
+        parent::setUp();
         $this->resetAfterTest(true);
     }
 
-    public function test_get_user() {
+    public function test_get_user(): void {
         global $CFG;
 
 
@@ -83,7 +84,7 @@ class user_test extends \advanced_testcase {
     /**
      * Test get_user_by_username method.
      */
-    public function test_get_user_by_username() {
+    public function test_get_user_by_username(): void {
         $record = array();
         $record['username'] = 'johndoe';
         $record['email'] = 'johndoe@example.com';
@@ -112,7 +113,7 @@ class user_test extends \advanced_testcase {
         $this->assertFalse(\core_user::get_user_by_username('janedoe'));
     }
 
-    public function test_search() {
+    public function test_search(): void {
         global $DB;
 
         self::init_search_tests();
@@ -317,7 +318,7 @@ class user_test extends \advanced_testcase {
     /**
      * Tests the search() function with limits on the number to return.
      */
-    public function test_search_with_count() {
+    public function test_search_with_count(): void {
         self::init_search_tests();
         $generator = $this->getDataGenerator();
         $course = $generator->create_course();
@@ -346,7 +347,7 @@ class user_test extends \advanced_testcase {
      * are not in the same group. This is checked by the user profile permission thing and not
      * currently by the original query.
      */
-    public function test_search_group_permissions() {
+    public function test_search_group_permissions(): void {
         global $DB;
 
         self::init_search_tests();
@@ -389,7 +390,7 @@ class user_test extends \advanced_testcase {
      * are not in the same group. This is checked by the user profile permission thing and not
      * currently by the original query.
      */
-    public function test_search_deleted_users() {
+    public function test_search_deleted_users(): void {
         self::init_search_tests();
 
         // Create one user to do the searching.
@@ -443,7 +444,7 @@ class user_test extends \advanced_testcase {
     /**
      * Test require_active_user
      */
-    public function test_require_active_user() {
+    public function test_require_active_user(): void {
         global $DB;
 
         // Create a default user for the test.
@@ -511,7 +512,7 @@ class user_test extends \advanced_testcase {
     /**
      * Test get_property_definition() method.
      */
-    public function test_get_property_definition() {
+    public function test_get_property_definition(): void {
         // Try to get a existing property.
         $properties = \core_user::get_property_definition('id');
         $this->assertEquals($properties['type'], PARAM_INT);
@@ -536,7 +537,7 @@ class user_test extends \advanced_testcase {
     /**
      * Test validate() method.
      */
-    public function test_validate() {
+    public function test_validate(): void {
 
         // Create user with just with username and firstname.
         $record = array('username' => 's10', 'firstname' => 'Bebe Stevens');
@@ -566,7 +567,7 @@ class user_test extends \advanced_testcase {
     /**
      * Test clean_data() method.
      */
-    public function test_clean_data() {
+    public function test_clean_data(): void {
         $this->resetAfterTest(false);
 
         $user = new \stdClass();
@@ -593,7 +594,7 @@ class user_test extends \advanced_testcase {
     /**
      * Test clean_field() method.
      */
-    public function test_clean_field() {
+    public function test_clean_field(): void {
 
         // Create a 'malicious' user object/
         $user = new \stdClass();
@@ -619,7 +620,7 @@ class user_test extends \advanced_testcase {
     /**
      * Test get_property_type() method.
      */
-    public function test_get_property_type() {
+    public function test_get_property_type(): void {
 
         // Fetch valid properties and verify if the type is correct.
         $type = \core_user::get_property_type('username');
@@ -642,7 +643,7 @@ class user_test extends \advanced_testcase {
     /**
      * Test get_property_null() method.
      */
-    public function test_get_property_null() {
+    public function test_get_property_null(): void {
         // Fetch valid properties and verify if it is NULL_ALLOWED or NULL_NOT_ALLOWED.
         $property = \core_user::get_property_null('username');
         $this->assertEquals(NULL_NOT_ALLOWED, $property);
@@ -666,7 +667,7 @@ class user_test extends \advanced_testcase {
     /**
      * Test get_property_choices() method.
      */
-    public function test_get_property_choices() {
+    public function test_get_property_choices(): void {
 
         // Test against country property choices.
         $choices = \core_user::get_property_choices('country');
@@ -701,7 +702,7 @@ class user_test extends \advanced_testcase {
     /**
      * Test get_property_default().
      */
-    public function test_get_property_default() {
+    public function test_get_property_default(): void {
         global $CFG;
         $this->resetAfterTest();
 
@@ -735,7 +736,7 @@ class user_test extends \advanced_testcase {
     /**
      * Ensure that the noreply user is not cached.
      */
-    public function test_get_noreply_user() {
+    public function test_get_noreply_user(): void {
         global $CFG;
 
         // Create a new fake language 'xx' with the 'noreplyname'.
@@ -758,7 +759,7 @@ class user_test extends \advanced_testcase {
     /**
      * Test is_real_user method.
      */
-    public function test_is_real_user() {
+    public function test_is_real_user(): void {
         global $CFG, $USER;
 
         // Real users are real users.
@@ -798,7 +799,7 @@ class user_test extends \advanced_testcase {
     /**
      * Tests for the {@see \core_user::awaiting_action()} method.
      */
-    public function test_awaiting_action() {
+    public function test_awaiting_action(): void {
         global $CFG, $DB, $USER;
 
         $guest = \core_user::get_user($CFG->siteguest);
@@ -850,7 +851,7 @@ class user_test extends \advanced_testcase {
      *
      * @covers \core_user::get_fullname
      */
-    public function test_display_name() {
+    public function test_display_name(): void {
         $this->resetAfterTest();
 
         $user = $this->getDataGenerator()->create_user(['firstname' => 'John', 'lastname' => 'Doe']);
@@ -880,7 +881,7 @@ class user_test extends \advanced_testcase {
      *
      * @covers \core_user::get_profile_url
      */
-    public function test_display_profile_url() {
+    public function test_display_profile_url(): void {
         $this->resetAfterTest();
 
         $user = $this->getDataGenerator()->create_user(['firstname' => 'John', 'lastname' => 'Doe']);
@@ -907,7 +908,7 @@ class user_test extends \advanced_testcase {
      *
      * @covers \core_user::get_profile_picture
      */
-    public function test_display_profile_picture() {
+    public function test_display_profile_picture(): void {
         global $OUTPUT, $CFG;
         $this->resetAfterTest();
 

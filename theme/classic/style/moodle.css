@@ -22952,6 +22952,7 @@ a.text-dark:hover, a.text-dark:focus {
 .dir-rtl .popover.bs-popover-right .arrow, .dir-rtl .popover.bs-popover-auto[x-placement^=right] .arrow {
   transform: rotate(180deg);
   left: calc(-0.5rem - 1px);
+  right: auto;
 }
 .dir-rtl .popover.bs-popover-left, .dir-rtl .popover.bs-popover-auto[x-placement^=left] {
   margin-right: 0.5rem;
@@ -22959,6 +22960,7 @@ a.text-dark:hover, a.text-dark:focus {
 }
 .dir-rtl .popover.bs-popover-left .arrow, .dir-rtl .popover.bs-popover-auto[x-placement^=left] .arrow {
   transform: rotate(180deg);
+  left: auto;
   right: calc(-0.5rem - 1px);
 }
 
@@ -23266,12 +23268,8 @@ a.autolink.glossary:hover {
   display: none;
 }
 
-.visibleifjs {
+body:not(.jsenabled) .visibleifjs {
   display: none;
-}
-
-.jsenabled .visibleifjs {
-  display: inline;
 }
 
 .jsenabled .collapsibleregion {
@@ -24546,8 +24544,8 @@ audio.mediaplugin_html5audio {
 .modchooser .modal-body .loading-icon .icon {
   display: block;
   font-size: 3em;
-  height: 1em;
-  width: 1em;
+  max-height: 3em;
+  max-width: 3em;
 }
 .modchooser .modal-body .carousel-item .loading-icon .icon {
   margin: 1em auto;
@@ -24952,20 +24950,13 @@ nav.navbar .logo img {
 .page-context-header {
   overflow: hidden;
   padding: 0.25rem 0;
-  display: flex;
 }
 .page-context-header .page-header-image > a {
   display: inline-block;
 }
-.page-context-header .page-header-headings,
-.page-context-header .header-button-group {
-  position: relative;
-  line-height: 24px;
-  vertical-align: middle;
-}
-.page-context-header .header-button-group {
-  display: block;
-  float: left;
+.page-context-header .page-header-image .userinitials,
+.page-context-header .page-header-image .userpicture {
+  margin-right: 1rem;
 }
 
 ul.dragdrop-keyboard-drag li {
@@ -24978,6 +24969,10 @@ a.disabled {
   cursor: default;
   font-style: italic;
   color: #6a737b;
+}
+
+a.btn.disabled {
+  opacity: 1;
 }
 
 body.lockscroll {
@@ -25175,6 +25170,8 @@ h3.sectionname .inplaceeditable.inplaceeditingon .editinstructions {
 .footer-dark a {
   color: #fff;
   text-decoration: underline;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
 }
 .footer-dark a .icon {
   color: #fff;
@@ -25282,9 +25279,9 @@ h3.sectionname .inplaceeditable.inplaceeditingon .editinstructions {
   transform: translate(-50%, -50%);
 }
 .overlay-icon-container .loading-icon .icon {
-  height: 30px;
-  width: 30px;
-  font-size: 30px;
+  max-height: 2em;
+  max-width: 2em;
+  font-size: 2em;
 }
 
 .w-auto {
@@ -26002,17 +25999,11 @@ blockquote {
 }
 
 /* Showmore component */
-.showmore-container.collapsed .collapsed-content {
-  display: block;
-}
 .showmore-container.collapsed .expanded-content {
   display: none;
 }
 .showmore-container:not(.collapsed) .collapsed-content {
   display: none;
-}
-.showmore-container:not(.collapsed) .expanded-content {
-  display: block;
 }
 .showmore-container button {
   float: right;
@@ -31975,11 +31966,7 @@ table.question-bank-table {
   table-layout: fixed;
   overflow-x: scroll;
   width: min-content;
-}
-table.question-bank-table td,
-table.question-bank-table th {
-  max-width: 40vw;
-  width: max-content;
+  max-width: 100%;
 }
 table.question-bank-table th {
   text-align: left;
@@ -32525,12 +32512,6 @@ body.path-question-type .mform fieldset.hidden {
     margin: 0;
   }
 }
-@media (max-width: 991.98px) {
-  .question-bank-table td,
-  .question-bank-table th {
-    max-width: 75vw;
-  }
-}
 /* user.less */
 .userprofile .fullprofilelink {
   text-align: center;
@@ -32943,13 +32924,6 @@ body.path-question-type .mform fieldset.hidden {
   margin-bottom: 4px;
 }
 
-.mform .d-flex .form-control {
-  width: auto;
-  max-width: 100%;
-}
-.mform .d-flex textarea.form-control {
-  width: 100%;
-}
 .mform .d-flex .fitem {
   margin: 0.1rem 0.25rem 0.1rem 0 !important; /* stylelint-disable-line declaration-no-important */
 }
@@ -32957,6 +32931,14 @@ body.path-question-type .mform fieldset.hidden {
   justify-content: flex-start;
   width: 100%;
   margin-right: 0;
+}
+
+.d-flex > .form-control {
+  width: auto;
+  max-width: 100%;
+}
+.d-flex > textarea.form-control {
+  width: 100%;
 }
 
 .custom-select {
@@ -33111,13 +33093,6 @@ div#dateselector-calendar-panel {
 #id_availabilityconditionsjson[aria-hidden=true],
 .availability-field [aria-hidden=true] {
   display: none;
-}
-
-.availability-field label {
-  display: inline-flex;
-}
-.availability-field .availability-group label {
-  vertical-align: top;
 }
 
 .availability-eye {
@@ -34416,7 +34391,7 @@ img.userpicture {
   max-width: none;
 }
 
-#page-mod-quiz-mod #id_reviewoptionshdr .fitem {
+#page-mod-quiz-mod #id_reviewoptionshdr .fcontainer > .fitem {
   float: left;
   width: 20rem;
   display: inline-block;
@@ -35146,8 +35121,8 @@ table .sticky-column {
   top: 200px;
 }
 .table-dynamic .loading-icon .icon {
-  height: 3rem;
-  width: 3rem;
+  max-height: 3rem;
+  max-width: 3rem;
   font-size: 3rem;
 }
 
@@ -36795,8 +36770,8 @@ span[data-flexitour=container][x-placement=right] div[data-role=arrow]:after, sp
   position: fixed;
 }
 .layout.fullscreen .loading-icon .icon {
-  width: 1em;
-  height: 1em;
+  max-width: 4em;
+  max-height: 4em;
   font-size: 4em;
 }
 
@@ -38461,6 +38436,12 @@ div.editor_atto_toolbar button .icon {
   font-size: 1.4rem;
   font-weight: bold;
 }
+.tertiary-navigation h2 {
+  font-size: 1.4rem;
+  font-weight: bold;
+  margin: 0;
+  align-self: center;
+}
 .tertiary-navigation .navitem:not(:last-child),
 .tertiary-navigation .navitem-divider:not(:last-child) {
   margin-right: 20px;
@@ -38571,9 +38552,9 @@ div.editor_atto_toolbar button .icon {
   padding: 1rem;
 }
 .moodlenet-share-dialog .modal-body .moodlenet-share-modal-content .loading-icon .icon {
-  width: 60px;
-  height: 60px;
-  font-size: 60px;
+  max-width: 4em;
+  max-height: 4em;
+  font-size: 4em;
 }
 .moodlenet-share-dialog .modal-body .moodlenet-share-modal-content .moodlenet-circle-status {
   height: 18rem;

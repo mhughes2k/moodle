@@ -44,6 +44,7 @@ class vaults_discussion_list_test extends \advanced_testcase {
      * Set up function for tests.
      */
     public function setUp(): void {
+        parent::setUp();
         $vaultfactory = \mod_forum\local\container::get_vault_factory();
         $this->vault = $vaultfactory->get_discussions_in_forum_vault();
     }
@@ -51,7 +52,7 @@ class vaults_discussion_list_test extends \advanced_testcase {
     /**
      * Test get_from_id.
      */
-    public function test_get_from_id() {
+    public function test_get_from_id(): void {
         $this->resetAfterTest();
 
         $datagenerator = $this->getDataGenerator();
@@ -72,7 +73,7 @@ class vaults_discussion_list_test extends \advanced_testcase {
     /**
      * Test get_from_forum_id.
      */
-    public function test_get_from_forum_id() {
+    public function test_get_from_forum_id(): void {
         $this->resetAfterTest();
 
         $datagenerator = $this->getDataGenerator();
@@ -246,7 +247,7 @@ class vaults_discussion_list_test extends \advanced_testcase {
     /**
      * Test get_from_forum_id_and_group_id.
      */
-    public function test_get_from_forum_id_and_group_id() {
+    public function test_get_from_forum_id_and_group_id(): void {
         $this->resetAfterTest();
 
         $datagenerator = $this->getDataGenerator();
@@ -455,7 +456,7 @@ class vaults_discussion_list_test extends \advanced_testcase {
     /**
      * Test get_total_discussion_count_from_forum_id.
      */
-    public function test_get_total_discussion_count_from_forum_id() {
+    public function test_get_total_discussion_count_from_forum_id(): void {
         $this->resetAfterTest();
 
         $datagenerator = $this->getDataGenerator();
@@ -483,7 +484,7 @@ class vaults_discussion_list_test extends \advanced_testcase {
     /**
      * Test get_total_discussion_count_from_forum_id_and_group_id.
      */
-    public function test_get_total_discussion_count_from_forum_id_and_group_id() {
+    public function test_get_total_discussion_count_from_forum_id_and_group_id(): void {
         $this->resetAfterTest();
 
         $datagenerator = $this->getDataGenerator();

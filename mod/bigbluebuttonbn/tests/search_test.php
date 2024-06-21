@@ -44,6 +44,7 @@ class search_test extends advanced_testcase {
     protected $bbbactivtyarea = null;
 
     public function setUp(): void {
+        parent::setUp();
         set_config('enableglobalsearch', true);
         $this->bbbactivtyarea = \core_search\manager::get_search_area('mod_bigbluebuttonbn-activity');
     }
@@ -53,7 +54,7 @@ class search_test extends advanced_testcase {
      *
      * @return void
      */
-    public function test_indexing() {
+    public function test_indexing(): void {
         $this->resetAfterTest();
 
         // Setup test data.

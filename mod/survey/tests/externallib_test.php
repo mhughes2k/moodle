@@ -67,6 +67,7 @@ class externallib_test extends externallib_advanced_testcase {
      */
     public function setUp(): void {
         global $DB;
+        parent::setUp();
         $this->resetAfterTest();
         $this->setAdminUser();
 
@@ -95,7 +96,7 @@ class externallib_test extends externallib_advanced_testcase {
     /*
      * Test get surveys by courses
      */
-    public function test_mod_survey_get_surveys_by_courses() {
+    public function test_mod_survey_get_surveys_by_courses(): void {
         global $DB;
 
         // Create additional course.
@@ -222,7 +223,7 @@ class externallib_test extends externallib_advanced_testcase {
     /**
      * Test view_survey
      */
-    public function test_view_survey() {
+    public function test_view_survey(): void {
         global $DB;
 
         // Test invalid instance id.
@@ -282,7 +283,7 @@ class externallib_test extends externallib_advanced_testcase {
     /**
      * Test get_questions
      */
-    public function test_get_questions() {
+    public function test_get_questions(): void {
         global $DB;
 
         // Test user with full capabilities.
@@ -336,7 +337,7 @@ class externallib_test extends externallib_advanced_testcase {
     /**
      * Test submit_answers
      */
-    public function test_submit_answers() {
+    public function test_submit_answers(): void {
         global $DB;
 
         // Test user with full capabilities.
