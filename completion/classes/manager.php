@@ -618,7 +618,7 @@ class manager {
         if (file_exists($modmoodleform)) {
             require_once($modmoodleform);
         } else {
-            throw new \moodle_exception('noformdesc');
+            throw new \moodle_exception('noformdesc', '', '', (object)['modname' => $modname]);
         }
 
         if ($cm) {
