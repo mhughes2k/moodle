@@ -26,5 +26,5 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'tool_admin_presets';
-$plugin->version = 2024042200;
+$plugin->version = 2024042201;
 $plugin->requires = 2024041600;

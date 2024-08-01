@@ -206,7 +206,7 @@ class core_calendar_renderer extends plugin_renderer_base {
         }
 
         $contextrecords = [];
-        $courses = calendar_get_default_courses($courseid, 'id, shortname');
+        $courses = calendar_get_default_courses($courseid, 'id, fullname');
 
         if (!empty($courses) && count($courses) > CONTEXT_CACHE_MAX_SIZE) {
             // We need to pull the context records from the DB to preload them
@@ -235,7 +235,9 @@ class core_calendar_renderer extends plugin_renderer_base {
                 context_helper::preload_from_record($contextrecords[$course->id]);
             }
             $coursecontext = context_course::instance($course->id);
-            $courseoptions[$course->id] = format_string($course->shortname, true, array('context' => $coursecontext));
+            // Limit the displayed course name to prevent the dropdown from getting too wide.
+            $coursename = shorten_text($course->fullname, 50, true);
+            $courseoptions[$course->id] = format_string($coursename, true, ['context' => $coursecontext]);
         }
 
         if ($courseid) {
@@ -260,7 +262,7 @@ class core_calendar_renderer extends plugin_renderer_base {
         }
         $select = html_writer::label($label, $filterid, false, $labelattributes);
         $select .= html_writer::select($courseoptions, 'course', $selected, false,
-                ['class' => 'cal_courses_flt ml-1 mr-auto', 'id' => $filterid]);
+                ['class' => 'cal_courses_flt ml-1 mr-auto mr-2 mb-2', 'id' => $filterid]);
 
         return $select;
     }
@@ -298,9 +300,8 @@ class core_calendar_renderer extends plugin_renderer_base {
      */
     public function render_no_calendar_subscriptions(): string {
         $output = html_writer::start_div('mt-5');
-        $importlink = html_writer::link((new moodle_url('/calendar/import.php', calendar_get_export_import_link_params()))->out(),
-                get_string('importcalendarexternal', 'calendar'));
-        $output .= get_string('nocalendarsubscriptions', 'calendar', $importlink);
+        $importlink = (new moodle_url('/calendar/import.php', calendar_get_export_import_link_params()))->out();
+        $output .= get_string('nocalendarsubscriptionsimportexternal', 'core_calendar', $importlink);
         $output .= html_writer::end_div();
 
         return $output;
@@ -327,7 +328,8 @@ class core_calendar_renderer extends plugin_renderer_base {
         $table->id = 'subscription_details_table';
 
         if (empty($subscriptions)) {
-            $cell = new html_table_cell(get_string('nocalendarsubscriptions', 'calendar'));
+            $importlink = (new moodle_url('/calendar/import.php', calendar_get_export_import_link_params()))->out();
+            $cell = new html_table_cell(get_string('nocalendarsubscriptionsimportexternal', 'core_calendar', $importlink));
             $cell->colspan = 5;
             $table->data[] = new html_table_row(array($cell));
         }

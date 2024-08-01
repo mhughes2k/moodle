@@ -13898,12 +13898,13 @@ pre code {
   margin-left: -15px;
 }
 
-.no-gutters {
+.no-gutters, .g-0 {
   margin-right: 0;
   margin-left: 0;
 }
-.no-gutters > .col,
-.no-gutters > [class*=col-] {
+.no-gutters > .col, .g-0 > .col,
+.no-gutters > [class*=col-],
+.g-0 > [class*=col-] {
   padding-right: 0;
   padding-left: 0;
 }
@@ -22964,6 +22965,9 @@ a.text-dark:hover, a.text-dark:focus {
   right: calc(-0.5rem - 1px);
 }
 
+/* Bootstrap 5 bridge classes */
+/* These classes are used to bridge the gap between Bootstrap 4 and Bootstrap 5. */
+/* This file should be removed as part of MDL-75669. */
 /**
  * Moodle variables
  *
@@ -25030,9 +25034,6 @@ dd:after {
 }
 .inplaceeditable.inplaceeditingon select {
   margin-bottom: 0;
-}
-.inplaceeditable .quickediticon .icon {
-  font-size: medium;
 }
 .inplaceeditable .quickediticon img {
   opacity: 0.2;
@@ -27752,7 +27753,10 @@ table.calendartable caption {
   section:not(#region-main) .block.block_calendar_month .maincalendar .calendarwrapper .previous,
   section:not(#region-main) .block.block_calendar_month .maincalendar .calendarwrapper .next {
     width: 30%;
-    font-size: 0.8em;
+  }
+  section:not(#region-main) .block.block_calendar_month .maincalendar .calendarwrapper .previous .arrow_text,
+  section:not(#region-main) .block.block_calendar_month .maincalendar .calendarwrapper .next .arrow_text {
+    display: none;
   }
   section:not(#region-main) .block.block_calendar_month .maincalendar .calendartable.calendarmonth th,
   section:not(#region-main) .block.block_calendar_month .maincalendar .calendartable.calendarmonth td {
@@ -28453,6 +28457,7 @@ span.editinstructions {
   text-decoration: none;
   z-index: 9999;
   border: 0 solid transparent;
+  width: fit-content;
   color: #00434e;
   background-color: #cce6ea;
   border-color: #b8dce2;
@@ -33165,6 +33170,9 @@ div#dateselector-calendar-panel {
   margin: 0;
   cursor: pointer;
   color: #1d2125;
+  word-break: normal;
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 .form-autocomplete-suggestions li:hover, .form-autocomplete-suggestions li:focus, .form-autocomplete-suggestions li[aria-selected=true] {
   background-color: #0f6cbf;
@@ -34756,12 +34764,141 @@ img.userpicture {
   background-color: #fff;
 }
 
+.path-mod-assign .gradingtable thead tr {
+  position: sticky;
+  top: 50px;
+  z-index: 1;
+}
+
 /**
  * Mod LTI.
  */
 .path-admin-mod-lti .btn .loader img,
 .path-admin-mod-lti #tool-list-loader-container .loader img {
   height: auto;
+}
+
+/**
+ * Mod Feedback.
+ */
+.path-mod-feedback span.feedback_info {
+  font-weight: bold;
+}
+.path-mod-feedback div.feedback_is_dependent {
+  background: #6a737b;
+}
+.path-mod-feedback span.feedback_depend {
+  color: #ca3120;
+}
+.path-mod-feedback hr.feedback_pagebreak {
+  height: 4px;
+  color: #6a737b;
+  background-color: #6a737b;
+  border: 0;
+  margin: 0;
+}
+.path-mod-feedback .drag_target_active {
+  opacity: 0.25;
+}
+.path-mod-feedback .drag_item_active {
+  opacity: 0.5;
+}
+.path-mod-feedback .feedback_bar_image {
+  height: 10px;
+}
+.path-mod-feedback #analysis-form label {
+  display: inline;
+}
+.path-mod-feedback .templateslist td.cell.action {
+  width: 10%;
+}
+.path-mod-feedback .templateslist th.header.action {
+  width: 10%;
+}
+.path-mod-feedback .feedback_form .itemactions {
+  display: inline-block;
+  margin: 0 0.5rem;
+}
+.path-mod-feedback #feedback_edit_form [id*=_feedback_item_].feedback_itemlist {
+  padding: 1rem;
+  border: 1px solid #dee2e6;
+  border-radius: 0.25rem;
+}
+.path-mod-feedback #feedback_edit_form [id*=_feedback_item_].feedback_itemlist .itemhandle {
+  position: absolute;
+  width: 32px;
+  height: 32px;
+  text-align: center;
+  align-content: center;
+}
+.path-mod-feedback #feedback_edit_form [id*=_feedback_item_].feedback_itemlist .action-menu {
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+.path-mod-feedback #feedback_edit_form [id*=_feedback_item_].feedback_itemlist .dropdown-toggle {
+  border-radius: 0.5rem;
+  width: 32px;
+  height: 32px;
+}
+.path-mod-feedback table.analysis {
+  width: 100%;
+  border-top: 1px solid #dee2e6;
+  margin-top: 10px;
+}
+.path-mod-feedback table.analysis.itemtype_textarea td {
+  padding: 4px 0;
+}
+.path-mod-feedback table.analysis tr:first-child th {
+  padding-top: 10px;
+}
+.path-mod-feedback table.analysis tr:hover {
+  background: #dee2e6;
+}
+.path-mod-feedback table.analysis td.singlevalue:before,
+.path-mod-feedback table.analysis td.optionname:before {
+  content: "- ";
+}
+.path-mod-feedback table.analysis tr.isempty {
+  display: none;
+}
+.path-mod-feedback #showentrytable td.cell.completed_timemodified,
+.path-mod-feedback #showentryanontable td.cell.random_response {
+  font-weight: bold;
+}
+.path-mod-feedback #showentrytable td.cell.userpic,
+.path-mod-feedback #showentrytable td.cell.deleteentry,
+.path-mod-feedback #showentryanontable td.cell.deleteentry {
+  width: 10px;
+}
+.path-mod-feedback .response_navigation {
+  margin: 0.5rem 0;
+}
+.path-mod-feedback .response_navigation a {
+  display: block;
+}
+.path-mod-feedback .response_navigation a.back_to_list {
+  text-align: center;
+}
+.path-mod-feedback .response_navigation .prev_response {
+  text-align: left;
+}
+.path-mod-feedback .response_navigation .prev_response:before {
+  /*rtl:raw:
+  content: ' ► ';
+  */
+  /*rtl:remove*/
+  content: " ◄ ";
+}
+.path-mod-feedback .response_navigation .next_response {
+  text-align: right;
+}
+.path-mod-feedback .response_navigation .next_response:after {
+  /*rtl:raw:
+  content: ' ◄ ';
+  */
+  /*rtl:remove*/
+  content: " ► ";
 }
 
 .yui-skin-sam .yui-layout.path-mod-chat-gui_ajax {
@@ -34849,6 +34986,26 @@ img.userpicture {
   margin-left: 0;
 }
 
+#page-report-outline-index .font-lg {
+  font-size: 1.03125rem;
+}
+
+#page-report-outline-index .generaltable tbody tr {
+  background-color: #fff;
+}
+#page-report-outline-index .generaltable tbody tr.section {
+  padding-left: 2rem;
+}
+#page-report-outline-index .generaltable tbody tr.section h3 {
+  font-size: 1.171875rem;
+}
+#page-report-outline-index .generaltable tbody tr.section h4 {
+  font-size: 1.03125rem;
+}
+#page-report-outline-index .generaltable tbody td.delegated {
+  padding-left: 3.5rem;
+}
+
 .path-backup .mform {
   /* These are long labels with checkboxes on the right. */
 }
@@ -34865,6 +35022,18 @@ img.userpicture {
   margin-bottom: 1.25rem;
 }
 .path-backup .mform .grouped_settings.section_level::after {
+  display: block;
+  clear: both;
+  content: "";
+}
+.path-backup .mform .grouped_settings.subsection_level {
+  background-color: #fff;
+  border-radius: 0.25rem;
+  border: 1px solid rgba(0, 0, 0, 0.125);
+  padding: 1.25rem;
+  margin: 0 1.25rem 1.25rem 1.25rem;
+}
+.path-backup .mform .grouped_settings.subsection_level::after {
   display: block;
   clear: both;
   content: "";
@@ -36737,6 +36906,25 @@ span[data-flexitour=container][x-placement=right] div[data-role=arrow]:after, sp
 }
 .modal .close:not(:disabled):not(.disabled):hover, .modal .close:not(:disabled):not(.disabled):focus {
   opacity: inherit;
+}
+
+/* Bug fix for TinyMCE menu when in fullscreen mode. */
+body.tox-fullscreen .modal-dialog {
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
+}
+body.tox-fullscreen .modal-dialog .modal-header {
+  height: 0;
+  padding: 0;
+}
+body.tox-fullscreen .modal-dialog .tox-tinymce-aux {
+  position: relative;
+}
+
+/* Bug fix TinyMCE menu width dropdowns when in fullscreen mode. */
+body.tox-fullscreen .tox.tox-tinymce-aux {
+  position: relative !important;
 }
 
 .layout.fullscreen {
