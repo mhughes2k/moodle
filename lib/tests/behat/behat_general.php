@@ -32,8 +32,11 @@ use Behat\Mink\Element\NodeElement;
 use Behat\Mink\Exception\DriverException;
 use Behat\Mink\Exception\ElementNotFoundException;
 use Behat\Mink\Exception\ExpectationException;
+use Facebook\WebDriver\Exception\NoSuchAlertException;
 use Facebook\WebDriver\Exception\NoSuchElementException;
 use Facebook\WebDriver\Exception\StaleElementReferenceException;
+use Facebook\WebDriver\WebDriverAlert;
+use Facebook\WebDriver\WebDriverExpectedCondition;
 
 /**
  * Cross component steps definitions.
@@ -263,11 +266,24 @@ class behat_general extends behat_base {
     }
 
     /**
+     * Wait for an alert to be displayed.
+     *
+     * @return WebDriverAlert
+     */
+    public function wait_for_alert(): WebDriverAlert {
+        $webdriver = $this->getSession()->getDriver()->getWebdriver();
+        $webdriver->wait()->until(WebDriverExpectedCondition::alertIsPresent());
+
+        return $webdriver->switchTo()->alert();
+    }
+
+    /**
      * Accepts the currently displayed alert dialog. This step does not work in all the browsers, consider it experimental.
      * @Given /^I accept the currently displayed dialog$/
      */
     public function accept_currently_displayed_alert_dialog() {
-        $this->getSession()->getDriver()->getWebDriver()->switchTo()->alert()->accept();
+        $alert = $this->wait_for_alert();
+        $alert->accept();
     }
 
     /**
@@ -275,7 +291,8 @@ class behat_general extends behat_base {
      * @Given /^I dismiss the currently displayed dialog$/
      */
     public function dismiss_currently_displayed_alert_dialog() {
-        $this->getSession()->getDriver()->getWebDriver()->switchTo()->alert()->dismiss();
+        $alert = $this->wait_for_alert();
+        $alert->dismiss();
     }
 
     /**
@@ -286,9 +303,7 @@ class behat_general extends behat_base {
      * @param string $link
      */
     public function click_link($link) {
-
         $linknode = $this->find_link($link);
-        $this->ensure_node_is_visible($linknode);
         $linknode->click();
     }
 
@@ -393,11 +408,8 @@ class behat_general extends behat_base {
      * @param string $selectortype The type of what we look for
      */
     public function i_click_on($element, $selectortype) {
-
         // Gets the node based on the requested selector type and locator.
-        $node = $this->get_selected_node($selectortype, $element);
-        $this->ensure_node_is_visible($node);
-        $node->click();
+        $this->get_selected_node($selectortype, $element)->click();
     }
 
     /**
@@ -458,9 +470,7 @@ class behat_general extends behat_base {
      * @param string $nodeselectortype The type of selector where we look in
      */
     public function i_click_on_in_the($element, $selectortype, $nodeelement, $nodeselectortype) {
-
         $node = $this->get_node_in_container($selectortype, $element, $nodeselectortype, $nodeelement);
-        $this->ensure_node_is_visible($node);
         $node->click();
     }
 
@@ -502,7 +512,6 @@ class behat_general extends behat_base {
         }
 
         $node = $this->get_node_in_container($selectortype, $element, $nodeselectortype, $nodeelement);
-        $this->ensure_node_is_visible($node);
 
         // KeyUP and KeyDown require the element to be displayed in the current window.
         $this->execute_js_on_node($node, '{{ELEMENT}}.scrollIntoView();');
@@ -2489,5 +2498,111 @@ EOF;
         } else {
             throw new \Behat\Mink\Exception\ExpectationException('Invalid state for switch: ' . $state, $this->getSession());
         }
+
+    }
+
+    /**
+     * Update a stored progress bar.
+     *
+     * @Given I set the stored progress bar :idnumber to :percent
+     * @param string $idnumber The unique idnumber of the stored progress bar.
+     * @param float $percent The value to update the progress bar to.
+     */
+    public function i_set_the_stored_progress_bar_to(string $idnumber, float $percent): void {
+        $progress = \core\output\stored_progress_bar::get_by_idnumber($idnumber);
+        if (!$progress) {
+            throw new invalid_parameter_exception('No progress bar with idnumber ' . $idnumber . 'found.');
+        }
+        $progress->auto_update(false);
+        $progress->update_full($percent, '');
+    }
+
+    /**
+     * Helper that returns the dropdown node element within a particular search combo box.
+     *
+     * @param string $comboboxname The name (label) of the search combo box element. (e.g. "Search users", "Search groups").
+     * @param string $itemname The name of the combo box item we are searching for. This is only used if $fieldset is set
+     *                         to true.
+     * @param bool $fieldset Whether to set the search field of the combo box at the same time
+     * @return NodeElement
+     * @throws coding_exception
+     */
+    private function get_combobox_dropdown_node(string $comboboxname, string $itemname, bool $fieldset = true): NodeElement {
+        $this->execute("behat_general::wait_until_the_page_is_ready");
+
+        $comboboxxpath = "//div[contains(@class, 'comboboxsearch') and .//span[text()='{$comboboxname}']]";
+        $dropdowntriggerxpath = $comboboxxpath . "/descendant::div[contains(@class,'dropdown-toggle')]";
+        $dropdownxpath = $comboboxxpath . "/descendant::div[contains(@class,'dropdown-menu')]";
+        $dropdown = $this->find("xpath_element", $dropdownxpath);
+
+        // If the dropdown is not visible, open it. Also, ensure that a dropdown trigger element exists.
+        if ($this->getSession()->getPage()->find('xpath', $dropdowntriggerxpath) && !$dropdown->isVisible()) {
+            $this->execute("behat_general::i_click_on", [$dropdowntriggerxpath, "xpath_element"]);
+        }
+
+        if ($fieldset) {
+            $this->execute("behat_forms::set_field_value", [$comboboxname, $itemname]);
+            $this->execute("behat_general::wait_until_exists", [$itemname, "list_item"]);
+        }
+
+        return $dropdown;
+    }
+
+    /**
+     * Confirm if a value exists within the search combo box.
+     *
+     * Examples:
+     * - I confirm "User" exists in the "Search users" search combo box
+     * - I confirm "Group" exists in the "Search groups" search combo box
+     * - I confirm "Grade item" exists in the "Search grade items" search combo box
+     *
+     * @Given /^I confirm "(?P<itemname>(?:[^"]|\\")*)" exists in the "(?P<comboboxname>(?:[^"]|\\")*)" search combo box$/
+     * @param string $itemname The name of the combo box item we are searching for. This is only used if $fieldset is set
+     *                         to true.
+     * @param string $comboboxname The name (label) of the search combo box element. (e.g. "Search users", "Search groups").
+     */
+    public function i_confirm_in_search_combobox_exists(string $itemname, string $comboboxname): void {
+        $this->execute("behat_general::assert_element_contains_text",
+            [$itemname, $this->get_combobox_dropdown_node($comboboxname, $itemname, false), "NodeElement"]);
+    }
+
+    /**
+     * Confirm if a value does not exist within the search combo box.
+     *
+     * Examples:
+     * - I confirm "User" does not exist in the "Search users" search combo box
+     * - I confirm "Group" does not exist in the "Search groups" search combo box
+     * - I confirm "Grade item" does not exist in the "Search grade items" search combo box
+     *
+     * @Given /^I confirm "(?P<itemname>(?:[^"]|\\")*)" does not exist in the "(?P<comboboxname>(?:[^"]|\\")*)" search combo box$/
+     * @param string $itemname The name of the combo box item we are searching for. This is only used if $fieldset is set
+     *                         to true.
+     * @param string $comboboxname The name (label) of the search combo box element. (e.g. "Search users", "Search groups").
+     */
+    public function i_confirm_in_search_combobox_does_not_exist(string $itemname, string $comboboxname): void {
+        $this->execute("behat_general::assert_element_not_contains_text",
+            [$itemname, $this->get_combobox_dropdown_node($comboboxname, $itemname, false), "NodeElement"]);
+    }
+
+    /**
+     * Clicks on an option from the specified search widget.
+     *
+     * Examples:
+     * - I click on "Student" in the "Search users" search combo box
+     * - I click on "Group" in the "Search groups" search combo box
+     * - I click on "Grade item" in the "Search grade items" search combo box
+     *
+     * @Given /^I click on "(?P<itemname>(?:[^"]|\\")*)" in the "(?P<comboboxname>(?:[^"]|\\")*)" search combo box$/
+     * @param string $itemname The name of the combo box item we are searching for. This is only used if $fieldset is set
+     *                         to true.
+     * @param string $comboboxname The name (label) of the search combo box element. (e.g. "Search users", "Search groups").
+     */
+    public function i_click_on_in_search_combobox(string $itemname, string $comboboxname): void {
+        $node = $this->get_combobox_dropdown_node($comboboxname, $itemname);
+        $this->execute('behat_general::i_click_on_in_the', [
+            $itemname, "list_item",
+            $node, "NodeElement",
+        ]);
+        $this->execute("behat_general::i_wait_to_be_redirected");
     }
 }

@@ -40,6 +40,7 @@ import Pending from 'core/pending';
 import ContentTree from 'core_courseformat/local/courseeditor/contenttree';
 // The jQuery module is only used for interacting with Boostrap 4. It can we removed when MDL-71979 is integrated.
 import jQuery from 'jquery';
+import Notification from "core/notification";
 
 // Load global strings.
 prefetchStrings('core', ['movecoursesection', 'movecoursemodule', 'confirm', 'delete']);
@@ -82,11 +83,15 @@ export default class extends BaseComponent {
             ACTIONMENUTOGGLER: `[data-toggle="dropdown"]`,
             // Availability modal selectors.
             OPTIONSRADIO: `[type='radio']`,
+            COURSEADDSECTION: `#course-addsection`,
+            MAXSECTIONSWARNING: `[data-region='max-sections-warning']`,
+            ADDSECTIONREGION: `[data-region='section-addsection']`,
         };
         // Component css classes.
         this.classes = {
-            DISABLED: `text-body`,
+            DISABLED: `disabled`,
             ITALIC: `font-italic`,
+            DISPLAYNONE: `d-none`,
         };
     }
 
@@ -357,16 +362,15 @@ export default class extends BaseComponent {
         // Open the cm section node if possible (Bootstrap 4 uses jQuery to interact with collapsibles).
         // All jQuery in this code can be replaced when MDL-71979 is integrated.
         cmIds.forEach(cmId => {
-            const currentElement = modalBody.querySelector(`${this.selectors.CMLINK}[data-id='${cmId}']`);
-            const sectionnode = currentElement.closest(this.selectors.SECTIONNODE);
-            const toggler = jQuery(sectionnode).find(this.selectors.MODALTOGGLER);
-            let collapsibleId = toggler.data('target') ?? toggler.attr('href');
-            if (collapsibleId) {
-                // We cannot be sure we have # in the id element name.
-                collapsibleId = collapsibleId.replace('#', '');
-                const expandNode = modalBody.querySelector(`#${collapsibleId}`);
-                jQuery(expandNode).collapse('show');
+            const cmInfo = this.reactive.get('cm', cmId);
+            let selector;
+            if (!cmInfo.hasdelegatedsection) {
+                selector = `${this.selectors.CMLINK}[data-id='${cmId}']`;
+            } else {
+                selector = `${this.selectors.SECTIONLINK}[data-id='${cmInfo.sectionid}']`;
             }
+            const currentElement = modalBody.querySelector(selector);
+            this._expandCmMoveModalParentSections(modalBody, currentElement);
         });
 
         modalBody.addEventListener('click', (event) => {
@@ -381,6 +385,7 @@ export default class extends BaseComponent {
 
             let targetSectionId;
             let targetCmId;
+            let droppedCmIds = [...cmIds];
             if (target.dataset.for == 'cm') {
                 const dropData = exporter.cmDraggableData(this.reactive.state, target.dataset.id);
                 targetSectionId = dropData.sectionid;
@@ -390,11 +395,52 @@ export default class extends BaseComponent {
                 targetSectionId = target.dataset.id;
                 targetCmId = section?.cmlist[0];
             }
-            this.reactive.dispatch('cmMove', cmIds, targetSectionId, targetCmId);
+            const section = this.reactive.get('section', targetSectionId);
+            if (section.component) {
+                // Remove cmIds which are not allowed to be moved to this delegated section (mostly
+                // all other delegated cm).
+                droppedCmIds = droppedCmIds.filter(cmId => {
+                    const cmInfo = this.reactive.get('cm', cmId);
+                    return !cmInfo.hasdelegatedsection;
+                });
+            }
+            if (droppedCmIds.length === 0) {
+                return; // No cm to move.
+            }
+            this.reactive.dispatch('cmMove', droppedCmIds, targetSectionId, targetCmId);
             this._destroyModal(modal, editTools);
         });
 
         pendingModalReady.resolve();
+    }
+
+    /**
+     * Expand all the modal tree branches that contains the element.
+     *
+     * Bootstrap 4 uses jQuery to interact with collapsibles.
+     * All jQuery in this code can be replaced when MDL-71979 is integrated.
+     *
+     * @private
+     * @param {HTMLElement} modalBody the modal body element
+     * @param {HTMLElement} element the element to display
+     */
+    _expandCmMoveModalParentSections(modalBody, element) {
+        const sectionnode = element.closest(this.selectors.SECTIONNODE);
+        if (!sectionnode) {
+            return;
+        }
+
+        const toggler = jQuery(sectionnode).find(this.selectors.MODALTOGGLER);
+        let collapsibleId = toggler.data('target') ?? toggler.attr('href');
+        if (collapsibleId) {
+            // We cannot be sure we have # in the id element name.
+            collapsibleId = collapsibleId.replace('#', '');
+            const expandNode = modalBody.querySelector(`#${collapsibleId}`);
+            jQuery(expandNode).collapse('show');
+        }
+
+        // Section are a tree structure, we need to expand all the parents.
+        this._expandCmMoveModalParentSections(modalBody, sectionnode.parentElement);
     }
 
     /**
@@ -678,12 +724,28 @@ export default class extends BaseComponent {
      * @param {boolean} locked the new locked value.
      */
     _setAddSectionLocked(locked) {
-        const targets = this.getElements(this.selectors.ADDSECTION);
+        const targets = this.getElements(this.selectors.ADDSECTIONREGION);
         targets.forEach(element => {
             element.classList.toggle(this.classes.DISABLED, locked);
-            element.classList.toggle(this.classes.ITALIC, locked);
-            this.setElementLocked(element, locked);
+            const addSectionElement = element.querySelector(this.selectors.ADDSECTION);
+            addSectionElement.classList.toggle(this.classes.DISABLED, locked);
+            this.setElementLocked(addSectionElement, locked);
+            // We tweak the element to show a tooltip as a title attribute.
+            if (locked) {
+                getString('sectionaddmax', 'core_courseformat')
+                    .then((text) => addSectionElement.setAttribute('title', text))
+                    .catch(Notification.exception);
+                addSectionElement.style.pointerEvents = null; // Unlocks the pointer events.
+                addSectionElement.style.userSelect = null; // Unlocks the pointer events.
+            } else {
+                addSectionElement.setAttribute('title', addSectionElement.dataset.addSections);
+            }
         });
+        const courseAddSection = this.getElement(this.selectors.COURSEADDSECTION);
+        const addSection = courseAddSection.querySelector(this.selectors.ADDSECTION);
+        addSection.classList.toggle(this.classes.DISPLAYNONE, locked);
+        const noMoreSections = courseAddSection.querySelector(this.selectors.MAXSECTIONSWARNING);
+        noMoreSections.classList.toggle(this.classes.DISPLAYNONE, !locked);
     }
 
     /**

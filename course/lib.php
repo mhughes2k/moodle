@@ -1589,7 +1589,7 @@ function course_get_cm_edit_actions(cm_info $mod, $indent = -1, $sr = null) {
             $str->groupmode,
             $groupmode->get_choice_list(),
             ['class' => 'editing_groupmode'],
-            new pix_icon('i/groupv', '', 'moodle', ['class' => 'iconsmall'])
+            new pix_icon('t/groupv', '', 'moodle', ['class' => 'iconsmall'])
         );
     }
 
@@ -2982,7 +2982,8 @@ function include_course_editor(course_format $format) {
  */
 function get_sorted_course_formats($enabledonly = false) {
     global $CFG;
-    $formats = core_component::get_plugin_list('format');
+
+    $formats = core_plugin_manager::instance()->get_installed_plugins('format');
 
     if (!empty($CFG->format_plugins_sortorder)) {
         $order = explode(',', $CFG->format_plugins_sortorder);
@@ -2996,7 +2997,9 @@ function get_sorted_course_formats($enabledonly = false) {
     }
     $sortedformats = array();
     foreach ($order as $formatname) {
-        if (!get_config('format_'.$formatname, 'disabled')) {
+        $component = "format_{$formatname}";
+        $componentdir = core_component::get_component_directory($component);
+        if ($componentdir !== null && !get_config($component, 'disabled')) {
             $sortedformats[] = $formatname;
         }
     }
@@ -3243,6 +3246,23 @@ function duplicate_module($course, $cm, int $sectionid = null, bool $changename 
         // Update calendar events with the duplicated module.
         // The following line is to be removed in MDL-58906.
         course_module_update_calendar_events($newcm->modname, null, $newcm);
+
+        // Copy permission overrides to new course module.
+        $newcmcontext = context_module::instance($newcm->id);
+        $overrides = $DB->get_records('role_capabilities', ['contextid' => $cmcontext->id]);
+        foreach ($overrides as $override) {
+            $override->contextid = $newcmcontext->id;
+            unset($override->id);
+            $DB->insert_record('role_capabilities', $override);
+        }
+
+        // Copy locally assigned roles to new course module.
+        $overrides = $DB->get_records('role_assignments', ['contextid' => $cmcontext->id]);
+        foreach ($overrides as $override) {
+            $override->contextid = $newcmcontext->id;
+            unset($override->id);
+            $DB->insert_record('role_assignments', $override);
+        }
 
         // Trigger course module created event. We can trigger the event only if we know the newcmid.
         $newcm = get_fast_modinfo($cm->course)->get_cm($newcmid);

@@ -39,8 +39,7 @@ require_once($CFG->dirroot . '/webservice/tests/helpers.php');
  * @copyright  2012 Jerome Mouneyrac
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class externallib_test extends externallib_advanced_testcase {
-    //core_course_externallib_testcase
+final class externallib_test extends externallib_advanced_testcase {
 
     /**
      * Tests set up
@@ -609,7 +608,7 @@ class externallib_test extends externallib_advanced_testcase {
      *
      * @return array
      */
-    public function course_empty_field_provider(): array {
+    public static function course_empty_field_provider(): array {
         return [
             [[
                 'fullname' => '',
@@ -2859,8 +2858,13 @@ class externallib_test extends externallib_advanced_testcase {
 
         $category1 = self::getDataGenerator()->create_category(array('name' => 'Cat 1'));
         $category2 = self::getDataGenerator()->create_category(array('parent' => $category1->id));
-        $course1 = self::getDataGenerator()->create_course(
-            array('category' => $category1->id, 'shortname' => 'c1', 'format' => 'topics'));
+        $numsections = 4;
+        $course1 = self::getDataGenerator()->create_course([
+            'category' => $category1->id,
+            'shortname' => 'c1',
+            'format' => 'topics',
+            'numsections' => $numsections,
+        ]);
 
         $fieldcategory = self::getDataGenerator()->create_custom_field_category(['name' => 'Other fields']);
         $customfield = ['shortname' => 'test', 'name' => 'Custom field', 'type' => 'text',
@@ -3064,6 +3068,20 @@ class externallib_test extends externallib_advanced_testcase {
         $this->assertCount(0, $result['courses']);
 
         $result = core_course_external::get_courses_by_field('idnumber', 'x');
+        $result = external_api::clean_returnvalue(core_course_external::get_courses_by_field_returns(), $result);
+        $this->assertCount(0, $result['courses']);
+
+        $existingsections = $DB->get_records('course_sections', ['course' => $course1->id]);
+        $this->assertEquals(count($existingsections), $numsections + 1); // Includes generic section.
+
+        $section = array_shift($existingsections);
+        $result = core_course_external::get_courses_by_field('sectionid', $section->id);
+        $result = external_api::clean_returnvalue(core_course_external::get_courses_by_field_returns(), $result);
+        $this->assertCount(1, $result['courses']);
+        $this->assertEquals($course1->id, $result['courses'][0]['id']);
+
+        // Wrong section.
+        $result = core_course_external::get_courses_by_field('sectionid', 1234);
         $result = external_api::clean_returnvalue(core_course_external::get_courses_by_field_returns(), $result);
         $this->assertCount(0, $result['courses']);
     }
@@ -3304,7 +3322,7 @@ class externallib_test extends externallib_advanced_testcase {
     /**
      * Test cases for the get_enrolled_courses_by_timeline_classification test.
      */
-    public function get_get_enrolled_courses_by_timeline_classification_test_cases(): array {
+    public static function get_get_enrolled_courses_by_timeline_classification_test_cases(): array {
         $now = time();
         $day = 86400;
 
@@ -3566,16 +3584,6 @@ class externallib_test extends externallib_advanced_testcase {
                 'classification' => 'all',
                 'limit' => 5,
                 'offset' => 5,
-                'sort' => "ul.timeaccess abcdasc",
-                'expectedcourses' => [],
-                'expectednextoffset' => 0,
-                'expectedexception' => 'Invalid sort direction in $sort parameter in enrol_get_my_courses()',
-            ],
-            'all limit and offset with wrong sort direction' => [
-                'coursedata' => $coursedata,
-                'classification' => 'all',
-                'limit' => 5,
-                'offset' => 5,
                 'sort' => "ul.timeaccess.foo ascd",
                 'expectedcourses' => [],
                 'expectednextoffset' => 0,
@@ -3587,16 +3595,6 @@ class externallib_test extends externallib_advanced_testcase {
                 'limit' => 5,
                 'offset' => 5,
                 'sort' => "foobar",
-                'expectedcourses' => [],
-                'expectednextoffset' => 0,
-                'expectedexception' => 'Invalid $sort parameter in enrol_get_my_courses()',
-            ],
-            'all limit and offset with wrong field name' => [
-                'coursedata' => $coursedata,
-                'classification' => 'all',
-                'limit' => 5,
-                'offset' => 5,
-                'sort' => "ul.foobar",
                 'expectedcourses' => [],
                 'expectednextoffset' => 0,
                 'expectedexception' => 'Invalid $sort parameter in enrol_get_my_courses()',

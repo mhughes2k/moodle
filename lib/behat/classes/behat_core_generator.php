@@ -290,7 +290,7 @@ class behat_core_generator extends behat_generator_base {
             'user private files' => [
                 'singular' => 'user private file',
                 'datagenerator' => 'user_private_files',
-                'required' => ['user', 'filepath', 'filename'],
+                'required' => ['user', 'filepath'],
                 'switchids' => ['user' => 'userid']
             ],
             'badge external backpacks' => [
@@ -315,6 +315,11 @@ class behat_core_generator extends behat_generator_base {
                 'datagenerator' => 'notification',
                 'required' => ['subject', 'userfrom', 'userto'],
                 'switchids' => ['userfrom' => 'userfromid', 'userto' => 'usertoid'],
+            ],
+            'stored progress bars' => [
+                'singular' => 'stored progress bar',
+                'datagenerator' => 'stored_progress_bar',
+                'required' => ['idnumber'],
             ],
         ];
 

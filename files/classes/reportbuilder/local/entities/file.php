@@ -306,10 +306,8 @@ class file extends base {
             $this->get_entity_name()
         ))
             ->add_joins($this->get_joins())
-            ->set_type(column::TYPE_INTEGER)
             ->add_fields("{$filesalias}.itemid")
-            ->set_is_sortable(true)
-            ->set_disabled_aggregation_all();
+            ->set_is_sortable(true);
 
         // Time created.
         $columns[] = (new column(
@@ -394,6 +392,16 @@ class file extends base {
                 core_collator::asort($mimetypes);
                 return $mimetypes;
             });
+
+        // Author.
+        $filters[] = (new filter(
+            text::class,
+            'author',
+            new lang_string('author', 'core_repository'),
+            $this->get_entity_name(),
+            "{$filesalias}.author"
+        ))
+            ->add_joins($this->get_joins());
 
         // License (consider null = 'unknown/license not specified' for filtering purposes).
         $filters[] = (new filter(

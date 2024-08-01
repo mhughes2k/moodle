@@ -188,12 +188,7 @@ class cohorts extends system_report {
      * unique identifier
      */
     protected function add_filters(): void {
-        $filters = [
-            'cohort:name',
-            'cohort:idnumber',
-            'cohort:description',
-        ];
-        $this->add_filters_from_entities($filters);
+        $this->add_filters_from_entity('cohort', ['name', 'idnumber', 'description', 'customfield*']);
     }
 
     /**
@@ -245,9 +240,9 @@ class cohorts extends system_report {
 
         // Delete action. It will be only shown if user has 'moodle/cohort:manage' capabillity.
         $this->add_action((new action(
-            new moodle_url('/cohort/edit.php', ['id' => ':id', 'delete' => 1, 'returnurl' => $returnurl]),
+            new moodle_url('#'),
             new pix_icon('t/delete', '', 'core'),
-            ['class' => 'text-danger'],
+            ['class' => 'text-danger', 'data-action' => 'cohort-delete', 'data-cohort-id' => ':id', 'data-cohort-name' => ':name'],
             false,
             new lang_string('delete')
         ))->add_callback(function(stdClass $row): bool {

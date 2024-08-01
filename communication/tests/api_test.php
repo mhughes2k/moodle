@@ -69,8 +69,10 @@ class api_test extends \advanced_testcase {
         // Set the data.
         $communication->set_data($course);
 
+        $roomnameidenfier = $communication->get_provider() . 'roomname';
+
         // Test the set data.
-        $this->assertEquals($roomname, $course->communicationroomname);
+        $this->assertEquals($roomname, $course->$roomnameidenfier);
         $this->assertEquals($provider, $course->selectedcommunication);
     }
 
@@ -475,6 +477,8 @@ class api_test extends \advanced_testcase {
 
         // Now delete all the ad-hoc tasks.
         $DB->delete_records('task_adhoc');
+
+        $course->customlinkurl = $course->customlinkurl ?? 'https://moodle.org';
 
         // Now change the provider to another one.
         $communication->configure_room_and_membership_by_provider(

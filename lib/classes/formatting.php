@@ -116,7 +116,7 @@ class formatting {
         }
 
         // If the site requires it, strip ALL tags from this string.
-        if (!empty($this->get_striptags())) {
+        if ($this->get_striptags()) {
             if ($escape) {
                 $string = str_replace(['<', '>'], ['&lt;', '&gt;'], strip_tags($string));
             } else {
@@ -277,7 +277,7 @@ class formatting {
                 $text = $filtermanager->filter_text($text, $context, $filteroptions);
                 break;
             default:  // FORMAT_MOODLE or anything else.
-                throw new \coding_exception("Unkown format passed to format_text: {$format}");
+                throw new \coding_exception("Unknown format passed to format_text: {$format}");
         }
 
         if ($filter) {
@@ -387,7 +387,7 @@ class formatting {
             return $this->striptags;
         }
 
-        return $CFG->formatstringstriptags;
+        return !empty($CFG->formatstringstriptags);
     }
 
     /**

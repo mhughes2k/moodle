@@ -124,6 +124,12 @@ class assign_grading_table extends table_sql implements renderable {
             $this->rownum = $rowoffset - 1;
         }
 
+        $userid = optional_param('userid', null, PARAM_INT);
+        $groupid = groups_get_course_group($assignment->get_course(), true);
+        // If the user ID is set, it indicates that a user has been selected. In this case, override the user search
+        // string with the full name of the selected user.
+        $usersearch = $userid ? fullname(\core_user::get_user($userid)) : optional_param('search', '', PARAM_NOTAGS);
+        $assignment->set_usersearch($userid, $groupid, $usersearch);
         $users = array_keys( $assignment->list_participants($currentgroup, true));
         if (count($users) == 0) {
             // Insert a record that will never match to the sql is still valid.
@@ -395,12 +401,8 @@ class assign_grading_table extends table_sql implements renderable {
                     <input type="checkbox" id="selectall" name="selectall" title="' . get_string('selectall') . '"/></div>';
         }
 
-        // User picture.
         if ($this->hasviewblind || !$this->assignment->is_blind_marking()) {
-            if (!$this->is_downloading()) {
-                $columns[] = 'picture';
-                $headers[] = get_string('pictureofuser');
-            } else {
+            if ($this->is_downloading()) {
                 $columns[] = 'recordid';
                 $headers[] = get_string('recordid', 'assign');
             }
@@ -408,7 +410,6 @@ class assign_grading_table extends table_sql implements renderable {
             // Fullname.
             $columns[] = 'fullname';
             $headers[] = get_string('fullname');
-
             // Participant # details if can view real identities.
             if ($this->assignment->is_blind_marking()) {
                 if (!$this->is_downloading()) {
@@ -557,6 +558,7 @@ class assign_grading_table extends table_sql implements renderable {
 
         // Set the columns.
         $this->define_columns($columns);
+        $this->set_columnsattributes(['fullname' => ['class' => 'username']]);
         $this->define_headers($headers);
         foreach ($extrauserfields as $extrafield) {
              $this->column_class($extrafield, $extrafield);
@@ -891,8 +893,16 @@ class assign_grading_table extends table_sql implements renderable {
      *
      * @param stdClass $row
      * @return string
+     * @deprecated since Moodle 4.5
+     * @todo Final deprecation in Moodle 6.0. See MDL-82336.
      */
+    #[\core\attribute\deprecated(
+        replacement: null,
+        since: '4.5',
+        reason: 'Picture column is merged with fullname column'
+    )]
     public function col_picture(stdClass $row) {
+        \core\deprecation::emit_deprecation_if_present([$this, __FUNCTION__]);
         return $this->output->user_picture($row);
     }
 
@@ -905,8 +915,8 @@ class assign_grading_table extends table_sql implements renderable {
     public function col_fullname($row) {
         if (!$this->is_downloading()) {
             $courseid = $this->assignment->get_course()->id;
-            $link = new moodle_url('/user/view.php', array('id' => $row->id, 'course' => $courseid));
-            $fullname = $this->output->action_link($link, $this->assignment->fullname($row));
+            $fullname = $this->output->render(\core_user::get_profile_picture($row, null,
+                ['courseid' => $courseid, 'includefullname' => true]));
         } else {
             $fullname = $this->assignment->fullname($row);
         }

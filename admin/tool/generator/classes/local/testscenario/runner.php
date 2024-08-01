@@ -19,9 +19,12 @@ namespace tool_generator\local\testscenario;
 use behat_admin;
 use behat_data_generators;
 use behat_base;
+use behat_course;
+use behat_user;
 use Behat\Gherkin\Parser;
 use Behat\Gherkin\Lexer;
 use Behat\Gherkin\Keywords\ArrayKeywords;
+use Behat\Gherkin\Node\OutlineNode;
 use ReflectionClass;
 use ReflectionMethod;
 use stdClass;
@@ -48,6 +51,7 @@ class runner {
         $this->include_composer_libraries();
         $this->include_behat_libraries();
         $this->load_generator();
+        $this->load_cleanup();
     }
 
     /**
@@ -76,6 +80,9 @@ class runner {
         require_once($CFG->libdir . '/behat/behat_base.php');
         require_once("{$CFG->libdir}/tests/behat/behat_data_generators.php");
         require_once("{$CFG->dirroot}/admin/tests/behat/behat_admin.php");
+        require_once("{$CFG->dirroot}/course/lib.php");
+        require_once("{$CFG->dirroot}/course/tests/behat/behat_course.php");
+        require_once("{$CFG->dirroot}/user/tests/behat/behat_user.php");
         return true;
     }
 
@@ -90,6 +97,27 @@ class runner {
         $extra = $this->scan_method(
             new ReflectionMethod(behat_admin::class, 'the_following_config_values_are_set_as_admin'),
             new behat_admin(),
+        );
+        if ($extra) {
+            $this->validsteps[$extra->given] = $extra;
+        }
+    }
+
+    /**
+     * Load all cleanup steps.
+     */
+    private function load_cleanup() {
+        $extra = $this->scan_method(
+            new ReflectionMethod(behat_course::class, 'the_course_is_deleted'),
+            new behat_course(),
+        );
+        if ($extra) {
+            $this->validsteps[$extra->given] = $extra;
+        }
+
+        $extra = $this->scan_method(
+            new ReflectionMethod(behat_user::class, 'the_user_is_deleted'),
+            new behat_user(),
         );
         if ($extra) {
             $this->validsteps[$extra->given] = $extra;
@@ -158,6 +186,19 @@ class runner {
      * @return parsedfeature
      */
     public function parse_feature(string $content): parsedfeature {
+        return $this->parse_selected_scenarios($content);
+    }
+
+    /**
+     * Parse all feature file scenarios.
+     *
+     * Note: if no filter is passed, it will execute only the scenarios that are not tagged.
+     *
+     * @param string $content the feature file content.
+     * @param string $filtertag the tag to filter the scenarios.
+     * @return parsedfeature
+     */
+    private function parse_selected_scenarios(string $content, ?string $filtertag = null): parsedfeature {
         $result = new parsedfeature();
 
         $parser = $this->get_parser();
@@ -169,9 +210,15 @@ class runner {
         if ($feature->hasScenarios()) {
             $scenarios = $feature->getScenarios();
             foreach ($scenarios as $scenario) {
+                // By default, we only execute scenaros that are not tagged.
+                if (empty($filtertag) && !empty($scenario->getTags())) {
+                    continue;
+                }
+                if ($filtertag && !in_array($filtertag, $scenario->getTags())) {
+                    continue;
+                }
                 if ($scenario->getNodeType() == 'Outline') {
-                    $result->add_scenario($scenario->getNodeType(), $scenario->getTitle());
-                    $result->add_error(get_string('testscenario_outline', 'tool_generator'));
+                    $this->parse_scenario_outline($scenario, $result);
                     continue;
                 }
                 $result->add_scenario($scenario->getNodeType(), $scenario->getTitle());
@@ -185,6 +232,32 @@ class runner {
     }
 
     /**
+     * Parse a feature file using only the scenarios with cleanup tag.
+     * @param string $content the feature file content.
+     * @return parsedfeature
+     */
+    public function parse_cleanup(string $content): parsedfeature {
+        return $this->parse_selected_scenarios($content, 'cleanup');
+    }
+
+    /**
+     * Parse a scenario outline.
+     * @param OutlineNode $scenario the scenario outline to parse.
+     * @param parsedfeature $result the parsed feature to add the scenario.
+     */
+    private function parse_scenario_outline(OutlineNode $scenario, parsedfeature $result) {
+        $count = 1;
+        foreach ($scenario->getExamples() as $example) {
+            $result->add_scenario($example->getNodeType(), $example->getOutlineTitle() . " ($count)");
+            $steps = $example->getSteps();
+            foreach ($steps as $step) {
+                $result->add_step(new steprunner(null, $this->validsteps, $step));
+            }
+            $count++;
+        }
+    }
+
+    /**
      * Get the parser.
      * @return Parser
      */
@@ -192,7 +265,6 @@ class runner {
         $keywords = new ArrayKeywords([
             'en' => [
                 'feature' => 'Feature',
-                // If in the future we have clean up steps, background will be renamed to "Clean up".
                 'background' => 'Background',
                 'scenario' => 'Scenario',
                 'scenario_outline' => 'Scenario Outline|Scenario Template',
