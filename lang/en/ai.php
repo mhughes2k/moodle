@@ -123,3 +123,5 @@ If you have questions about how your data is processed, please check with your t
 <br>
 By continuing, you acknowledge that you understand and agree to this policy.';
 $string['validate'] = 'Validate';
+$string['validateprovider'] = 'Validate Provider Settings';
+$string['validateresults'] = 'Save changes first and press validate to check your connection to the "{$a}" provider.';
