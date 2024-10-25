@@ -33,6 +33,6 @@ export default {
         DECLINE: '[data-action="course-summarise-policy-decline"]',
         ACCEPT: '.ai-policy-block [data-action="accept"]',
         REGENERATE: '[data-action="course-summarise-regenerate"]',
-        CANCEL: '.ai-policy-block [data-action="decline"]',
+        CANCEL: '.ai-policy-block [data-action="decline"]'
     }
 };

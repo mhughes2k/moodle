@@ -16,6 +16,7 @@
 
 namespace aiprovider_openai;
 
+use core\exception\coding_exception;
 use core_ai\aiactions;
 use core_ai\rate_limiter;
 use Psr\Http\Message\RequestInterface;
@@ -211,4 +212,6 @@ class provider extends \core_ai\provider {
     public function is_provider_configured(): bool {
         return !empty($this->apikey);
     }
+
+
 }

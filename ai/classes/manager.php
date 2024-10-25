@@ -34,7 +34,8 @@ class manager {
      * @param string $plugin The component name.
      * @return string The class name of the provider.
      */
-    private static function get_ai_plugin_classname(string $plugin): string {
+    public static function get_ai_plugin_classname(string $plugin): string {
+        // Change to public so we can re-use this to get the correctly named plugin.
         if (str_starts_with($plugin, 'aiprovider_')) {
             return "{$plugin}\\provider";
         } else if (str_starts_with($plugin, 'aiplacement_')) {

@@ -122,3 +122,4 @@ Additionally, a record of your interactions with the AI features may be saved in
 If you have questions about how your data is processed, please check with your teachers or learning organisation.
 <br>
 By continuing, you acknowledge that you understand and agree to this policy.';
+$string['validate'] = 'Validate';

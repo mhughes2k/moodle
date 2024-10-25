@@ -20,6 +20,7 @@
  * @copyright  2024 Huong Nguyen <huongnv13@gmail.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+
 export default class AIHelper {
     /**
      * Replace double line breaks with <br> and with </p><p> for paragraphs.
@@ -38,4 +39,5 @@ export default class AIHelper {
         // Add opening and closing <p> tags to wrap the entire content
         return `<p>${textWithBreaks}</p>`;
     }
+
 }

@@ -16,6 +16,8 @@
 
 namespace core_ai;
 
+use core\exception\coding_exception;
+
 /**
  * Class provider.
  *
@@ -87,5 +89,31 @@ abstract class provider {
      */
     public function is_provider_configured(): bool {
         return false;
+    }
+
+    /**
+     * Check that the provider actually works.
+     * @return bool
+     */
+    public function test_status(): mixed {
+        $issues = [];
+        if (! $this->is_provider_configured()) {
+            $issues[] = "Provider is not configured";
+        }
+        $context = \context_system::instance();
+        $action = new \core_ai\aiactions\generate_text(
+            contextid: $context->id,
+            userid: get_admin()->id,
+            prompttext: 'Please respond to confirm I been successfull in connecting to you and return nothing else'
+        );
+        $manager = new \core_ai\manager();
+        // This  technically only makes sure that "any" provider handles it, not the specified one.
+        $result = $manager->process_action($action);
+
+        if (!$result->get_success()) {
+            $issues[] = "* ". $result->get_errormessage();
+        }
+
+        return empty($issues) ? true : implode("\n", $issues);
     }
 }
