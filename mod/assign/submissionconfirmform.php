@@ -41,7 +41,8 @@ class mod_assign_confirm_submission_form extends moodleform {
     public function definition() {
         $mform = $this->_form;
 
-        list($requiresubmissionstatement,
+        list($assign,
+             $requiresubmissionstatement,
              $submissionstatement,
              $coursemoduleid,
              $data) = $this->_customdata;
@@ -57,8 +58,18 @@ class mod_assign_confirm_submission_form extends moodleform {
         $mform->setType('id', PARAM_INT);
         $mform->addElement('hidden', 'action', 'confirmsubmit');
         $mform->setType('action', PARAM_ALPHA);
-        $this->add_action_buttons(true, get_string('continue'));
 
+//        $this->build_submission_statements($assign, $mform, $data);
+        $extendsubmissionstatementhook = new \mod_assign\hook\extend_submission_statement($assign, $mform, $data);
+        // TODO dispatch via DI if after Moodle 4.4
+        if (false) {
+//            \core\di::get(\mod_assign\hook\manager::class)->dispatch($extendsubmissionstatementhook);
+        } else {
+            \core\hook\manager::get_instance()->dispatch($extendsubmissionstatementhook);
+        }
+
+
+        $this->add_action_buttons(true, get_string('continue'));
         if ($data) {
             $this->set_data($data);
         }

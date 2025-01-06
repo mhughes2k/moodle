@@ -5254,10 +5254,13 @@ class assign {
         }
 
         if ($mform == null) {
-            $mform = new mod_assign_confirm_submission_form(null, array($requiresubmissionstatement,
+            $mform = new mod_assign_confirm_submission_form(null, [
+                                                                        $this,
+                                                                        $requiresubmissionstatement,
                                                                         $submissionstatement,
                                                                         $this->get_course_module()->id,
-                                                                        $data));
+                                                                        $data]
+            );
         }
         $o = '';
         $o .= $this->get_renderer()->render(new assign_header($this->get_instance(),
@@ -8144,6 +8147,8 @@ class assign {
 
         // Only show submission statement if we are editing our own submission.
         if ($requiresubmissionstatement && !$draftsenabled && $userid == $USER->id) {
+
+            // TODO Hook in extending submission statement.
             $mform->addElement('checkbox', 'submissionstatement', '', $submissionstatement);
             $mform->addRule('submissionstatement', get_string('submissionstatementrequired', 'mod_assign'),
                 'required', null, 'client');
