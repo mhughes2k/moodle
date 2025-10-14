@@ -35,6 +35,7 @@ final class extend_user_menu {
     public function __construct(
         /** @var array The navigation items */
         public array $navitems = [],
+        public array $submenus = []
     ) {
     }
 
@@ -51,6 +52,17 @@ final class extend_user_menu {
         }
     }
 
+    public function add_submenu(?\stdClass $output): void {
+        if ($output) {
+            // id' => $langsubmenuid,
+            //         'title' => get_string('languageselector'),
+            //         'items' => $languageitems,
+            if (property_exists($output, 'id')) {   // Check we have a menu i
+                $this->submenus[] = $output;
+            }
+        }
+    }
+
     /**
      * Returns a class with the detail for the menu.
      *
@@ -58,5 +70,9 @@ final class extend_user_menu {
      */
     public function get_navitems(): array {
         return $this->navitems;
+    }
+
+    public function get_submenus(): array {
+        return $this->submenus;
     }
 }

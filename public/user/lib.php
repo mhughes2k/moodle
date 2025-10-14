@@ -870,6 +870,7 @@ function user_get_user_navigation_info($user, $page, $options = array()) {
     $returnobject = new stdClass();
     $returnobject->navitems = array();
     $returnobject->metadata = array();
+    $returnobject->submenus = [];
 
     $guest = isguestuser();
     if (!isloggedin() || $guest) {
@@ -942,9 +943,13 @@ function user_get_user_navigation_info($user, $page, $options = array()) {
     // Call to hook to add menu items.
     $hook = new extend_user_menu();
     di::get(core\hook\manager::class)->dispatch($hook);
-    $hookitems = $hook->get_navitems();
+    $hookitems= $hook->get_navitems();
     foreach ($hookitems as $menuitem) {
         $returnobject->navitems[] = $menuitem;
+    }
+    $submenus = $hook->get_submenus();
+    if (!empty($submenus)) {
+        $returnobject->submenus = array_merge($returnobject->submenus, $submenus);
     }
 
     if ($custommenucount > 0) {
@@ -961,7 +966,6 @@ function user_get_user_navigation_info($user, $page, $options = array()) {
     $preferences->title = get_string('preferences');
     $preferences->titleidentifier = 'preferences,moodle';
     $returnobject->navitems[] = $preferences;
-
 
     if (is_role_switched($course->id)) {
         if ($role = $DB->get_record('role', array('id' => $user->access['rsw'][$context->path]))) {

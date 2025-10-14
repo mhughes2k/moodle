@@ -361,7 +361,14 @@ class primary implements renderable, templatable {
                 ];
             }
         }
-
+        // Merge any additional submenus added through the extend_user_menu hook.
+        // Simply combine $submenusdata with $info->submenus.
+        if (!empty($info->submenus)) {
+            foreach ($info->submenus as $submenu) {
+                $submenusdata[] = $submenu;
+            }
+        } 
+        
         // Add divider before the last item.
         $modifiedarray[count($modifiedarray) - 2]->divider = true;
         $usermenudata['items'] = $modifiedarray;
