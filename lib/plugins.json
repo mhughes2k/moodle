@@ -5,8 +5,10 @@
             "editor"
         ],
         "aiprovider": [
-            "openai",
-            "azureai"
+            "azureai",
+            "deepseek",
+            "ollama",
+            "openai"
         ],
         "antivirus": [
             "clamav"
@@ -22,48 +24,12 @@
             "file",
             "onlinetext"
         ],
-        "atto": [
-            "accessibilitychecker",
-            "accessibilityhelper",
-            "align",
-            "backcolor",
-            "bold",
-            "charmap",
-            "clear",
-            "collapse",
-            "emojipicker",
-            "emoticon",
-            "equation",
-            "fontcolor",
-            "h5p",
-            "html",
-            "image",
-            "indent",
-            "italic",
-            "link",
-            "managefiles",
-            "media",
-            "noautolink",
-            "orderedlist",
-            "recordrtc",
-            "rtl",
-            "strike",
-            "subscript",
-            "superscript",
-            "table",
-            "title",
-            "underline",
-            "undo",
-            "unorderedlist"
-        ],
         "auth": [
-            "cas",
             "db",
             "email",
             "ldap",
             "lti",
             "manual",
-            "mnet",
             "nologin",
             "none",
             "oauth2",
@@ -100,7 +66,6 @@
             "login",
             "lp",
             "mentees",
-            "mnet_hosts",
             "myoverview",
             "myprofile",
             "navigation",
@@ -112,7 +77,6 @@
             "recentlyaccesseditems",
             "rss_client",
             "search_forums",
-            "section_links",
             "selfcompletion",
             "settings",
             "site_main_menu",
@@ -186,7 +150,6 @@
             "resources"
         ],
         "editor": [
-            "atto",
             "textarea",
             "tiny"
         ],
@@ -202,7 +165,6 @@
             "lti",
             "manual",
             "meta",
-            "mnet",
             "paypal",
             "self"
         ],
@@ -260,6 +222,9 @@
             "direct",
             "xml"
         ],
+        "gradepenalty": [
+            "duedate"
+        ],
         "gradereport": [
             "grader",
             "history",
@@ -299,15 +264,14 @@
         "message": [
             "airnotifier",
             "email",
-            "popup"
+            "popup",
+            "sms"
         ],
         "mlbackend": [
             "php",
             "python"
         ],
-        "mnetservice": [
-            "enrol"
-        ],
+        "mnetservice": [],
         "mod": [
             "assign",
             "bigbluebuttonbn",
@@ -340,8 +304,7 @@
         "portfolio": [
             "download",
             "flickr",
-            "googledocs",
-            "mahara"
+            "googledocs"
         ],
         "profilefield": [
             "checkbox",
@@ -488,7 +451,8 @@
             "solr"
         ],
         "smsgateway": [
-            "aws"
+            "aws",
+            "modica"
         ],
         "theme": [
             "boost",
@@ -576,9 +540,45 @@
             "upload",
             "uploadsingle"
         ],
+        "atto": [
+            "accessibilitychecker",
+            "accessibilityhelper",
+            "align",
+            "backcolor",
+            "bold",
+            "charmap",
+            "clear",
+            "collapse",
+            "emojipicker",
+            "emoticon",
+            "equation",
+            "fontcolor",
+            "h5p",
+            "html",
+            "image",
+            "indent",
+            "italic",
+            "link",
+            "managefiles",
+            "media",
+            "noautolink",
+            "orderedlist",
+            "recordrtc",
+            "rtl",
+            "strike",
+            "subscript",
+            "superscript",
+            "table",
+            "title",
+            "underline",
+            "undo",
+            "unorderedlist"
+        ],
         "auth": [
+            "cas",
             "fc",
             "imap",
+            "mnet",
             "nntp",
             "pam",
             "pop3",
@@ -588,8 +588,10 @@
             "community",
             "course_overview",
             "messages",
+            "mnet_hosts",
             "participants",
-            "quiz_results"
+            "quiz_results",
+            "section_links"
         ],
         "cachestore": [
             "memcache",
@@ -597,10 +599,12 @@
             "mongodb"
         ],
         "editor": [
+            "atto",
             "tinymce"
         ],
         "enrol": [
-            "authorize"
+            "authorize",
+            "mnet"
         ],
         "filter": [
             "censor",
@@ -619,6 +623,9 @@
         "message": [
             "jabber"
         ],
+        "mnetservice": [
+            "enrol"
+        ],
         "mod": [
             "assignment",
             "chat",
@@ -626,6 +633,7 @@
         ],
         "portfolio": [
             "boxnet",
+            "mahara",
             "picasa"
         ],
         "qformat": [

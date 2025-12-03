@@ -85,7 +85,7 @@ jobs:
       - name: Setting up DB pgsql
         uses: m4nu56/postgresql-action@v1
         with:
-          postgresql version: 13
+          postgresql version: 14
           postgresql db: test
           postgresql user: test
           postgresql password: test
@@ -93,7 +93,7 @@ jobs:
       - name: Setting up PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: 8.3
+          php-version: 8.4
           ini-values: max_input_vars=5000
           coverage: none
 
@@ -113,7 +113,7 @@ jobs:
           cp .github/workflows/config-template.php config.php
           mkdir ../moodledata
           sudo locale-gen en_AU.UTF-8
-          php admin/tool/phpunit/cli/init.php --no-composer-self-update
+          php public/admin/tool/phpunit/cli/init.php --no-composer-self-update
 
       - name: Run PHPUnit test (one by one)
         env:
