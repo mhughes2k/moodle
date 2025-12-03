@@ -1830,6 +1830,9 @@ function mod_assign_get_path_from_pluginfile(string $filearea, array $args): arr
  * @return lang_string The event type lang string.
  */
 function mod_assign_core_calendar_get_event_action_string(string $eventtype): string {
+    global $CFG;
+    require_once($CFG->dirroot . '/mod/assign/locallib.php');
+
     $modulename = get_string('modulename', 'assign');
 
     switch ($eventtype) {
