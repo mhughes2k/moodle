@@ -1,0 +1,19 @@
+[mysqld]
+# Character set and collation for Moodle
+character-set-server=utf8mb4
+collation-server=utf8mb4_unicode_ci
+
+# Moodle recommended settings
+innodb_file_format=Barracuda
+innodb_file_per_table=1
+innodb_large_prefix=1
+
+# Performance tuning for development
+max_allowed_packet=256M
+innodb_buffer_pool_size=512M
+
+# Binary logging (can be disabled for development to save space)
+skip-log-bin
+
+[client]
+default-character-set=utf8mb4

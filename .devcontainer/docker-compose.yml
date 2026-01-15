@@ -1,0 +1,113 @@
+version: '3.8'
+
+services:
+  moodle:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        # Use PHP 8.3 for Moodle 5.x
+        PHP_VERSION: "8.3"
+    volumes:
+      # Mount the workspace
+      - ..:/workspace:cached
+      # Moodle data directories (persistent)
+      - moodledata:/var/www/moodledata
+      - phpunitdata:/var/www/phpunitdata
+      - behatdata:/var/www/behatdata
+      - behatfaildumps:/var/www/behatfaildumps
+      # Composer cache
+      - composer-cache:/var/www/.composer
+    ports:
+      - "8080:80"
+    environment:
+      # Database configuration (MariaDB by default)
+      MOODLE_DBTYPE: "mariadb"
+      MOODLE_DBHOST: "mariadb"
+      MOODLE_DBNAME: "moodle"
+      MOODLE_DBUSER: "moodle"
+      MOODLE_DBPASSWORD: "moodle_password"
+      MOODLE_DBPORT: "3306"
+      
+      # PostgreSQL alternative (comment out MariaDB above and uncomment below)
+      # MOODLE_DBTYPE: "pgsql"
+      # MOODLE_DBHOST: "postgres"
+      # MOODLE_DBPORT: "5432"
+      
+      # Moodle configuration
+      MOODLE_WWWROOT: "http://localhost:8080"
+      MOODLE_DATAROOT: "/var/www/moodledata"
+      
+      # Development settings
+      MOODLE_DEBUG: "true"
+      
+      # PHP settings
+      PHP_MEMORY_LIMIT: "512M"
+      PHP_MAX_EXECUTION_TIME: "300"
+      PHP_UPLOAD_MAX_FILESIZE: "100M"
+      PHP_POST_MAX_SIZE: "100M"
+      
+      # Xdebug
+      XDEBUG_MODE: "debug,develop"
+      XDEBUG_CONFIG: "client_host=host.docker.internal"
+    depends_on:
+      - mariadb
+      # - postgres  # Uncomment if using PostgreSQL
+    networks:
+      - moodle-network
+    # Keep container running
+    command: apache2-foreground
+
+  mariadb:
+    image: mariadb:11.2
+    environment:
+      MYSQL_ROOT_PASSWORD: "root_password"
+      MYSQL_DATABASE: "moodle"
+      MYSQL_USER: "moodle"
+      MYSQL_PASSWORD: "moodle_password"
+      MYSQL_CHARSET: "utf8mb4"
+      MYSQL_COLLATION: "utf8mb4_unicode_ci"
+    volumes:
+      - mariadb-data:/var/lib/mysql
+      - ./mariadb-custom.cnf:/etc/mysql/conf.d/custom.cnf:ro
+    ports:
+      - "3306:3306"
+    networks:
+      - moodle-network
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+
+  # PostgreSQL alternative to MariaDB (uncomment to use)
+  # postgres:
+  #   image: postgres:16-alpine
+  #   environment:
+  #     POSTGRES_DB: "moodle"
+  #     POSTGRES_USER: "moodle"
+  #     POSTGRES_PASSWORD: "moodle_password"
+  #   volumes:
+  #     - postgres-data:/var/lib/postgresql/data
+  #   ports:
+  #     - "5432:5432"
+  #   networks:
+  #     - moodle-network
+
+  # Mailpit for email testing (optional but recommended)
+  mailpit:
+    image: axllent/mailpit:latest
+    ports:
+      - "8025:8025"  # Web UI
+      - "1025:1025"  # SMTP
+    networks:
+      - moodle-network
+
+networks:
+  moodle-network:
+    driver: bridge
+
+volumes:
+  moodledata:
+  phpunitdata:
+  behatdata:
+  behatfaildumps:
+  mariadb-data:
+  # postgres-data:  # Uncomment if using PostgreSQL
+  composer-cache:

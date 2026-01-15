@@ -1,0 +1,149 @@
+{
+  "name": "Moodle 5 Development",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "moodle",
+  "workspaceFolder": "/workspace",
+  
+  // Features to add to the dev container
+  "features": {
+    "ghcr.io/devcontainers/features/git:1": {
+      "version": "latest",
+      "ppa": false
+    },
+    "ghcr.io/devcontainers/features/github-cli:1": {
+      "version": "latest"
+    },
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "20",
+      "nodeGypDependencies": true,
+      "installYarnUsingApt": true
+    }
+  },
+
+  // Configure tool-specific properties
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        // PHP Development
+        "bmewburn.vscode-intelephense-client",
+        "xdebug.php-debug",
+        "zobo.php-intellisense",
+        
+        // Docker
+        "ms-azuretools.vscode-docker",
+        
+        // Database
+        "mtxr.sqltools",
+        "mtxr.sqltools-driver-mysql",
+        "mtxr.sqltools-driver-pg",
+        
+        // Code Quality
+        "EditorConfig.EditorConfig",
+        "streetsidesoftware.code-spell-checker",
+        
+        // Git
+        "eamodio.gitlens",
+        
+        // Utilities
+        "usernamehw.errorlens",
+        "GitHub.copilot"
+      ],
+      "settings": {
+        "php.validate.executablePath": "/usr/local/bin/php",
+        "php.suggest.basic": false,
+        "intelephense.stubs": [
+          "apache",
+          "bcmath",
+          "Core",
+          "ctype",
+          "curl",
+          "date",
+          "dom",
+          "fileinfo",
+          "filter",
+          "gd",
+          "hash",
+          "iconv",
+          "intl",
+          "json",
+          "libxml",
+          "mbstring",
+          "mysqli",
+          "mysqlnd",
+          "openssl",
+          "pcre",
+          "PDO",
+          "pdo_mysql",
+          "pdo_pgsql",
+          "Phar",
+          "session",
+          "SimpleXML",
+          "soap",
+          "SPL",
+          "standard",
+          "tokenizer",
+          "xml",
+          "xmlreader",
+          "xmlwriter",
+          "zip",
+          "zlib"
+        ],
+        "files.associations": {
+          "*.php": "php"
+        },
+        "files.exclude": {
+          "**/.git": true,
+          "**/.DS_Store": true,
+          "**/node_modules": true
+        },
+        "search.exclude": {
+          "**/node_modules": true,
+          "**/vendor": true,
+          "**/moodledata": true
+        },
+        "[php]": {
+          "editor.defaultFormatter": "bmewburn.vscode-intelephense-client",
+          "editor.formatOnSave": false,
+          "editor.tabSize": 4
+        },
+        "editor.rulers": [132],
+        "terminal.integrated.defaultProfile.linux": "bash"
+      }
+    }
+  },
+
+  // Use 'forwardPorts' to make a list of ports inside the container available locally
+  "forwardPorts": [8080, 3306, 5432],
+  
+  // Port attributes
+  "portsAttributes": {
+    "8080": {
+      "label": "Moodle Web",
+      "onAutoForward": "notify"
+    },
+    "3306": {
+      "label": "MariaDB",
+      "onAutoForward": "silent"
+    },
+    "5432": {
+      "label": "PostgreSQL",
+      "onAutoForward": "silent"
+    }
+  },
+
+  // Run commands after container creation
+  "postCreateCommand": "bash .devcontainer/scripts/post-create.sh",
+  
+  // Run commands after the container starts
+  "postStartCommand": "bash .devcontainer/scripts/post-start.sh",
+
+  // Use root user to allow features to install properly
+  // Apache runs as www-data, but we need root for development tasks
+  "remoteUser": "root",
+  
+  // Set containerUser to ensure proper feature installation
+  "containerUser": "root",
+  
+  // Keep container running for debugging
+  "shutdownAction": "stopCompose"
+}
