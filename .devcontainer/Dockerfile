@@ -83,6 +83,9 @@ COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
 # Apache configuration for Moodle
 RUN a2enmod rewrite expires headers ssl
 
+# Copy custom Apache configuration
+COPY apache-moodle.conf /etc/apache2/sites-available/000-default.conf
+
 # Create Moodle data directories with proper permissions
 RUN mkdir -p /var/www/moodledata /var/www/phpunitdata /var/www/behatdata /var/www/behatfaildumps \
     && chown -R www-data:www-data /var/www/moodledata /var/www/phpunitdata /var/www/behatdata /var/www/behatfaildumps \

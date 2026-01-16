@@ -9,33 +9,32 @@ echo "🚀 Running post-create setup for Moodle 5..."
 # Change to workspace directory
 cd /workspace
 
-# Check if we're in the public directory or root
-if [ -d "public" ]; then
-    MOODLE_DIR="/workspace/public"
-    echo "📁 Detected Moodle in public/ directory"
-else
-    MOODLE_DIR="/workspace"
-    echo "📁 Using workspace root as Moodle directory"
-fi
+# Configure Git to trust this directory (fixes ownership warnings in dev containers)
+echo "🔧 Configuring Git safe directory..."
+git config --global --add safe.directory /workspace || true
+
+# Moodle is in the public/ directory
+MOODLE_DIR="/workspace/public"
+echo "📁 Using Moodle directory: $MOODLE_DIR"
 
 # Install Composer dependencies if composer.json exists
-if [ -f "$MOODLE_DIR/../composer.json" ]; then
+if [ -f "/workspace/composer.json" ]; then
     echo "📦 Installing Composer dependencies..."
     cd /workspace
     composer install --no-interaction --prefer-dist || true
 fi
 
 # Install NPM dependencies if package.json exists
-if [ -f "$MOODLE_DIR/../package.json" ]; then
+if [ -f "/workspace/package.json" ]; then
     echo "📦 Installing NPM dependencies..."
     cd /workspace
     npm install || true
 fi
 
-# Create config.php if it doesn't exist
-if [ ! -f "$MOODLE_DIR/config.php" ]; then
+# Create config.php if it doesn't exist in public/
+if [ ! -f "$MOODLE_DIR/../config.php" ]; then
     echo "⚙️  Creating Moodle config.php..."
-    cp /workspace/.devcontainer/config.php "$MOODLE_DIR/config.php"
+    cp /workspace/.devcontainer/config.php "$MOODLE_DIR/../config.php"
 fi
 
 # Set proper permissions

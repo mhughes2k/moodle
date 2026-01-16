@@ -6,12 +6,8 @@ set -e
 
 echo "🎓 Installing Moodle via CLI..."
 
-# Determine Moodle directory
-if [ -d "/workspace/public" ]; then
-    MOODLE_DIR="/workspace/public"
-else
-    MOODLE_DIR="/workspace"
-fi
+# Moodle directory is in public/
+MOODLE_DIR="/workspace/public"
 
 # Check if Moodle is already installed
 if [ -f "$MOODLE_DIR/config.php" ]; then

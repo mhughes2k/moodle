@@ -21,15 +21,22 @@ $CFG->dboptions = [
 ];
 
 // Site configuration
-$CFG->wwwroot   = getenv('MOODLE_WWWROOT') ?: 'http://localhost:8080';
+// Handle GitHub Codespaces, local dev, and other environments
+if (isset($_SERVER['HTTP_X_FORWARDED_HOST'])) {
+    // GitHub Codespaces or other proxied environment
+    $CFG->wwwroot = 'https://' . $_SERVER['HTTP_X_FORWARDED_HOST'];
+} elseif (getenv('CODESPACE_NAME')) {
+    // GitHub Codespaces fallback
+    $CFG->wwwroot = 'https://' . getenv('CODESPACE_NAME') . '-8080.app.github.dev';
+} else {
+    // Local development
+    $CFG->wwwroot = getenv('MOODLE_WWWROOT') ?: 'http://localhost:8080';
+}
+
 $CFG->dataroot  = getenv('MOODLE_DATAROOT') ?: '/var/www/moodledata';
 
-// Determine Moodle directory
-if (file_exists('/workspace/public/lib/setup.php')) {
-    $CFG->dirroot = '/workspace/public';
-} else {
-    $CFG->dirroot = '/workspace';
-}
+// Moodle directory - should be /workspace/public based on repo structure
+$CFG->dirroot = '/workspace/public';
 
 // Admin settings
 $CFG->admin = 'admin';
@@ -72,12 +79,11 @@ $CFG->phpunit_dataroot = '/var/www/phpunitdata';
 // Behat settings
 $CFG->behat_prefix = 'bht_';
 $CFG->behat_dataroot = '/var/www/behatdata';
-$CFG->behat_wwwroot = 'http://moodle:80';
+$CFG->behat_wwwroot = $CFG->wwwroot; // Use the same wwwroot
 $CFG->behat_faildump_path = '/var/www/behatfaildumps';
 
 // Proxy settings (for codespaces/cloud environments)
 if (isset($_SERVER['HTTP_X_FORWARDED_HOST'])) {
-    $CFG->wwwroot = 'https://' . $_SERVER['HTTP_X_FORWARDED_HOST'];
     $CFG->reverseproxy = true;
     $CFG->sslproxy = true;
 }
