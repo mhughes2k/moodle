@@ -10,7 +10,7 @@ echo "🎓 Installing Moodle via CLI..."
 MOODLE_DIR="/workspace/public"
 
 # Check if Moodle is already installed
-if [ -f "$MOODLE_DIR/config.php" ]; then
+if [ -f "$MOODLE_DIR/../config.php" ]; then
     echo "⚠️  Moodle config.php already exists. Checking if installed..."
     
     # Try to access database - if it works, Moodle is likely installed

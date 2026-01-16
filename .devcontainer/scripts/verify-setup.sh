@@ -47,7 +47,7 @@ echo ""
 echo "📌 Moodle Files:"
 if [ -d "/workspace/public" ]; then
     echo "✅ Moodle directory exists: /workspace/public"
-    if [ -f "/workspace/public/config.php" ]; then
+    if [ -f "/workspace/config.php" ]; then
         echo "✅ config.php exists"
     else
         echo "⚠️ config.php not found - run post-create script or copy from .devcontainer/"
@@ -108,9 +108,9 @@ if ! pgrep -x "apache2" > /dev/null; then
     echo "⚠️ Start Apache: sudo apachectl start"
 fi
 
-if [ ! -f "/workspace/public/config.php" ]; then
+if [ ! -f "/workspace/config.php" ]; then
     ALL_GOOD=false
-    echo "⚠️ Copy config: cp .devcontainer/config.php public/config.php"
+    echo "⚠️ Copy config: cp .devcontainer/config.php config.php"
 fi
 
 if $ALL_GOOD; then
