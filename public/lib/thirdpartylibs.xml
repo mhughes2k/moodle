@@ -323,13 +323,12 @@ All rights reserved.</copyright>
     <location>mustache</location>
     <name>Mustache</name>
     <description>PHP library for displaying mustache templates.</description>
-    <version>2.14.2</version>
+    <version>3.0.0</version>
     <license>MIT</license>
     <repository>https://github.com/bobthecow/mustache.php</repository>
     <copyrights>
-      <copyright>2010-2016 Justin Hileman</copyright>
+      <copyright>2010-2025 Justin Hileman</copyright>
     </copyrights>
-    <customised/>
   </library>
   <library>
     <location>amd/src/mustache.js</location>
@@ -404,11 +403,11 @@ All rights reserved.</copyright>
     <location>amd/src/chartjs-lazy.js</location>
     <name>Chart.js</name>
     <description>Simple yet flexible JavaScript charting for designers &amp; developers.</description>
-    <version>4.5.0</version>
+    <version>4.5.1</version>
     <license>MIT</license>
     <repository>https://github.com/chartjs/Chart.js</repository>
     <copyrights>
-      <copyright>2014-2022 Chart.js Contributors</copyright>
+      <copyright>2014-2025 Chart.js Contributors</copyright>
     </copyrights>
     <customised/>
   </library>
@@ -838,5 +837,48 @@ All rights reserved.</copyright>
       <version>9.0.12</version>
       <license>Apache 2.0</license>
       <repository>https://github.com/giggsey/libphonenumber-for-php-lite</repository>
+  </library>
+  <library>
+      <location>monolog</location>
+      <name>Monolog</name>
+      <description>Monolog - Logging for PHP</description>
+      <version>3.9.0</version>
+      <license>MIT</license>
+      <repository>https://github.com/Seldaek/monolog</repository>
+  </library>
+  <library>
+      <location>psr/cache</location>
+      <name>cache</name>
+      <description>Caching Interface (PHP FIG PSR-6).</description>
+      <version>3.0.0</version>
+      <license>MIT</license>
+      <repository>https://github.com/php-fig/cache</repository>
+  </library>
+  <library>
+      <location>google2</location>
+      <name>Google APIs</name>
+      <description>Library Google APIs Client Library for PHP</description>
+      <version>2.18.4</version>
+      <license>Apache</license>
+      <licenseversion>2.0</licenseversion>
+      <repository>https://github.com/googleapis/google-api-php-client</repository>
+  </library>
+  <library>
+      <location>google2-auth</location>
+      <name>Google Auth</name>
+      <description>Google Auth Library for PHP</description>
+      <version>1.49.0</version>
+      <license>Apache</license>
+      <licenseversion>2.0</licenseversion>
+      <repository>https://github.com/googleapis/google-auth-library-php</repository>
+  </library>
+  <library>
+      <location>google2-service</location>
+      <name>Google Client Services</name>
+      <description>Google PHP API Client Services</description>
+      <version>0.424.0</version>
+      <license>Apache</license>
+      <licenseversion>2.0</licenseversion>
+      <repository>https://github.com/googleapis/google-api-php-client-services</repository>
   </library>
 </libraries>

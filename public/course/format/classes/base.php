@@ -213,7 +213,7 @@ abstract class base {
      *
      * @param int $courseid
      */
-    final public static function reset_course_cache($courseid = 0) {
+    final public static function reset_course_cache($courseid = 0): void {
         if ($courseid) {
             if (isset(self::$instances[$courseid])) {
                 foreach (self::$instances[$courseid] as $format => $object) {
@@ -328,7 +328,7 @@ abstract class base {
      * Returns a record from course database table plus additional fields
      * that course format defines
      *
-     * @return ?stdClass
+     * @return stdClass|null
      */
     public function get_course() {
         global $DB;
@@ -479,7 +479,7 @@ abstract class base {
      * Initially this was created to know if forms should add a button to return to the course page.
      * So if 'Return to course' does not make sense in your format your should probably return false.
      *
-     * @return boolean
+     * @return bool
      * @since Moodle 2.6
      */
     public function has_view_page() {
@@ -557,7 +557,7 @@ abstract class base {
      *
      * @param int|stdClass $section either section number (field course_section.section) or row from course_section table
      * @param int $strictness
-     * @return ?section_info
+     * @return section_info|null
      */
     final public function get_section($section, $strictness = IGNORE_MISSING) {
         if (is_object($section)) {
@@ -665,19 +665,6 @@ abstract class base {
     }
 
     /**
-     * @deprecated Since 4.4. Use set_sectionnum instead.
-     */
-    #[\core\attribute\deprecated(
-        replacement: 'base::set_sectionnum',
-        since: '4.4',
-        mdl: 'MDL-80248',
-        final: true,
-    )]
-    public function set_section_number(int $singlesection): void {
-        \core\deprecation::emit_deprecation([self::class, __FUNCTION__]);
-    }
-
-    /**
      * Set the current section number to display.
      * Some formats has the hability to swith from one section to multiple sections per page.
      *
@@ -725,20 +712,6 @@ abstract class base {
         }
         $modinfo = get_fast_modinfo($this->courseid);
         return $modinfo->get_section_info_by_id($this->singlesectionid);
-    }
-
-    /**
-     * @deprecated Since 4.4. Use get_sectionnum instead.
-     */
-    #[\core\attribute\deprecated(
-        replacement: 'base::get_sectionnum',
-        since: '4.4',
-        mdl: 'MDL-80248',
-        final: true,
-    )]
-    public function get_section_number(): int {
-        \core\deprecation::emit_deprecation([self::class, __FUNCTION__]);
-        return 0;
     }
 
     /**
@@ -906,7 +879,7 @@ abstract class base {
      *
      * Used in course/rest.php
      *
-     * @return ?array This will be passed in ajax respose
+     * @return array|null This will be passed in ajax respose
      */
     public function ajax_section_move() {
         return null;
@@ -1838,7 +1811,10 @@ abstract class base {
         $decreasenumsections = $courseformathasnumsections && ($section->section <= $course->numsections);
 
         // Move the section to the end.
-        move_section_to($course, $section->section, $lastsection, true);
+        $sectionactions = \core_courseformat\formatactions::section($course);
+        $modinfo = get_fast_modinfo($course);
+        $sectioninfo = $modinfo->get_section_info($section->section);
+        $sectionactions->move_at($sectioninfo, $lastsection);
 
         // Delete all modules from the section.
         foreach (preg_split('/,/', $section->sequence, -1, PREG_SPLIT_NO_EMPTY) as $cmid) {
@@ -1884,24 +1860,14 @@ abstract class base {
      *
      * @param section_info $section the section to move
      * @param section_info $destination the section that should be below the moved section
-     * @return boolean if the section can be moved or not
+     * @return bool if the section can be moved or not
      */
     public function move_section_after(section_info $section, section_info $destination): bool {
         if ($section->section == $destination->section || $section->section == $destination->section + 1) {
             return true;
         }
-        // The move_section_to moves relative to the section to move. However, this
-        // method will move the target section always after the destination.
-        if ($section->section > $destination->section) {
-            $newsectionnumber = $destination->section + 1;
-        } else {
-            $newsectionnumber = $destination->section;
-        }
-        return move_section_to(
-            $this->get_course(),
-            $section->section,
-            $newsectionnumber
-        );
+        $sectionactions = \core_courseformat\formatactions::section($this->get_course());
+        return $sectionactions->move_after($section, $destination);
     }
 
     /**
@@ -1958,7 +1924,7 @@ abstract class base {
      * @param stdClass $section
      * @param string $itemtype
      * @param mixed $newvalue
-     * @return ?\core\output\inplace_editable
+     * @return \core\output\inplace_editable|null
      */
     public function inplace_editable_update_section_name($section, $itemtype, $newvalue) {
         if ($itemtype === 'sectionname' || $itemtype === 'sectionnamenl') {

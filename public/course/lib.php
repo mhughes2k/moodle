@@ -491,7 +491,7 @@ function set_section_visible($courseid, $sectionnumber, $visibility) {
  * Return the course category context for the category with id $categoryid, except
  * that if $categoryid is 0, return the system context.
  *
- * @param integer $categoryid a category id or 0.
+ * @param int $categoryid a category id or 0.
  * @return context the corresponding context
  */
 function get_category_or_system_context($categoryid) {
@@ -505,8 +505,8 @@ function get_category_or_system_context($categoryid) {
 /**
  * Does the user have permission to edit things in this category?
  *
- * @param integer $categoryid The id of the category we are showing, or 0 for system context.
- * @return boolean has_any_capability(array(...), ...); in the appropriate context.
+ * @param int $categoryid The id of the category we are showing, or 0 for system context.
+ * @return bool has_any_capability(array(...), ...); in the appropriate context.
  */
 function can_edit_in_category($categoryid = 0) {
     $context = get_category_or_system_context($categoryid);
@@ -719,6 +719,7 @@ function set_coursemodule_name($cmid, $name) {
  *
  * @param int $cmid the course module id
  * @param bool $async whether or not to try to delete the module using an adhoc task. Async also depends on a plugin hook.
+ * @return bool|null
  * @throws moodle_exception
  * @since Moodle 2.5
  * @deprecated since Moodle 5.2.
@@ -744,7 +745,7 @@ function course_delete_module($cmid, $async = false) {
  * The real deletion of the module is handled by the task, which calls 'course_delete_module($cmid)'.
  *
  * @param int $cmid the course module id.
- * @return ?bool whether the module was successfully scheduled for deletion.
+ * @return bool|null whether the module was successfully scheduled for deletion.
  * @throws \moodle_exception
  * @deprecated since Moodle 5.2.
  * @todo MDL-86956 Final deprecation in Moodle 6.0.
@@ -877,7 +878,7 @@ function course_module_update_calendar_events($modulename, $instance = null, $cm
  * Update all instances through out the site or in a course.
  *
  * @param  string  $modulename Module type to update.
- * @param  integer $courseid   Course id to update events. 0 for the whole site.
+ * @param  int $courseid   Course id to update events. 0 for the whole site.
  * @return bool Returns True if the update was successful.
  * @since  Moodle 3.3.4
  */
@@ -910,7 +911,7 @@ function course_module_bulk_update_calendar_events($modulename, $courseid = 0) {
  * @param  stdClass $cm Course Module object.
  * @since  Moodle 3.3.4
  */
-function course_module_calendar_event_update_process($instance, $cm) {
+function course_module_calendar_event_update_process($instance, $cm): void {
     global $CFG;
 
     // We need to call *_refresh_events() first because some modules delete 'old' events at the end of the code which
@@ -933,65 +934,34 @@ function course_module_calendar_event_update_process($instance, $cm) {
  * @param int $section Section number (not id!!!)
  * @param int $destination
  * @param bool $ignorenumsections
- * @return boolean Result
+ * @return bool Result
+ * @todo see MDL-87419 for the final deprecation in Moodle 6.0.
  */
+#[\core\attribute\deprecated(
+    replacement: 'core_courseformat\local\sectionactions',
+    since: '5.2',
+    mdl: 'MDL-86862',
+    reason: 'Replaced by sectionactions::move_after.',
+)]
 function move_section_to($course, $section, $destination, $ignorenumsections = false) {
-/// Moves a whole course section up and down within the course
-    global $USER, $DB;
+    \core\deprecation::emit_deprecation(__FUNCTION__);
 
     if (!$destination && $destination != 0) {
         return true;
     }
-
-    // compartibility with course formats using field 'numsections'
     $courseformatoptions = course_get_format($course)->get_format_options();
     if ((!$ignorenumsections && array_key_exists('numsections', $courseformatoptions) &&
             ($destination > $courseformatoptions['numsections'])) || ($destination < 1)) {
         return false;
     }
 
-    // Get all sections for this course and re-order them (2 of them should now share the same section number)
-    if (!$sections = $DB->get_records_menu('course_sections', array('course' => $course->id),
-            'section ASC, id ASC', 'id, section')) {
+    $sectionactions = formatactions::section($course);
+    $modinfo = get_fast_modinfo($course);
+    $sectioninfo = $modinfo->get_section_info($section);
+    if (!$sectioninfo) {
         return false;
     }
-
-    $movedsections = reorder_sections($sections, $section, $destination);
-
-    // Update all sections. Do this in 2 steps to avoid breaking database
-    // uniqueness constraint
-    $transaction = $DB->start_delegated_transaction();
-    foreach ($movedsections as $id => $position) {
-        if ((int) $sections[$id] !== $position) {
-            $DB->set_field('course_sections', 'section', -$position, ['id' => $id]);
-            // Invalidate the section cache by given section id.
-            course_modinfo::purge_course_section_cache_by_id($course->id, $id);
-        }
-    }
-    foreach ($movedsections as $id => $position) {
-        if ((int) $sections[$id] !== $position) {
-            $DB->set_field('course_sections', 'section', $position, ['id' => $id]);
-            // Invalidate the section cache by given section id.
-            course_modinfo::purge_course_section_cache_by_id($course->id, $id);
-        }
-    }
-
-    // If we move the highlighted section itself, then just highlight the destination.
-    // Adjust the higlighted section location if we move something over it either direction.
-    if ($section == $course->marker) {
-        $sectioninfo = get_fast_modinfo($course->id)->get_section_info($destination);
-        formatactions::section($course->id)->set_marker($sectioninfo, true);
-    } else if ($section > $course->marker && $course->marker >= $destination) {
-        $sectioninfo = get_fast_modinfo($course->id)->get_section_info($course->marker + 1);
-        formatactions::section($course->id)->set_marker($sectioninfo, true);
-    } else if ($section < $course->marker && $course->marker <= $destination) {
-        $sectioninfo = get_fast_modinfo($course->id)->get_section_info($course->marker - 1);
-        formatactions::section($course->id)->set_marker($sectioninfo, true);
-    }
-
-    $transaction->allow_commit();
-    rebuild_course_cache($course->id, true, true);
-    return true;
+    return $sectionactions->move_at($sectioninfo, $destination);
 }
 
 /**
@@ -1045,7 +1015,7 @@ function course_delete_section_async($section, $forcedeleteifnotempty = true) {
  * @param stdClass|section_info $section record from course_sections table - it will be updated with the new values
  * @param array|stdClass $data
  */
-function course_update_section($courseorid, $section, $data) {
+function course_update_section($courseorid, $section, $data): void {
     $sectioninfo = get_fast_modinfo($courseorid)->get_section_info_by_id($section->id);
     formatactions::section($courseorid)->update($sectioninfo, $data);
 
@@ -1106,7 +1076,13 @@ function course_can_delete_section($course, $section) {
  * @param int $target_position
  * @return array|false
  */
+#[\core\attribute\deprecated(
+    since: '5.2',
+    reason: 'Unused after refactoring the move_after function.',
+    mdl: 'MDL-86862',
+)]
 function reorder_sections($sections, $origin_position, $target_position) {
+    \core\deprecation::emit_deprecation(__FUNCTION__);
     if (!is_array($sections)) {
         return false;
     }
@@ -1176,42 +1152,41 @@ function reorder_sections($sections, $origin_position, $target_position) {
  *     before which the module needs to be included. Null for inserting in the
  *     end of the section
  * @return int new value for module visibility (0 or 1)
+ * @todo Remove this method in Moodle 6.0 (MDL-87465).
  */
+#[\core\attribute\deprecated(
+    replacement: 'core_courseformat\local\cmactions',
+    since: '5.2',
+    mdl: 'MDL-86854',
+    reason: 'Replaced by an cmactions::move_before or cmactions::move_end_section.',
+)]
 function moveto_module($mod, $section, $beforemod=NULL) {
-    global $OUTPUT, $DB;
+    \core\deprecation::emit_deprecation(__FUNCTION__);
 
     if ($section->section != 0 && !course_modinfo::is_mod_type_visible_on_course($mod->modname)) {
         throw new coding_exception("Modules with FEATURE_CAN_DISPLAY set to false can not be moved from section 0");
     }
-
-    // Current module visibility state - return value of this function.
-    $modvisible = $mod->visible;
-
-    // Remove original module from original section.
-    if (! delete_mod_from_section($mod->id, $mod->section)) {
-        echo $OUTPUT->notification("Could not delete module from existing section");
+    [$course, $cm] = get_course_and_cm_from_cmid($mod->id);
+    $action = \core_courseformat\formatactions::cm($course);
+    if ($beforemod) {
+        $action->move_before($cm->id, $beforemod->id);
+    } else {
+        // We retrieve the target section directly from the cache to avoid stale information in the section info.
+        $action->move_end_section(
+            $cm->id,
+            $section->id,
+        );
     }
-
-    // Add the module into the new section.
-    course_add_cm_to_section($section->course, $mod->id, $section->section, $beforemod, $mod->modname);
-
-    // If moving to a hidden section then hide module.
-    if ($mod->section != $section->id) {
-        if (!$section->visible && $mod->visible) {
-            // Module was visible but must become hidden after moving to hidden section.
-            $modvisible = 0;
-            set_coursemodule_visible($mod->id, 0);
-            // Set visibleold to 1 so module will be visible when section is made visible.
-            $DB->set_field('course_modules', 'visibleold', 1, array('id' => $mod->id));
-        }
-        if ($section->visible && !$mod->visible) {
-            // Hidden module was moved to the visible section, restore the module visibility from visibleold.
-            set_coursemodule_visible($mod->id, $mod->visibleold);
-            $modvisible = $mod->visibleold;
-        }
-    }
-
-    return $modvisible;
+    $modinfo = get_fast_modinfo($course);
+    $cm = $modinfo->get_cm($mod->id);
+    $modvisibility = $cm->visible;
+    // Purge the cm cache to ensure visibility changes are reflected.
+    // This was done last in the original method so we need to keep this here for backward compatibility.
+    // The explanation is that get_fast_modinfo was sometimes called with the last parameter to true in order to purge the cache.
+    // But this is not working well, so removing the following line will lead to a unit test failure for
+    // info_test::test_is_user_visible as the course module visibility is not refreshed properly.
+    \course_modinfo::purge_course_module_cache($cm->course, $cm->id);
+    return $modvisibility;
 }
 
 /**
@@ -1637,7 +1612,7 @@ function course_format_ajax_support($format) {
  * Course creators have exception,
  * 1 day after the creation they can sill delete the course.
  * @param int $courseid
- * @return boolean
+ * @return bool
  */
 function can_delete_course($courseid) {
     global $USER;
@@ -1678,10 +1653,10 @@ function can_delete_course($courseid) {
 /**
  * Save the Your name for 'Some role' strings.
  *
- * @param integer $courseid the id of this course.
+ * @param int $courseid the id of this course.
  * @param array|stdClass $data the data that came from the course settings form.
  */
-function save_local_role_names($courseid, $data) {
+function save_local_role_names($courseid, $data): void {
     global $DB;
     $context = context_course::instance($courseid);
 
@@ -1751,8 +1726,8 @@ function course_overviewfiles_options($course) {
  * Please note this functions does not verify any access control,
  * the calling code is responsible for all validation (usually it is the form definition).
  *
- * @param array $editoroptions course description editor options
  * @param object $data  - all the data needed for an entry in the 'course' table
+ * @param array|null $editoroptions course description editor options
  * @return object new course instance
  */
 function create_course($data, $editoroptions = NULL) {
@@ -2156,7 +2131,7 @@ function average_number_of_participants(bool $onlyactive = false, ?int $lastlogi
 
 /**
  * Average number of course modules
- * @return integer
+ * @return int
  */
 function average_number_of_courses_modules() {
     global $DB, $SITE;
@@ -2217,7 +2192,7 @@ function course_page_type_list($pagetype, $parentcontext, $currentcontext) {
  * Determine whether course ajax should be enabled for the specified course
  *
  * @param stdClass $course The course to test against
- * @return boolean Whether course ajax is enabled or note
+ * @return bool Whether course ajax is enabled or note
  */
 function course_ajax_enabled($course) {
     global $CFG, $PAGE, $SITE;
@@ -2249,7 +2224,7 @@ function course_ajax_enabled($course) {
  * Include the relevant javascript and language strings for the resource
  * toolbox YUI module
  *
- * @param integer $id The ID of the course being applied to
+ * @param stdClass $course The course being applied to
  * @param array $usedmodules An array containing the names of the modules in use on the page
  * @param array $enabledmodules An array containing the names of the enabled (visible) modules on this site
  * @param stdClass $config An object containing configuration parameters for ajax modules including:
@@ -2365,7 +2340,7 @@ function include_course_ajax($course, $usedmodules = [], $enabledmodules = null,
  *
  * @param course_format $format the course format instance.
  */
-function include_course_editor(course_format $format) {
+function include_course_editor(course_format $format): void {
     global $PAGE, $SITE;
 
     $course = $format->get_course();
@@ -2446,7 +2421,7 @@ function course_get_url($courseorid, $section = null, $options = array()) {
  *      - capability checks and other checks
  *      - create the module from the module info
  *
- * @param object $module
+ * @param object $moduleinfo
  * @return object the created module info
  * @throws moodle_exception if user is not allowed to perform the action or module is not allowed in this course
  */
@@ -2484,7 +2459,7 @@ function create_module($moduleinfo) {
  *      - capability and other checks
  *      - update the module
  *
- * @param object $module
+ * @param object $moduleinfo
  * @return object the updated module info
  * @throws moodle_exception if current user is not allowed to update the module
  */
@@ -2657,14 +2632,16 @@ function duplicate_module($course, $cm, ?int $sectionid = null, bool $changename
             set_coursemodule_name($newcm->id, $newname);
         }
 
-        $section = $DB->get_record('course_sections', ['id' => $sectionid ?? $cm->section, 'course' => $cm->course]);
+        $section = get_fast_modinfo($course)->get_section_info_by_id($sectionid ?? $cm->section);
+        $action = formatactions::cm($course);
         if (isset($sectionid)) {
-            moveto_module($newcm, $section);
+            $action->move_end_section($newcm->id, $section->id);
         } else {
             $modarray = explode(",", trim($section->sequence));
             $cmindex = array_search($cm->id, $modarray);
             if ($cmindex !== false && $cmindex < count($modarray) - 1) {
-                moveto_module($newcm, $section, $modarray[$cmindex + 1]);
+                $beforecmid = $modarray[$cmindex + 1];
+                $action->move_before($newcm->id, $beforecmid);
             }
         }
 
@@ -2871,7 +2848,7 @@ function course_change_sortorder_after_course($courseorid, $moveaftercourseid) {
  * @param int $sectionnumber section number
  * @since Moodle 2.9
  */
-function course_view($context, $sectionnumber = 0) {
+function course_view($context, $sectionnumber = 0): void {
 
     $eventdata = array('context' => $context);
 
@@ -2923,7 +2900,7 @@ function course_get_tagged_courses($tag, $exclusivemode = false, $fromctx = 0, $
  * @param string $itemtype
  * @param int $itemid
  * @param mixed $newvalue
- * @return ?\core\output\inplace_editable
+ * @return \core\output\inplace_editable|null
  */
 function core_course_inplace_editable($itemtype, $itemid, $newvalue) {
     if ($itemtype === 'activityname') {
@@ -3012,7 +2989,7 @@ function core_course_drawer(): string {
  * @param int $contextid context id where to search for records
  * @param bool $recursivecontext search in subcontexts as well
  * @param int $page 0-based number of page being displayed
- * @return ?\core_tag\output\tagindex
+ * @return \core_tag\output\tagindex|null
  */
 function course_get_tagged_course_modules($tag, $exclusivemode = false, $fromcontextid = 0, $contextid = 0,
                                           $recursivecontext = 1, $page = 0) {
@@ -3906,7 +3883,7 @@ function course_can_view_participants($context) {
  * @param context $context The context we are checking.
  * @throws required_capability_exception
  */
-function course_require_view_participants($context) {
+function course_require_view_participants($context): void {
     if (!course_can_view_participants($context)) {
         $viewparticipantscap = 'moodle/course:viewparticipants';
         if ($context->contextlevel == CONTEXT_SYSTEM) {
@@ -4353,7 +4330,7 @@ function course_get_courseimage(\stdClass $course): ?stored_file {
 /**
  * Get course specific data for configuring a communication instance.
  *
- * @param integer $courseid The course id.
+ * @param int $courseid The course id.
  * @return array Returns course data, context and heading.
  */
 function course_get_communication_instance_data(int $courseid): array {
@@ -4395,7 +4372,7 @@ function course_update_communication_instance_data(stdClass $data): void {
  * @param int $sectionid section number
  * @since Moodle 4.4.
  */
-function course_section_view(context_course $context, int $sectionid) {
+function course_section_view(context_course $context, int $sectionid): void {
 
     $eventdata = [
         'objectid' => $sectionid,

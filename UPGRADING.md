@@ -15,6 +15,9 @@ The format of this change log follows the advice given at [Keep a CHANGELOG](htt
 - Appending an exclamation mark to template names ignores theme overrides
 
   For more information see [MDL-77894](https://tracker.moodle.org/browse/MDL-77894)
+- Redis connection timeout settings for cachestores and sessions have been split into connection timeout and read timeout to allow for finer control. These settings now also accept floats.
+
+  For more information see [MDL-85336](https://tracker.moodle.org/browse/MDL-85336)
 - The namespace for the `\core_shutdown_manager` has been moved to `\core\shutdown_manager`. The legacy namespace will continue to work for the moment.
 
   For more information see [MDL-87046](https://tracker.moodle.org/browse/MDL-87046)
@@ -32,6 +35,26 @@ The format of this change log follows the advice given at [Keep a CHANGELOG](htt
 - The CLI script used to terminate user sessions (kill_all_sessions.php) has been improved to make it safer and more flexible.  A new '--run' parameter has been introduced. Without '--run', the script performs a dry run making no changes. The script now supports targeted session termination using '--for-users' parameter.
 
   For more information see [MDL-87173](https://tracker.moodle.org/browse/MDL-87173)
+- The __construct() method of the confirm_action class now accepts two optional new parameters: `$title` (string) to set the dialogue's heading, and `$dialogtype` (string) to specify the visual style of the action ('delete' for displaying the danger button).
+
+  For more information see [MDL-87281](https://tracker.moodle.org/browse/MDL-87281)
+- A new path_module parameter type for routing has been created
+
+  For more information see [MDL-87283](https://tracker.moodle.org/browse/MDL-87283)
+- Public require_login() function in moodlelib.php has been change to redirect users to a restricted page when the activity restrictions are visible.
+
+  For more information see [MDL-87283](https://tracker.moodle.org/browse/MDL-87283)
+- There is a new Behat `toast_message` named selector to more easily assert the presence of Toast messages on the page
+
+  For more information see [MDL-87443](https://tracker.moodle.org/browse/MDL-87443)
+- Added new `options` parameter to loadingicon.js functions for displaying the icon as `overlay`.
+
+  For more information see [MDL-87517](https://tracker.moodle.org/browse/MDL-87517)
+- The Checks API now supports multiple results being returned for a single instance of `\core\check\check`.
+
+  To support this a new `get_results(): array;` method has been created which returns an array of `\core\check\result` objects.
+
+  For more information see [MDL-87648](https://tracker.moodle.org/browse/MDL-87648)
 
 #### Changed
 
@@ -55,15 +78,83 @@ The format of this change log follows the advice given at [Keep a CHANGELOG](htt
 
 #### Removed
 
+- Removed `qtype_random` from core. `core\component::is_valid_plugin_name` has an additional check to ensure no-one can create a new plugin called qtype_random, as this would conflict with the support for restoring old backups.
+
+  For more information see [MDL-73602](https://tracker.moodle.org/browse/MDL-73602)
 - The following AMD modules have been removed following the final deprecation process. It is no longer possible or necessary to manually register modal types. See MDL-78324 for further details.
 
   - `core/modal_registry`
   - `core/modal_factory`
 
   For more information see [MDL-79182](https://tracker.moodle.org/browse/MDL-79182)
+- Legacy constructors have been removed. These relate to PHP 4 and earlier.
+
+  For more information see [MDL-82284](https://tracker.moodle.org/browse/MDL-82284)
 - Removed $CFG->wwwrootendsinpublic flag to force users to configure their server accordingly.
 
   For more information see [MDL-87072](https://tracker.moodle.org/browse/MDL-87072)
+- The following functions have been removed from `public/lib/deprecatedlib.php` as part of the depreciation process: - `print_course_request_buttons()` - `cron_run()` - `cron_run_scheduled_tasks()` - `cron_run_adhoc_tasks()` - `cron_run_inner_scheduled_task()` - `cron_run_inner_adhoc_task()` - `cron_set_process_title()` - `cron_trace_time_and_memory()` - `cron_prepare_core_renderer()` - `cron_setup_user()` - `badges_get_oauth2_service_options()` - `theme_is_device_locked()` - `theme_get_locked_theme_for_device()` - `random_bytes_emulate()` - `plagiarism_get_file_results()` - `plagiarism_update_status()` - `calendar_top_controls()` - `calendar_get_link_previous()` - `calendar_get_link_next()`
+
+  For more information see [MDL-87423](https://tracker.moodle.org/browse/MDL-87423)
+- The `MOD_PURPOSE_INTERFACE` constant has been removed from `public/lib/moodlelib.php`.
+
+  For more information see [MDL-87425](https://tracker.moodle.org/browse/MDL-87425)
+- The `public/lib/classes/navigation/flat_navigation_node.php` file has been removed.
+
+  For more information see [MDL-87425](https://tracker.moodle.org/browse/MDL-87425)
+- The `public/question/qengine.js` file has been removed.
+
+  For more information see [MDL-87425](https://tracker.moodle.org/browse/MDL-87425)
+- - The `public/lib/amd/src/addblockmodal.js` file has been removed. - The `request()` has been removed from `public/lib/amd/src/pending.js`. - The `triggerSelector()` has been removed from `public/lib/amd/src/comboboxsearch/search_combobox.js`. - The `public/lib/classes/navigation/flat_navigation.php` file has been removed. - The following methods have been removed from `public/lib/classes/output/action_menu.php`:
+    - `\core\output\action_menu::set_alignment()`
+    - `\core\output\action_menu::set_constraint()`
+  - The following methods have been removed from `public/lib/classes/output/core_renderer.php`:
+    - `\core\output\core_renderer::activity_information()`
+    - `\core\output\core_renderer::htmllize_file_tree()`
+  - The `\core\output\action_menu\link::instance` property has been removed from `public/lib/classes/output/action_menu/link.php`. - The `\core\output\renderer_base::should_display_main_logo()` has been removed from `public/lib/classes/output/renderer_base.php`. - The `\core\task\manager::ensure_adhoc_task_qos()` has been removed from `public/lib/classes/task/manager.php`. - The following methods have been removed from `public/lib/classes/task/task_base.php`:
+    - `\core\task\task_base::set_blocking()`
+    - `\core\task\task_base::is_blocking()`
+  - The `\core\moodlenet\activity_sender::share_activity()` has been removed from `public/lib/classes/moodlenet/activity_sender.php`. - The `\core\encryption::is_sodium_installed()` has been removed from `public/lib/classes/encryption.php`. - The `\core\hook\manager::is_deprecated_plugin_callback()` has been removed from `public/lib/classes/hook/manager.php`. - The `\core\report_helper::save_selected_report()` has been removed from `public/lib/classes/report_helper.php`. - The `\core_text::reset_caches()` has been removed from `public/lib/classes/text.php`. - The following methods have been removed from `public/lib/classes/useragent.php`:
+    - `\core_useragent::get_device_type_list()`
+    - `\core_useragent::get_device_type_theme()`
+    - `\core_useragent::get_device_type_cfg_var_name()`
+  - The `M.util.set_user_preference()` has been removed from `public/lib/javascript-static.js`.
+
+  For more information see [MDL-87425](https://tracker.moodle.org/browse/MDL-87425)
+- - The `\core\output\action_menu::do_not_enhance()` has been removed from `public/lib/classes/output/action_menu.php`. - The following functions have been removed from `public/lib/javascript-static.js`:
+    - `M.util.init_toggle_class_on_click()`
+    - `M.util.focus_login_form()`
+    - `M.util.focus_login_error()`
+    - `checkall()`
+    - `checknone()`
+    - `select_all_in_element_with_id()`
+    - `select_all_in()`
+    - `deselect_all_in()`
+    - `confirm_if()`
+    - `findParentNode()`
+    - `filterByParent()`
+    - `fix_column_widths()`
+    - `fix_column_width()`
+    - `stripHTML()`
+    - `M.form.init_smartselect()`
+
+  For more information see [MDL-87426](https://tracker.moodle.org/browse/MDL-87426)
+- The `\admin_setting_configselect::output_select_html()` has been removed from `public/lib/adminlib.php`.
+
+  For more information see [MDL-87426](https://tracker.moodle.org/browse/MDL-87426)
+- The `relateduserid` key inside the `other` array has been removed.
+
+  For more information see [MDL-87427](https://tracker.moodle.org/browse/MDL-87427)
+- - The following files have been removed:
+    - `public/lib/classes/event/content_viewed.php`
+    - `public/lib/classes/exception/webservice_parameter_exception.php`
+  - The `lightbox` attribute has been removed from `public/lib/yui/src/notification/js/dialogue.js`. - The following functions have been removed from `public/lib/deprecatedlib.php`:
+    - `get_context_instance()`
+    - `can_use_rotated_text()`
+    - `get_system_context()`
+    - `print_arrow()`
+
+  For more information see [MDL-87427](https://tracker.moodle.org/browse/MDL-87427)
 
 #### Fixed
 
@@ -78,6 +169,32 @@ The format of this change log follows the advice given at [Keep a CHANGELOG](htt
 
   For more information see [MDL-87079](https://tracker.moodle.org/browse/MDL-87079)
 
+### core_analytics
+
+#### Removed
+
+- The `\core_analytics\manager::add_builtin_models()` has been removed from `public/analytics/classes/manager.php`.
+
+  For more information see [MDL-87426](https://tracker.moodle.org/browse/MDL-87426)
+
+### core_availability
+
+#### Removed
+
+- - The `public/availability/amd/src/availability_more.js` file has been removed. - The `public/availability/renderer.php` file has been removed.
+
+  For more information see [MDL-87425](https://tracker.moodle.org/browse/MDL-87425)
+
+### core_backup
+
+#### Removed
+
+- - The following methods have been removed from `public/backup/controller/base_controller.class.php`:
+    - `\base_controller::set_copy()`
+    - `\base_controller::get_copy()`
+
+  For more information see [MDL-87425](https://tracker.moodle.org/browse/MDL-87425)
+
 ### core_badges
 
 #### Changed
@@ -91,6 +208,32 @@ The format of this change log follows the advice given at [Keep a CHANGELOG](htt
 - The class core_badges_assertion has been deprecated and replaced by \core_badges\achievement_credential. The method badges_get_default_issuer() has also been deprecated because it is no longer needed. The file badges/endorsement.php has been removed because it stopped being used when MDL-84323 was integrated.
 
   For more information see [MDL-85621](https://tracker.moodle.org/browse/MDL-85621)
+
+#### Removed
+
+- - The following methods have been removed from `public/badges/renderer.php`:
+    - `\core_badges_renderer::print_badge_table_actions()`
+    - `\core_badges_renderer::render_badge_collection()`
+    - `\core_badges_renderer::render_badge_management()`
+    - `\core_badges_renderer::render_badge_recipients()`
+
+  For more information see [MDL-87425](https://tracker.moodle.org/browse/MDL-87425)
+
+### core_block
+
+#### Removed
+
+- Removed block_activity_modules from Moodle 5.2.
+
+  For more information see [MDL-86832](https://tracker.moodle.org/browse/MDL-86832)
+
+### core_calendar
+
+#### Removed
+
+- - The `calendar_add_event_metadata()` has been removed from `public/calendar/deprecatedlib.php`. - The `\core_external\external_api\calendar_information::prepare_for_view()` has been removed from `public/calendar/lib.php`. - The `\core_calendar_renderer::event()` has been removed from `public/calendar/renderer.php`.
+
+  For more information see [MDL-87426](https://tracker.moodle.org/browse/MDL-87426)
 
 ### core_completion
 
@@ -107,12 +250,24 @@ The format of this change log follows the advice given at [Keep a CHANGELOG](htt
 - The external function `core_course_get_course_contents` now includes the `candisplay` property for each returned module. If this is false, the module should not be displayed on the course page (for example, for question banks).
 
   For more information see [MDL-85405](https://tracker.moodle.org/browse/MDL-85405)
+- Add a new invalidation event for course action state so we can purge the courseactionsinstances cache when needed.
+
+  For more information see [MDL-86862](https://tracker.moodle.org/browse/MDL-86862)
 - Two optional new strings, `modulename_summary` and `modulename_tip`, have been added to modules and will be displayed in the activity chooser interface when defined.
 
   For more information see [MDL-87117](https://tracker.moodle.org/browse/MDL-87117)
 
+#### Changed
+
+- The description field is no longer available on the edit form for delegated sections like mod_subsection.
+
+  For more information see [MDL-87279](https://tracker.moodle.org/browse/MDL-87279)
+
 #### Deprecated
 
+- Deprecates moveto_module (core_course) in favor of cmactions::move_before or cmactions::move_end_section (core_courseformat\local\cmactions).
+
+  For more information see [MDL-86854](https://tracker.moodle.org/browse/MDL-86854)
 - The following methods have been deprecated and should no longer be used: - `course_delete_module` - `course_module_flag_for_async_deletion` Please consider using the equivalent methods, delete and delete_async, in `core_courseformat\local\cmactions` instead.
 
   For more information see [MDL-86856](https://tracker.moodle.org/browse/MDL-86856)
@@ -123,10 +278,25 @@ The format of this change log follows the advice given at [Keep a CHANGELOG](htt
 
   For more information see [MDL-86860](https://tracker.moodle.org/browse/MDL-86860)
 
+#### Removed
+
+- - The `\core_course_bulk_activity_completion_renderer::edit_default_completion()` has been removed from `public/course/classes/output/bulk_activity_completion_renderer.php`. - The `\core_course\reportbuilder\local\formatters\enrolment::enrolment_name()` has been removed from `public/course/classes/reportbuilder/local/formatters/enrolment.php`.
+
+  For more information see [MDL-87425](https://tracker.moodle.org/browse/MDL-87425)
+- The `replaceSectionActionItem()` has been removed from `public/course/amd/src/actions.js`.
+
+  For more information see [MDL-87426](https://tracker.moodle.org/browse/MDL-87426)
+- - The `\core_courseformat\output\section_renderer\core_course_renderer::course_category_tree_category()` has removed in `public/course/renderer.php`.
+
+  For more information see [MDL-87427](https://tracker.moodle.org/browse/MDL-87427)
+
 ### core_courseformat
 
 #### Added
 
+- Add core_courseformat\cmactions::move_before that will allow to move a coursemodule to a position before another coursemodule. Add core_courseformat\cmactions::move_end_section that will allow to move a coursemodule the end of a section.
+
+  For more information see [MDL-86854](https://tracker.moodle.org/browse/MDL-86854)
 - Add delete method to the core_courseformat\cmactions
 
   For more information see [MDL-86856](https://tracker.moodle.org/browse/MDL-86856)
@@ -139,6 +309,18 @@ The format of this change log follows the advice given at [Keep a CHANGELOG](htt
 - Added the `set_visibility` method to the `core_courseformat\sectionactions` class. To optimize performance, this method does not return the list of affected resources, avoiding unnecessary database queries since the return value is unused.
 
   For more information see [MDL-86861](https://tracker.moodle.org/browse/MDL-86861)
+- Add a new core_courseformat\sectionactions::move_after to replace the current move_section_to logic.
+
+  For more information see [MDL-86862](https://tracker.moodle.org/browse/MDL-86862)
+- Add sectionactions::move_at to move a section at a given position.
+
+  For more information see [MDL-86862](https://tracker.moodle.org/browse/MDL-86862)
+- A new restricted page has been created using routing for users to access the activity information. Only the activities with visible restrictions will be available.
+
+  For more information see [MDL-87283](https://tracker.moodle.org/browse/MDL-87283)
+- Public course_section_cm_unavailable_error_message() function has been changed to return the same message for all restricted activities.
+
+  For more information see [MDL-87283](https://tracker.moodle.org/browse/MDL-87283)
 
 #### Changed
 
@@ -151,12 +333,72 @@ The format of this change log follows the advice given at [Keep a CHANGELOG](htt
 - Two new public static methods have been added to the `overviewtable` class: - `is_cm_displayable`: Determines if a course module should be listed in the overview table. - `is_cm_available`: Checks if a course module is accessible to the user (and should therefore be rendered as a link).
 
   For more information see [MDL-86660](https://tracker.moodle.org/browse/MDL-86660)
+- Subsections are now always displayed inline within their respective sections (the separate subsection page is no longer used). Descriptions are no longer shown for delegated sections.
+
+  For more information see [MDL-87276](https://tracker.moodle.org/browse/MDL-87276)
 
 #### Deprecated
 
 - The `set_section_visible` function has been deprecated and should no longer be used. Please consider using the equivalent method, `set_visibility`, in `core_courseformat\local\sectionactions` instead.
 
   For more information see [MDL-86861](https://tracker.moodle.org/browse/MDL-86861)
+- Deprecates the move_section_to logic
+
+  For more information see [MDL-86862](https://tracker.moodle.org/browse/MDL-86862)
+- Deprecates and remove all usages of reorder_sections that is used only internally.
+
+  For more information see [MDL-86862](https://tracker.moodle.org/browse/MDL-86862)
+
+#### Removed
+
+- - The `\core_courseformat\output\local\content\section\availability::availability_info()` has been removed from `public/course/format/classes/output/local/content/section/availability.php`. - The `\core_courseformat\base::get_section_number()` has been removed from `public/course/format/classes/base.php`. - The `\core_courseformat\stateactions::section_move()` has been removed from `public/course/format/classes/stateactions.php`. - The `\core_courseformat\output\section_renderer\core_course_renderer::render_activity_information()` has been removed from `public/course/renderer.php`.
+
+  For more information see [MDL-87425](https://tracker.moodle.org/browse/MDL-87425)
+
+### core_customfield
+
+#### Added
+
+- Added new `\core_customfield\api::is_shortname_unique(...)` method to determine whether a shortname is available for use inside a given handler
+
+  For more information see [MDL-87059](https://tracker.moodle.org/browse/MDL-87059)
+
+### core_enrol
+
+#### Removed
+
+- - The `\enrol_plugin::update_communication()` has been removed from `public/lib/enrollib.php`.
+
+  For more information see [MDL-87425](https://tracker.moodle.org/browse/MDL-87425)
+
+### core_files
+
+#### Removed
+
+- The following methods have been removed from `public/lib/filestorage/file_storage.php`: - `\file_storage::content_exists()` - `\file_storage::try_content_recovery()`
+
+  For more information see [MDL-87426](https://tracker.moodle.org/browse/MDL-87426)
+
+### core_filters
+
+#### Removed
+
+- MimeTeX support has been removed from both `filter_tex` and `filter_algebra`. These filters now depend on LaTeX tools (`latex`, `dvips`, and `convert`/`dvisvgm`), and as a result, the `pathmimetex` setting has been removed.
+
+  For more information see [MDL-85233](https://tracker.moodle.org/browse/MDL-85233)
+
+### core_form
+
+#### Removed
+
+- - The following methods have been removed from `public/lib/antivirus/clamav/classes/scanner.php`:
+    - `\antivirus_clamav\scanner::scan_data_execute_unixsocket()`
+    - `\antivirus_clamav\scanner::scan_file_execute_unixsocket()`
+  - The following methods have been removed from `public/lib/form/classes/filetypes_util.php`:
+    - `\core_form\filetypes_util::is_whitelisted()`
+    - `\core_form\filetypes_util::get_not_whitelisted()`
+
+  For more information see [MDL-87426](https://tracker.moodle.org/browse/MDL-87426)
 
 ### core_grades
 
@@ -165,6 +407,23 @@ The format of this change log follows the advice given at [Keep a CHANGELOG](htt
 - In Moodle 4.2, the legacy Gradebook base widget from 4.1 has been removed and replaced with a simpler class-based system due to a breaking change and excessive complexity in the old pattern. The files `core/grades/basewidget.js` and templates in `grade/templates/searchwidget/` have been deleted, with minimal expected third-party impact.
 
   For more information see [MDL-78325](https://tracker.moodle.org/browse/MDL-78325)
+- - The `\grade_report::get_lang_string()` has been removed from `public/grade/report/lib.php`. - The following methods have been removed from `public/grade/tests/behat/behat_grade.php`:
+    - `\behat_grade::select_in_gradebook_tabs()`
+    - `\behat_grade::select_in_gradebook_navigation_selector()`
+  - The following methods have been removed from `public/grade/lib.php`:
+    - `\grade_structure::get_element_icon()`
+    - `\grade_structure::get_element_type_string()`
+    - `\grade_structure::get_element_header()`
+    - `\grade_structure::get_activity_link()`
+    - `\grade_structure::get_grade_analysis_icon()`
+    - `\grade_structure::get_reset_icon()`
+    - `\grade_structure::get_edit_icon()`
+    - `\grade_structure::get_hiding_icon()`
+    - `\grade_structure::get_locking_icon()`
+    - `\grade_structure::get_calculation_icon()`
+    - `\grade_helper::get_lang_string()`
+
+  For more information see [MDL-87425](https://tracker.moodle.org/browse/MDL-87425)
 
 ### core_group
 
@@ -173,6 +432,65 @@ The format of this change log follows the advice given at [Keep a CHANGELOG](htt
 - `groups_print_activity_menu()` and `groups_get_activity_group()` now include an additional `$participationonly` parameter, which is true by default. This can be set false when we want the user to be able to select a non-participation group within an activity, for example if a teacher wants to filter assignment submissions by non-participation groups. It should never be used when the menu is displayed to students, as this may allow them to participate using non-participation groups. Non-participation groups are labeled as such.
 
   For more information see [MDL-81514](https://tracker.moodle.org/browse/MDL-81514)
+
+### core_message
+
+#### Removed
+
+- - The following methods have been removed from `public/message/classes/api.php`:
+    - `\core_message\api::search_users_in_course()`
+    - `\core_message\api::search_users()`
+    - `\core_message\api::get_contacts()`
+    - `\core_message\api::get_contacts_with_unread_message_count()`
+    - `\core_message\api::get_non_contacts_with_unread_message_count()`
+    - `\core_message\api::get_messages()`
+    - `\core_message\api::get_most_recent_message()`
+    - `\core_message\api::get_profile()`
+    - `\core_message\api::delete_conversation()`
+    - `\core_message\api::mark_all_read_for_user()`
+    - `\core_message\api::can_post_message()`
+    - `\core_message\api::is_user_non_contact_blocked()`
+    - `\core_message\api::is_user_blocked()`
+    - `\core_message\api::get_individual_conversations_between_users()`
+    - `\core_message\api::create_conversation_between_users()`
+  - The following methods have been removed from `public/message/classes/helper.php`:
+    - `\core_message\helper::get_messages()`
+    - `\core_message\helper::create_messages()`
+    - `\core_message\helper::get_conversations_legacy_formatter()`
+
+  For more information see [MDL-87426](https://tracker.moodle.org/browse/MDL-87426)
+
+### core_mnet
+
+#### Removed
+
+- The `\mnet_peer::get_public_key()` has been removed from `public/mnet/peer.php`.
+
+  For more information see [MDL-87425](https://tracker.moodle.org/browse/MDL-87425)
+
+### core_question
+
+#### Deprecated
+
+- `get_next_version()` from questionlib.php is now deprecated. Use `\core_question\versions::get_next_version()` instead.
+
+  For more information see [MDL-86798](https://tracker.moodle.org/browse/MDL-86798)
+
+#### Removed
+
+- - The following methods have been removed from `public/question/renderer.php`:
+    - `\core_question_bank_renderer::render_category_condition()`
+    - `\core_question_bank_renderer::render_category_condition_advanced()`
+    - `\core_question_bank_renderer::render_hidden_condition_advanced()`
+
+  For more information see [MDL-87425](https://tracker.moodle.org/browse/MDL-87425)
+
+#### Fixed
+
+- In order to prevent re-use of question version numbers after a version is deleted, the `nextversion` column was added to `question_bank_entries`. This serves as a counter incremented each time a version is created.
+  Do not query this field directly. Instead use `core_question\versions::get_next_version()` to read the value, which will initialise it based on the existing versions if it is not set yet. By default, it will increment the version number automatically, unless you pass `increment: false`. Because of this, it is advisable to call it inside a transaction, that is only committed after the version number is used in a `question_versions` record.
+
+  For more information see [MDL-86798](https://tracker.moodle.org/browse/MDL-86798)
 
 ### core_reportbuilder
 
@@ -190,6 +508,174 @@ The format of this change log follows the advice given at [Keep a CHANGELOG](htt
   This change allows for a lot of boilerplate to be removed from report entity classes
 
   For more information see [MDL-86678](https://tracker.moodle.org/browse/MDL-86678)
+- There are two new entities intended for reports specific to course module data, in order to provide a baseline in terms of module reporting and API usage:
+
+  * `core_course\reportbuilder\local\entities\{course_module,course_module_base}`
+
+  For more information see [MDL-86699](https://tracker.moodle.org/browse/MDL-86699)
+
+#### Changed
+
+- The order in which `$entitynames` are passed to the datasource `add_all_from_entities()` method is now observed, taking precedence over the order in which they were already added to the report
+
+  For more information see [MDL-87263](https://tracker.moodle.org/browse/MDL-87263)
+
+#### Deprecated
+
+- The following `user_filter_manager` methods have been deprecated:
+
+  * `reset_all()` - to be replaced by new `reset()` method
+  * `reset_single()`
+  * `merge()`
+
+  For more information see [MDL-86997](https://tracker.moodle.org/browse/MDL-86997)
+- The following enrolment entity formatter methods have been deprecated:
+
+  * `enrolment_status()`
+  * `enrolment_values()`
+
+  For more information see [MDL-87000](https://tracker.moodle.org/browse/MDL-87000)
+
+#### Removed
+
+- - The `\core_reportbuilder\local\helpers\audience::get_all_audiences_menu_types()` has been removed from `public/reportbuilder/classes/local/helpers/audience.php`. - The `\core_reportbuilder\local\entities\base::get_default_table_aliases()` has been removed from `public/reportbuilder/classes/local/entities/base.php`. - The `\core_reportbuilder\local\helpers\report::get_available_columns()` has been removed from `public/reportbuilder/classes/local/helpers/report.php`.
+
+  For more information see [MDL-87425](https://tracker.moodle.org/browse/MDL-87425)
+
+### core_repository
+
+#### Removed
+
+- The `\repository::get_file_size()` has been removed from `public/repository/lib.php`.
+
+  For more information see [MDL-87425](https://tracker.moodle.org/browse/MDL-87425)
+
+### core_tag
+
+#### Removed
+
+- The `public/tag/classes/manage_table.php` file has been removed.
+
+  For more information see [MDL-87425](https://tracker.moodle.org/browse/MDL-87425)
+
+### core_user
+
+#### Removed
+
+- - The `\profile_field_base::profile_field_base()` has been removed from `public/user/profile/lib.php`. - The `\core_user_renderer::unified_filter()` has been removed from `public/user/renderer.php`.
+
+  For more information see [MDL-87426](https://tracker.moodle.org/browse/MDL-87426)
+
+### core_webservice
+
+#### Changed
+
+- The WebService core_webservice_get_site_info now returns three new fields: "usercanviewconfig" indicating whether the current user can see the administration tree, "usercanchangeconfig" indicating whether the current user can change the site configuration, and site secret.
+
+  For more information see [MDL-87034](https://tracker.moodle.org/browse/MDL-87034)
+
+### auth_ldap
+
+#### Removed
+
+- - The following methods have been removed from `auth/ldap/lib.php`:
+    - `\auth_plugin_ldap::auth_plugin_ldap()`
+    - `\auth_plugin_ldap::iscreator()`
+  - The `public/auth/ldap/cli/sync_users.php` file has been removed.
+
+  For more information see [MDL-87426](https://tracker.moodle.org/browse/MDL-87426)
+
+### customfield_number
+
+#### Changed
+
+- In order to fully support shared custom field categories, additional component/area/itemid parameters have been added to the following:
+
+  * The `customfield_number_recalculate_value` external method
+  * The abstract `\customfield_number\provider_base::recalculate()` method
+  * The `\customfield_number\task\recalculate` helpers for queueing task instances
+
+  For more information see [MDL-87714](https://tracker.moodle.org/browse/MDL-87714)
+
+### enrol_self
+
+#### Removed
+
+- The `\enrol_self_plugin::get_welcome_email_contact()` has been removed from `public/enrol/self/lib.php`
+
+  For more information see [MDL-87425](https://tracker.moodle.org/browse/MDL-87425)
+
+### gradereport_grader
+
+#### Removed
+
+- - The `\behat_gradereport_grader::get_grade_item_id()` has been removed from `public/grade/report/grader/tests/behat/behat_gradereport_grader.php`. - The following methods have been removed from `public/grade/report/grader/lib.php`:
+    - `\grade_report_grader::get_left_icons_row()`
+    - `\grade_report_grader::get_right_icons_row()`
+    - `\grade_report_grader::get_right_avg_row()`
+    - `\grade_report_grader::get_icons()`
+
+  For more information see [MDL-87425](https://tracker.moodle.org/browse/MDL-87425)
+
+### gradereport_singleview
+
+#### Removed
+
+- - The `public/grade/report/singleview/classes/local/screen/select.php` file has been removed.
+
+  For more information see [MDL-87425](https://tracker.moodle.org/browse/MDL-87425)
+
+### mod_assign
+
+#### Removed
+
+- - The `ASSIGN_ATTEMPT_REOPEN_METHOD_NONE` constant has been removed from the `public/mod/assign/locallib.php`. - The `public/mod/assign/renderer.php` file has been removed.
+
+  For more information see [MDL-87425](https://tracker.moodle.org/browse/MDL-87425)
+
+### mod_book
+
+#### Removed
+
+- The `book_get_nav_classes()` has been removed from `public/mod/book/deprecatedlib.php`.
+
+  For more information see [MDL-87425](https://tracker.moodle.org/browse/MDL-87425)
+
+### mod_choice
+
+#### Changed
+
+- Undo the deletion of public/mod/choice/classes/event/answer_updated.php file.
+
+  For more information see [MDL-87426](https://tracker.moodle.org/browse/MDL-87426)
+
+#### Removed
+
+- - The following files have been removed:
+    - `public/mod/choice/classes/event/answer_submitted.php`
+    - `public/mod/choice/classes/event/answer_updated.php`
+
+  For more information see [MDL-87426](https://tracker.moodle.org/browse/MDL-87426)
+
+### mod_data
+
+#### Removed
+
+- - The following functions have been removed from `public/mod/data/deprecatedlib.php`:
+    - `data_print_template()`
+    - `data_preset_name()`
+    - `data_get_available_presets()`
+    - `data_get_available_site_presets()`
+    - `data_delete_site_preset()`
+    - `data_presets_save()`
+    - `data_presets_generate_xml()`
+    - `data_presets_export()`
+    - `data_user_can_delete_preset()`
+    - `data_view()`
+    - `is_directory_a_preset()`
+  - The `\mod_data_renderer::import_setting_mappings()` has been removed from `public/mod/data/renderer.php`.
+
+  For more information see [MDL-87425](https://tracker.moodle.org/browse/MDL-87425)
 
 ### mod_feedback
 
@@ -199,6 +685,36 @@ The format of this change log follows the advice given at [Keep a CHANGELOG](htt
 
   For more information see [MDL-86607](https://tracker.moodle.org/browse/MDL-86607)
 
+#### Removed
+
+- - The following files have been removed:
+    - `public/mod/feedback/edit_form.php`.
+    - `public/mod/feedback/use_templ_form.php`.
+
+  For more information see [MDL-87425](https://tracker.moodle.org/browse/MDL-87425)
+
+### mod_folder
+
+#### Removed
+
+- - The `\mod_folder_renderer::htmllize_tree()` has been removed from `public/mod/folder/renderer.php`.
+
+  For more information see [MDL-87425](https://tracker.moodle.org/browse/MDL-87425)
+
+### mod_forum
+
+#### Deprecated
+
+- The forum report entity `->get_context_joins()` method is deprecated, replaced with `->get_course_modules_joins(...)`
+
+  For more information see [MDL-86699](https://tracker.moodle.org/browse/MDL-86699)
+
+#### Removed
+
+- The `forum_print_discussion_header()` has been removed from `public/mod/forum/deprecatedlib.php`.
+
+  For more information see [MDL-87425](https://tracker.moodle.org/browse/MDL-87425)
+
 ### mod_glossary
 
 #### Added
@@ -206,6 +722,107 @@ The format of this change log follows the advice given at [Keep a CHANGELOG](htt
 - Function mod_glossary_rating_can_see_item_ratings is now implemented for checking permissions to view ratings.
 
   For more information see [MDL-86960](https://tracker.moodle.org/browse/MDL-86960)
+
+### mod_imscp
+
+#### Removed
+
+- The `imscp_libxml_disable_entity_loader()` has been removed from `public/mod/imscp/deprecatedlib.php`.
+
+  For more information see [MDL-87425](https://tracker.moodle.org/browse/MDL-87425)
+
+### mod_lesson
+
+#### Removed
+
+- - The following files have been removed:
+    - `public/mod/lesson/classes/event/highscore_added.php`
+    - `public/mod/lesson/classes/event/highscores_viewed.php`
+
+  For more information see [MDL-87426](https://tracker.moodle.org/browse/MDL-87426)
+
+### mod_lti
+
+#### Removed
+
+- The `lti_libxml_disable_entity_loader()` has been removed from `public/mod/lti/deprecatedlib.php`.
+
+  For more information see [MDL-87425](https://tracker.moodle.org/browse/MDL-87425)
+
+### mod_quiz
+
+#### Changed
+
+- The WebServices mod_quiz_get_user_best_grade and mod_quiz_get_user_quiz_attempts have been updated to return overall feedback even when quiz marks are hidden in the review options. This change aligns the WebService behaviour with Moodle LMS display logic.
+
+  For more information see [MDL-86916](https://tracker.moodle.org/browse/MDL-86916)
+
+#### Removed
+
+- - The following functions have been removed from `public/mod/quiz/deprecatedlib.php`:
+    - `quiz_has_question_use()`
+    - `quiz_update_sumgrades()`
+    - `quiz_update_all_attempt_sumgrades()`
+    - `quiz_update_all_final_grades()`
+    - `quiz_set_grade()`
+    - `quiz_save_best_grade()`
+    - `quiz_calculate_best_grade()`
+    - `quiz_calculate_best_attempt()`
+    - `quiz_delete_override()`
+    - `quiz_delete_all_overrides()`
+    - `quiz_add_random_questions()`
+  - The following functions have been removed from `public/mod/quiz/classes/output/renderer.php`:
+    - `\mod_quiz\output\renderer::no_questions_message()`
+    - `\mod_quiz\output\renderer::render_mod_quiz_links_to_other_attempts()`
+    - `\mod_quiz\output\renderer::render_quiz_nav_question_button()`
+    - `\mod_quiz\output\renderer::render_quiz_nav_section_heading()`
+  - The following functions have been removed from `public/mod/quiz/classes/local/structure/slot_random.php`:
+    - `\mod_quiz\local\structure\slot_random::set_tags()`
+    - `\mod_quiz\local\structure\slot_random::set_tags_by_id()`
+  - The `\mod_quiz\structure::is_display_number_customised()` has been removed from `public/mod/quiz/classes/structure.php`.
+
+  For more information see [MDL-87425](https://tracker.moodle.org/browse/MDL-87425)
+
+### mod_subsection
+
+#### Added
+
+- A new ad-hoc task, `migrate_subsection_descriptions_task`, has been added. This task will migrate all existing subsection descriptions into Text and media. To ensure system stability, the task processes records in batches of 100 and clears the original description upon successful migration.
+
+  For more information see [MDL-87281](https://tracker.moodle.org/browse/MDL-87281)
+- The subsection generator now includes support for the `summary` field. This has been added specifically to test migration tool compatibility and will be removed in Moodle 7.0. Developers should use this field only for testing migration workflows.
+
+  For more information see [MDL-87621](https://tracker.moodle.org/browse/MDL-87621)
+- A new ad-hoc task, `remove_existing_descriptions`, has been added. This task will remove the descriptions for all existing subsection instances. To ensure system stability, the task processes records in batches of 100 and clears the original description upon completion.
+
+  For more information see [MDL-87621](https://tracker.moodle.org/browse/MDL-87621)
+- The `manager::clear_description()` method has been added to remove legacy data. When called, it deletes the description text associated with a subsection and any files linked to that description.
+
+  For more information see [MDL-87621](https://tracker.moodle.org/browse/MDL-87621)
+
+#### Changed
+
+- When restoring backups, subsection descriptions are now ignored. This change ensures that subsection do not incorrectly restore legacy summary.
+
+  For more information see [MDL-87621](https://tracker.moodle.org/browse/MDL-87621)
+
+### mod_wiki
+
+#### Removed
+
+- The `\mod_wiki_renderer::wiki_info()` has been removed from `public/mod/wiki/renderer.php`.
+
+  For more information see [MDL-87425](https://tracker.moodle.org/browse/MDL-87425)
+
+### qbank
+
+#### Removed
+
+- - The following methods have been removed from `public/question/engine/bank.php`:
+    - `\question_finder::get_questions_from_categories_with_usage_counts()`
+    - `\question_finder::get_questions_from_categories_and_tags_with_usage_counts()`
+
+  For more information see [MDL-87425](https://tracker.moodle.org/browse/MDL-87425)
 
 ### qbank_columnsortorder
 
@@ -216,6 +833,91 @@ The format of this change log follows the advice given at [Keep a CHANGELOG](htt
   For example: - `And I drag "Move Created by" "button" and I drop it in "Move T" "button"`
 
   For more information see [MDL-86855](https://tracker.moodle.org/browse/MDL-86855)
+
+### qbank_history
+
+#### Removed
+
+- The `\qbank_history\question_history_view::display_advanced_search_form()` has been removed from `public/question/bank/history/classes/question_history_view.php`.
+
+  For more information see [MDL-87425](https://tracker.moodle.org/browse/MDL-87425)
+
+### qbank_managecategories
+
+#### Removed
+
+- - The following methods have been removed from `public/question/bank/managecategories/classes/category_condition.php`:
+    - `\qbank_managecategories\category_condition::display_options()`
+    - `\qbank_managecategories\category_condition::display_options_adv()`
+    - `\qbank_managecategories\category_condition::display_category_form()`
+    - `\qbank_managecategories\category_condition::print_choose_category_message()`
+    - `\qbank_managecategories\category_condition::get_current_category()`
+    - `\qbank_managecategories\category_condition::print_category_info()`
+
+  For more information see [MDL-87425](https://tracker.moodle.org/browse/MDL-87425)
+
+### qbank_statistics
+
+#### Removed
+
+- - The following methods have been removed from `public/question/bank/statistics/classes/helper.php`:
+    - `\qbank_statistics\helper::calculate_average_question_facility()`
+    - `\qbank_statistics\helper::calculate_average_question_discriminative_efficiency()`
+    - `\qbank_statistics\helper::calculate_average_question_discrimination_index()`
+
+  For more information see [MDL-87425](https://tracker.moodle.org/browse/MDL-87425)
+
+### report_eventlist
+
+#### Removed
+
+- - The following methods have been removed from `public/report/eventlist/classes/list_generator.php`:
+    - `\report_eventlist_list_generator::get_core_events_list()`
+    - `\report_eventlist_list_generator::get_non_core_event_list()`
+
+  For more information see [MDL-87425](https://tracker.moodle.org/browse/MDL-87425)
+
+### report_log
+
+#### Removed
+
+- The `public/report/log/graph.php` has been removed.
+
+  For more information see [MDL-87426](https://tracker.moodle.org/browse/MDL-87426)
+
+### repository_onedrive
+
+#### Removed
+
+- - The following methods have been removed from `public/repository/onedrive/lib.php`:
+    - `\repository_onedrive::can_import_skydrive_files()`
+    - `\repository_onedrive::import_skydrive_files()`
+
+  For more information see [MDL-87425](https://tracker.moodle.org/browse/MDL-87425)
+
+### scormreport_graphs
+
+#### Removed
+
+- The `public/mod/scorm/report/graphs/graph.php` has been removed.
+
+  For more information see [MDL-87426](https://tracker.moodle.org/browse/MDL-87426)
+
+### theme_boost
+
+#### Removed
+
+- - The `public/theme/boost/templates/flat_navigation.mustache` file has been removed. - The `public/theme/boost/templates/nav-drawer.mustache` file has been removed.
+
+  For more information see [MDL-87425](https://tracker.moodle.org/browse/MDL-87425)
+
+### tool_mfa
+
+#### Removed
+
+- The `\tool_mfa\output\renderer::setup_factor()` has been removed from `public/admin/tool/mfa/classes/output/renderer.php`.
+
+  For more information see [MDL-87425](https://tracker.moodle.org/browse/MDL-87425)
 
 ### tool_mobile
 

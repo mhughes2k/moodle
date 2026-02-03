@@ -3583,26 +3583,7 @@ class admin_setting_configselect extends admin_setting {
     }
 
     /**
-     * Returns XHTML select field
-     *
-     * Ensure the options are loaded, and generate the XHTML for the select
-     * element and any warning message. Separating this out from output_html
-     * makes it easier to subclass this class.
-     *
-     * @param string $data the option to show as selected.
-     * @param string $current the currently selected option in the database, null if none.
-     * @param string $default the default selected option.
-     * @return array the HTML for the select element, and a warning message.
-     * @deprecated since Moodle 3.2
-     */
-    public function output_select_html($data, $current, $default, $extraname = '') {
-        debugging('The method admin_setting_configselect::output_select_html is depreacted, do not use any more.', DEBUG_DEVELOPER);
-    }
-
-    /**
      * Returns XHTML select field and wrapping div(s)
-     *
-     * @see output_select_html()
      *
      * @param string $data the option to show as selected
      * @param string $query
@@ -5952,8 +5933,6 @@ class admin_setting_configselect_autocomplete extends admin_setting_configselect
     /**
      * Returns XHTML select field and wrapping div(s)
      *
-     * @see output_select_html()
-     *
      * @param string $data the option to show as selected
      * @param string $query
      * @return string XHTML field and wrapping div
@@ -6094,16 +6073,6 @@ class admin_setting_special_gradelimiting extends admin_setting_configcheckbox {
     public function __construct() {
         parent::__construct('unlimitedgrades', get_string('unlimitedgrades', 'grades'),
             get_string('unlimitedgrades_help', 'grades'), '0', '1', '0');
-    }
-
-    /**
-     * Old syntax of class constructor. Deprecated in PHP7.
-     *
-     * @deprecated since Moodle 3.1
-     */
-    public function admin_setting_special_gradelimiting() {
-        debugging('Use of class name as constructor is deprecated', DEBUG_DEVELOPER);
-        self::__construct();
     }
 
     /**

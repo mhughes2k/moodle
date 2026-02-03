@@ -411,8 +411,6 @@ $string['maxareabytes'] = 'The file is larger than the space remaining in this a
 $string['maxdraftitemids'] = 'Your file uploads are temporarily limited after you uploaded a high volume of files. Please wait then try again.';
 $string['messageundeliveredbynotificationsettings'] = 'The message could not be sent because personal messages between users (in Notification settings) has been disabled by a site administrator.';
 $string['messagingdisable'] = 'Messaging is disabled on this site';
-$string['mimetexisnotexist'] = 'Your system is not configured to run mimeTeX. You need to obtain the C source from <a href="https://www.forkosh.com/mimetex.zip">https://www.forkosh.com/mimetex.zip</a>, compile it and put the executable into your moodle/filter/tex/ directory.';
-$string['mimetexnotexecutable'] = 'Custom mimetex is not executable!';
 $string['missingcategoryrole'] = 'Could not assign role to user: missing role for category.';
 $string['missingfield'] = 'Field "{$a}" is missing';
 $string['missingkeyinsql'] = 'ERROR: missing param "{$a}" in query';
@@ -480,6 +478,9 @@ $string['nopermissiontoviewcalendar'] = 'Sorry, but you do not have permission t
 $string['nopermissiontoviewgrades'] = 'Cannot view grades.';
 $string['nopermissiontoviewletergrade'] = 'Missing permission to view letter grades';
 $string['nopermissiontoviewpage'] = 'You are not allowed to look at this page';
+$string['nosections_editor'] = 'The course can\'t be displayed because the current course format \'{$a->courseformat}\' is not compatible with the way the course content is organised.
+To display the course correctly, choose a different course format. Use the \'Continue\' button to go to course format settings.';
+$string['nosections_noneditor'] = 'This course is not available right now. Contact your teacher or instructor for help.';
 $string['nosite'] = 'Could not find a top-level course!';
 $string['nositeid'] = 'No site ID';
 $string['nostartdatenoenddate'] = 'A course end date can only be set if a start date is also set.';

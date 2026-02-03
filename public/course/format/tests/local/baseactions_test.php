@@ -15,6 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace core_courseformat\local;
+use core_courseformat\formatactions;
 use ReflectionMethod;
 use section_info;
 use cm_info;
@@ -98,7 +99,8 @@ final class baseactions_test extends \advanced_testcase {
 
         // Section info should be always the most updated one.
         course_update_section($course, $originalsection, (object)['name' => 'New name']);
-        move_section_to($course, 1, 3);
+        $sectionactions  = formatactions::section($course);
+        $sectionactions->move_at($sectioninfo, 3);
 
         $sectioninfo = $method->invoke($baseactions, $originalsection->id);
         $this->assertInstanceOf(section_info::class, $sectioninfo);
@@ -136,7 +138,8 @@ final class baseactions_test extends \advanced_testcase {
         $this->assertEquals($originalcm->name, $cm->name);
 
         // CM info should be always the most updated one.
-        moveto_module($originalcm, $destinationsection);
+        $formatactions = formatactions::cm($course);
+        $formatactions->move_end_section($originalcm->id, $destinationsection->id);
 
         $cm = $method->invoke($baseactions, $originalcm->id);
         $this->assertInstanceOf(cm_info::class, $cm);
