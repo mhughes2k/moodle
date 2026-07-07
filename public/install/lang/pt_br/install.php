@@ -36,7 +36,7 @@ $string['chooselanguagesub'] = 'Por favor, escolha o idioma para a instalação.
 $string['clialreadyconfigured'] = 'Arquivo config.php já existe. Por favor, use admin/cli/install_database.php para instalar o Moodle neste site.';
 $string['clialreadyinstalled'] = 'Arquivo config.php já existe. Por favor use admin/cli/install_database.php para atualizar o Moodle neste site.';
 $string['cliinstallheader'] = 'Programa de instalação por linha de comando do Moodle {$a}';
-$string['clitablesexist'] = 'O banco de dados possui tabelas, a instalação por CLI não pode continuar.';
+$string['clitablesexist'] = 'O banco de dados já possui tabelas; a instalação pela Interface de Linha de Comando (CLI) não pode continuar.';
 $string['databasehost'] = 'Host do banco de dados';
 $string['databasename'] = 'Nome do banco de dados';
 $string['databasetypehead'] = 'Escolha o driver do banco de dados';
@@ -69,7 +69,7 @@ $string['pathsunsecuredataroot'] = 'A localização da pasta de dados não é se
 $string['pathswrongadmindir'] = 'Diretório Admin não existe';
 $string['phpextension'] = 'Extensão PHP {$a}';
 $string['phpversion'] = 'Versão do PHP';
-$string['webserverconfigproblemdescription'] = 'Seu servidor web não está configurado para impedir o acesso a arquivos fora do diretório /public. Consulte <a href="https://moodledev.io/docs/5.1/guides/restructure">[https://moodledev.io/docs/5.1/guides/restructure](https://moodledev.io/docs/5.1/guides/restructure)</a> para obter detalhes sobre como configurar seu servidor web. Após a reconfiguração, <a href="{$a}">visite novamente a raiz da web</a>.';
+$string['webserverconfigproblemdescription'] = 'Seu servidor web não está configurado para impedir o acesso a arquivos fora do diretório /public. Para detalhes de como configurar corretamente seu servidor web, consulte a documentação <a href="https://docs.moodle.org/en/Upgrading#Code_directories_restructure">Atualização - reestruturação dos diretórios de código</a>. Após reconfigurar, <a href="{$a}">revisite a raiz da web</a>.';
 $string['webservernotconfigured'] = 'Servidor web não configurado';
 $string['welcomep10'] = '{$a->installername} ({$a->installerversion})';
 $string['welcomep20'] = 'Você está vendo esa página pois instalou com sucesso o pacote<strong>{$a->packname} {$a->packversion}</strong>. Parabéns!';

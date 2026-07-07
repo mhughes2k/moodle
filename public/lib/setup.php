@@ -592,7 +592,12 @@ ini_set('include_path', $CFG->libdir . '/pear' . PATH_SEPARATOR . ini_get('inclu
 // Register our classloader.
 \core\component::register_autoloader();
 
-// Early profiling start, based exclusively on config.php $CFG settings
+// Register our shutdown manager, do NOT use register_shutdown_function().
+if (\core\shutdown_manager::is_initialized() === false) {
+    \core\shutdown_manager::initialize();
+}
+
+// Early profiling start, based exclusively on config.php $CFG settings.
 if (!empty($CFG->earlyprofilingenabled) && !defined('ABORT_AFTER_CONFIG_CANCEL')) {
     require_once($CFG->libdir . '/xhprof/xhprof_moodle.php');
     profiling_start();
@@ -688,7 +693,7 @@ setup_DB();
 if (PHPUNIT_TEST and !PHPUNIT_UTIL) {
     // Make sure tests do not run in parallel.
     $suffix = '';
-    if (phpunit_util::is_in_isolated_process()) {
+    if (\core\test\phpunit\phpunit_util::is_in_isolated_process()) {
         $suffix = '.isolated';
     }
     test_lock::acquire('phpunit', $suffix);
@@ -696,7 +701,7 @@ if (PHPUNIT_TEST and !PHPUNIT_UTIL) {
     try {
         if ($dbhash = $DB->get_field('config', 'value', array('name'=>'phpunittest'))) {
             // reset DB tables
-            phpunit_util::reset_database();
+            \core\test\phpunit\phpunit_util::reset_database();
         }
     } catch (Exception $e) {
         if ($dbhash) {
@@ -736,7 +741,7 @@ if (is_readable($bootstraplocalfile)) {
 
 // Load up any configuration from the config table or MUC cache.
 if (PHPUNIT_TEST) {
-    phpunit_util::initialise_cfg();
+    \core\test\phpunit\phpunit_util::initialise_cfg();
 } else {
     initialise_cfg();
 }
@@ -778,10 +783,7 @@ if (!isset($CFG->debugdisplay)) {
     ini_set('display_errors', '1');
 }
 
-// Register our shutdown manager, do NOT use register_shutdown_function().
-\core\shutdown_manager::initialize();
-
-// Verify upgrade is not running unless we are in a script that needs to execute in any case
+// Verify upgrade is not running unless we are in a script that needs to execute in any case.
 if (!defined('NO_UPGRADE_CHECK') and isset($CFG->upgraderunning)) {
     if ($CFG->upgraderunning < time()) {
         unset_config('upgraderunning');
@@ -1021,6 +1023,7 @@ if ($forcelang = optional_param('forcelang', '', PARAM_SAFEDIR)) {
 unset($forcelang);
 
 setup_lang_from_browser();
+setup_vary_headers();
 
 if (empty($CFG->lang)) {
     if (empty($SESSION->lang)) {

@@ -23,8 +23,9 @@ namespace core_external;
  * @category    test
  * @copyright   2022 Andrew Lyons <andrew@nicols.co.uk>
  * @license     http://www.gnu.org/copyleft/gpl.html GNU Public License
- * @covers      \core_external\util
  */
+#[\PHPUnit\Framework\Attributes\CoversClass(util::class)]
+#[\PHPUnit\Framework\Attributes\CoversFunction('external_format_text')]
 final class util_test extends \advanced_testcase {
     /** @var \moodle_database The database connection */
     protected $db;
@@ -69,8 +70,6 @@ final class util_test extends \advanced_testcase {
 
     /**
      * Validate courses, but still return courses even if they fail validation.
-     *
-     * @covers \core_external\util::validate_courses
      */
     public function test_validate_courses_keepfails(): void {
         $this->resetAfterTest(true);
@@ -95,8 +94,6 @@ final class util_test extends \advanced_testcase {
 
     /**
      * Validate courses can re-use an array of prefetched courses.
-     *
-     * @covers \core_external\util::validate_courses
      */
     public function test_validate_courses_prefetch(): void {
         $this->resetAfterTest(true);
@@ -125,8 +122,6 @@ final class util_test extends \advanced_testcase {
 
     /**
      * Test the Validate courses standard functionality.
-     *
-     * @covers \core_external\util::validate_courses
      */
     public function test_validate_courses(): void {
         $this->resetAfterTest(true);
@@ -163,8 +158,6 @@ final class util_test extends \advanced_testcase {
 
     /**
      * Text util::get_area_files
-     *
-     * @covers \core_external\util::get_area_files
      */
     public function test_get_area_files(): void {
         global $CFG, $DB;
@@ -220,8 +213,6 @@ final class util_test extends \advanced_testcase {
 
     /**
      * Test default time for user created tokens.
-     *
-     * @covers \core_external\util::generate_token_for_current_user
      */
     public function test_user_created_tokens_duration(): void {
         global $CFG, $DB;
@@ -246,118 +237,190 @@ final class util_test extends \advanced_testcase {
         $this->assertLessThanOrEqual($timenow + DAYSECS, $token->validuntil);
     }
 
-
-    /**
-     * Test the format_text function.
-     *
-     * @covers \core_external\util::format_text
-     * @runInSeparateProcess
-     */
-    public function test_format_text(): void {
-        $this->include_legacy_functions();
+    #[\PHPUnit\Framework\Attributes\DataProvider('format_text_provider')]
+    public function test_format_text(
+        bool $raw,
+        bool $filter,
+        string $text,
+        string $textformat,
+        string $correct,
+        string $correctformat,
+        ?array $options,
+    ): void {
         $settings = external_settings::get_instance();
 
-        $settings->set_raw(true);
-        $settings->set_filter(false);
-        $context = \context_system::instance();
+        $settings->set_raw($raw);
+        $settings->set_filter($filter);
+        $context = \core\context\system::instance();
 
-        $test = '$$ \pi $$';
-        $testformat = FORMAT_MARKDOWN;
-        $correct = [$test, $testformat];
-        $this->assertSame($correct, util::format_text($test, $testformat, $context, 'core', '', 0));
+        $this->assertSame(
+            util::format_text($text, $textformat, $context, 'core', '', 0, $options),
+            [$correct, $correctformat],
+        );
+    }
 
-        // Function external_format_text should work with context id or context instance.
-        $this->assertSame(external_format_text($test, $testformat, $context->id, 'core', '', 0), $correct);
-        $this->assertSame(external_format_text($test, $testformat, $context, 'core', '', 0), $correct);
+    public static function format_text_provider(): \Iterator {
+        $text = '$$ \pi $$';
+
+        yield [
+            'raw' => true,
+            'filter' => false,
+            'text' => $text,
+            'textformat' => FORMAT_MARKDOWN,
+            'correct' => $text,
+            'correctformat' => FORMAT_MARKDOWN,
+            'options' => null,
+        ];
+
+        yield [
+            'raw' => false,
+            'filter' => true,
+            'text' => $text,
+            'textformat' => FORMAT_MARKDOWN,
+            'correct' => "<span class=\"filter_mathjaxloader_equation\"><p><span class=\"nolink\">{$text}</span></p>
+</span>",
+            'correctformat' => FORMAT_HTML,
+            'options' => null,
+        ];
+
+        // Filters can be opted out from by the developer.
+        yield [
+            'raw' => false,
+            'filter' => true,
+            'text' => $text,
+            'textformat' => FORMAT_MARKDOWN,
+            'correct' => "<p>{$text}</p>\n",
+            'correctformat' => FORMAT_HTML,
+            'options' => [
+                'filter' => false,
+            ],
+        ];
+
+        yield [
+            'raw' => false,
+            'filter' => true,
+            'text' => '<p><a id="test"></a><a href="#test">Text</a></p>',
+            'textformat' => FORMAT_HTML,
+            'correct' => '<p><a id="test"></a><a href="#test">Text</a></p>',
+            'correctformat' => FORMAT_HTML,
+            'options' => [
+                'allowid' => true,
+            ],
+        ];
+
+        yield [
+            'raw' => false,
+            'filter' => true,
+            'text' => '<p><a id="test"></a><a href="#test">Text</a></p>',
+            'textformat' => FORMAT_HTML,
+            'correct' => '<p><a></a><a href="#test">Text</a></p>',
+            'correctformat' => FORMAT_HTML,
+            'options' => [
+                'allowid' => false,
+            ],
+        ];
+
+        yield [
+            'raw' => false,
+            'filter' => true,
+            'text' => '<p><a id="test"></a><a href="#test">Text</a></p>' . "\n" . 'Newline',
+            'textformat' => FORMAT_MOODLE,
+            'correct' => '<p><a id="test"></a><a href="#test">Text</a></p> Newline',
+            'correctformat' => FORMAT_HTML,
+            'options' => [
+                'newlines' => false,
+            ],
+        ];
+
+        $text = '<p><a id="test"></a><a href="#test">Text</a></p>';
+        yield [
+            'raw' => false,
+            'filter' => true,
+            'text' => $text,
+            'textformat' => FORMAT_MOODLE,
+            'correct' => '<div class="text_to_html">' . $text . '</div>',
+            'correctformat' => FORMAT_HTML,
+            'options' => [
+                'para' => true,
+            ],
+        ];
+
+        $text = '<p><a id="test"></a><a href="#test">Text</a></p>';
+    }
+
+    public function test_format_string_with_context_options(): void {
+        $settings = external_settings::get_instance();
 
         $settings->set_raw(false);
         $settings->set_filter(true);
 
-        $test = '$$ \pi $$';
-        $testformat = FORMAT_MARKDOWN;
-        $correct = ['<span class="filter_mathjaxloader_equation"><p><span class="nolink">$$ \pi $$</span></p>
-</span>', FORMAT_HTML,
+        $context = \core\context\system::instance();
+
+        $text = '<p><a id="test"></a><a href="#test">Text</a></p>';
+        $options = [
+            'context' => $context,
         ];
-        $this->assertSame(util::format_text($test, $testformat, $context, 'core', '', 0), $correct);
 
-        // Function external_format_text should work with context id or context instance.
-        $this->assertSame(external_format_text($test, $testformat, $context->id, 'core', '', 0), $correct);
-        $this->assertSame(external_format_text($test, $testformat, $context, 'core', '', 0), $correct);
-
-        // Filters can be opted out from by the developer.
-        $test = '$$ \pi $$';
-        $testformat = FORMAT_MARKDOWN;
-        $correct = ['<p>$$ \pi $$</p>
-', FORMAT_HTML,
-        ];
-        $this->assertSame(util::format_text($test, $testformat, $context, 'core', '', 0, ['filter' => false]), $correct);
-
-        // Function external_format_text should work with context id or context instance.
-        $this->assertSame(external_format_text($test, $testformat, $context->id, 'core', '', 0, ['filter' => false]), $correct);
-        $this->assertSame(external_format_text($test, $testformat, $context, 'core', '', 0, ['filter' => false]), $correct);
-
-        $test = '<p><a id="test"></a><a href="#test">Text</a></p>';
-        $testformat = FORMAT_HTML;
-        $correct = [$test, FORMAT_HTML];
-        $options = ['allowid' => true];
-        $this->assertSame(util::format_text($test, $testformat, $context, 'core', '', 0, $options), $correct);
-        // Function external_format_text should work with context id or context instance.
-        $this->assertSame(external_format_text($test, $testformat, $context->id, 'core', '', 0, $options), $correct);
-        $this->assertSame(external_format_text($test, $testformat, $context, 'core', '', 0, $options), $correct);
-
-        $test = '<p><a id="test"></a><a href="#test">Text</a></p>';
-        $testformat = FORMAT_HTML;
-        $correct = ['<p><a></a><a href="#test">Text</a></p>', FORMAT_HTML];
-        $options = new \stdClass();
-        $options->allowid = false;
-        $this->assertSame(util::format_text($test, $testformat, $context, 'core', '', 0, $options), $correct);
-
-        // Function external_format_text should work with context id or context instance.
-        $this->assertSame(external_format_text($test, $testformat, $context->id, 'core', '', 0, $options), $correct);
-        $this->assertSame(external_format_text($test, $testformat, $context, 'core', '', 0, $options), $correct);
-
-        $test = '<p><a id="test"></a><a href="#test">Text</a></p>' . "\n" . 'Newline';
-        $testformat = FORMAT_MOODLE;
-        $correct = ['<p><a id="test"></a><a href="#test">Text</a></p> Newline', FORMAT_HTML];
-        $options = new \stdClass();
-        $options->newlines = false;
-        $this->assertSame(util::format_text($test, $testformat, $context, 'core', '', 0, $options), $correct);
-
-        // Function external_format_text should work with context id or context instance.
-        $this->assertSame(external_format_text($test, $testformat, $context->id, 'core', '', 0, $options), $correct);
-        $this->assertSame(external_format_text($test, $testformat, $context, 'core', '', 0, $options), $correct);
-
-        $test = '<p><a id="test"></a><a href="#test">Text</a></p>';
-        $testformat = FORMAT_MOODLE;
-        $correct = ['<div class="text_to_html">' . $test . '</div>', FORMAT_HTML];
-        $options = new \stdClass();
-        $options->para = true;
-        $this->assertSame(util::format_text($test, $testformat, $context, 'core', '', 0, $options), $correct);
-
-        // Function external_format_text should work with context id or context instance.
-        $this->assertSame(external_format_text($test, $testformat, $context->id, 'core', '', 0, $options), $correct);
-        $this->assertSame(external_format_text($test, $testformat, $context, 'core', '', 0, $options), $correct);
-
-        $test = '<p><a id="test"></a><a href="#test">Text</a></p>';
-        $testformat = FORMAT_MOODLE;
-        $correct = [$test, FORMAT_HTML];
-        $options = new \stdClass();
-        $options->context = $context;
-        $this->assertSame(util::format_text($test, $testformat, $context, 'core', '', 0, $options), $correct);
-
-        // Function external_format_text should work with context id or context instance.
-        $this->assertSame(external_format_text($test, $testformat, $context->id, 'core', '', 0, $options), $correct);
-        $this->assertSame(external_format_text($test, $testformat, $context, 'core', '', 0, $options), $correct);
+        $this->assertSame(
+            util::format_text($text, FORMAT_MOODLE, $context, 'core', '', 0, $options),
+            [$text, FORMAT_HTML],
+        );
     }
-    /**
-     * Teset the format_string function.
-     *
-     * @covers \core_external\util::format_string
-     * @runInSeparateProcess
-     */
-    public function test_external_format_string(): void {
+
+    public static function external_format_string_provider(): \Iterator {
+        $text = '<span lang="en" class="multilang">EN</span><span lang="fr" class="multilang">FR</span> ';
+        $text .= '<script>hi</script> <h3>there</h3>!';
+        yield [
+            'raw' => true,
+            'filter' => true,
+            'text' => $text,
+            'correct' => $text,
+            'options' => null,
+        ];
+
+        $text = '<span lang="en" class="multilang">EN</span><span lang="fr" class="multilang">FR</span> ';
+        $text .= '<script>hi</script> <h3>there</h3>?';
+        yield [
+            'raw' => false,
+            'filter' => false,
+            'text' => $text,
+            'correct' => 'ENFR hi there?',
+            'options' => null,
+        ];
+
+        $text = '<span lang="en" class="multilang">EN</span><span lang="fr" class="multilang">FR</span> ';
+        $text .= '<script>hi</script> <h3>there</h3>@';
+        yield [
+            'raw' => false,
+            'filter' => true,
+            'text' => $text,
+            'correct' => 'EN hi there@',
+            'options' => null,
+        ];
+
+        // Filters can be opted out.
+        $text = '<span lang="en" class="multilang">EN</span><span lang="fr" class="multilang">FR</span> ';
+        $text .= '<script>hi</script> <h3>there</h3>%';
+        yield [
+            'raw' => false,
+            'filter' => true,
+            'text' => $text,
+            'correct' => 'ENFR hi there%',
+            'options' => [
+                'filter' => false,
+            ],
+        ];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('external_format_string_provider')]
+    public function test_format_string_with_external(
+        bool $raw,
+        bool $filter,
+        string $text,
+        string $correct,
+        ?array $options,
+    ): void {
         $this->resetAfterTest();
-        $this->include_legacy_functions();
         $settings = external_settings::get_instance();
 
         // Enable multilang filter to on content and heading.
@@ -366,52 +429,10 @@ final class util_test extends \advanced_testcase {
         $filtermanager = \filter_manager::instance();
         $filtermanager->reset_caches();
 
-        $settings->set_raw(true);
-        $settings->set_filter(true);
+        $settings->set_raw($raw);
+        $settings->set_filter($filter);
         $context = \context_system::instance();
 
-        $test = '<span lang="en" class="multilang">EN</span><span lang="fr" class="multilang">FR</span> ';
-        $test .= '<script>hi</script> <h3>there</h3>!';
-        $correct = $test;
-        $this->assertSame($correct, util::format_string($test, $context));
-
-        // Function external_format_string should work with context id or context instance.
-        $this->assertSame($correct, external_format_string($test, $context));
-        $this->assertSame($correct, external_format_string($test, $context->id));
-
-        $settings->set_raw(false);
-        $settings->set_filter(false);
-
-        $test = '<span lang="en" class="multilang">EN</span><span lang="fr" class="multilang">FR</span> ';
-        $test .= '<script>hi</script> <h3>there</h3>?';
-        $correct = 'ENFR hi there?';
-        $this->assertSame($correct, util::format_string($test, $context));
-
-        // Function external_format_string should work with context id or context instance.
-        $this->assertSame($correct, external_format_string($test, $context));
-        $this->assertSame($correct, external_format_string($test, $context->id));
-
-        $settings->set_filter(true);
-
-        $test = '<span lang="en" class="multilang">EN</span><span lang="fr" class="multilang">FR</span> ';
-        $test .= '<script>hi</script> <h3>there</h3>@';
-        $correct = 'EN hi there@';
-        $this->assertSame($correct, util::format_string($test, $context));
-
-        // Function external_format_string should work with context id or context instance.
-        $this->assertSame($correct, external_format_string($test, $context));
-        $this->assertSame($correct, external_format_string($test, $context->id));
-
-        // Filters can be opted out.
-        $test = '<span lang="en" class="multilang">EN</span><span lang="fr" class="multilang">FR</span> ';
-        $test .= '<script>hi</script> <h3>there</h3>%';
-        $correct = 'ENFR hi there%';
-        $this->assertSame($correct, util::format_string($test, $context, false, ['filter' => false]));
-
-        // Function external_format_string should work with context id or context instance.
-        $this->assertSame($correct, external_format_string($test, $context->id, false, ['filter' => false]));
-        $this->assertSame($correct, external_format_string($test, $context, false, ['filter' => false]));
-
-        $this->assertSame("& < > \" '", format_string("& < > \" '", true, ['escape' => false]));
+        $this->assertSame($correct, util::format_string($text, $context, options: $options));
     }
 }

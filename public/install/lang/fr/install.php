@@ -36,7 +36,7 @@ $string['chooselanguagesub'] = 'Veuillez choisir la langue d’installation. Cet
 $string['clialreadyconfigured'] = 'Le fichier config.php existe déjà. Veuillez utiliser admin/cli/install_database.php pour installer Moodle sur ce site.';
 $string['clialreadyinstalled'] = 'Le fichier config.php existe déjà. Veuillez utiliser admin/cli/install_database.php si vous désirez mettre à jour ce site Moodle.';
 $string['cliinstallheader'] = 'Programme d’installation de Moodle {$a} en ligne de commande';
-$string['clitablesexist'] = 'Les tables de la base de données sont déjà présentes ; l’installation en ligne de commande ne peut pas continuer.';
+$string['clitablesexist'] = 'Les tables de la base de données sont déjà présentes ; l’installation en ligne de commande (CLI) ne peut pas continuer.';
 $string['databasehost'] = 'Serveur de base de données';
 $string['databasename'] = 'Nom de la base de données';
 $string['databasetypehead'] = 'Sélectionner un pilote de base de données';
@@ -68,7 +68,7 @@ $string['pathsunsecuredataroot'] = 'L’emplacement du dossier de données n’e
 $string['pathswrongadmindir'] = 'Le dossier d’administration n’existe pas';
 $string['phpextension'] = 'Extension PHP {$a}';
 $string['phpversion'] = 'Version de PHP';
-$string['webserverconfigproblemdescription'] = 'Votre serveur web n\'est pas configuré pour accéder aux fichiers en dehors du dossier /public. Veuillez vous référer à <a href="https://moodledev.io/docs/5.1/guides/restructure">https://moodledev.io/docs/5.1/guides/restructure</a> pour des informations sur la façon de configurer votre serveur web. Une fois celui-ci configuré, <a href="{$a}">visitez de nouveau la racine du site web</a>.';
+$string['webserverconfigproblemdescription'] = 'Votre serveur web n’est pas configuré pour accéder aux fichiers en dehors du dossier /public. Pour des informations sur la façon de configurer votre serveur web correctement, veuillez vous référer à <a href="https://docs.moodle.org/501/en/Upgrading#Code_directories_restructure">la documentation (en anglais)</a>. Une fois celui-ci configuré, <a href="{$a}">visitez de nouveau la racine du site web</a>.';
 $string['webservernotconfigured'] = 'Serveur web non configuré';
 $string['welcomep10'] = '{$a->installername} ({$a->installerversion})';
 $string['welcomep20'] = 'Vous voyez cette page, car vous avez installé Moodle correctement et lancé le logiciel <strong>{$a->packname} {$a->packversion}</strong> sur votre ordinateur. Félicitations !';

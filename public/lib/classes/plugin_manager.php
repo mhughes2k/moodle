@@ -1523,6 +1523,8 @@ class plugin_manager {
      * @return bool true on success, false on errors/problems
      */
     public function uninstall_plugin($component, progress_trace $progress) {
+        global $CFG;
+        require_once($CFG->libdir . '/upgradelib.php');
 
         $pluginfo = $this->get_plugin_info($component);
 
@@ -1541,6 +1543,7 @@ class plugin_manager {
         uninstall_plugin($pluginfo->type, $pluginfo->name);
         $progress->output(ob_get_clean());
 
+        upgrade_log(UPGRADE_LOG_NORMAL, $component, 'Plugin uninstalled');
         return true;
     }
 

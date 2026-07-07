@@ -25,13 +25,16 @@
 require('../config.php');
 require_once($CFG->libdir . '/adminlib.php');
 
-$swaggerversion = '5.17.14';
+use core\url;
+
+$swaggerversion = '5.32.5';
+$swaggeruipluginversion = '1.0.4';
 
 $PAGE->set_url('/admin/swaggerui.php');
 
 admin_externalpage_setup('swaggerui');
 
-$PAGE->requires->css(new moodle_url("https://unpkg.com/swagger-ui-dist@{$swaggerversion}/swagger-ui.css"));
+$PAGE->requires->css(new url("https://unpkg.com/swagger-ui-dist@{$swaggerversion}/swagger-ui.css"));
 
 echo $OUTPUT->header();
 
@@ -40,7 +43,7 @@ echo html_writer::tag(
     tagname: 'script',
     contents: '',
     attributes: [
-        'src' => new moodle_url("https://unpkg.com/swagger-ui-dist@{$swaggerversion}/swagger-ui-bundle.js"),
+        'src' => new url("https://unpkg.com/swagger-ui-dist@{$swaggerversion}/swagger-ui-bundle.js"),
         'crossorigin' => 'crossorigin',
     ],
 );
@@ -48,12 +51,12 @@ echo html_writer::tag(
     tagname: 'script',
     contents: '',
     attributes: [
-        'src' => new moodle_url("https://unpkg.com/swagger-ui-plugin-hierarchical-tags"),
+        'src' => new url("https://unpkg.com/swagger-ui-plugin-hierarchical-tags@{$swaggeruipluginversion}/build/index.js"),
         'crossorigin' => 'crossorigin',
     ],
 );
 
-$openapipath = moodle_url::routed_path('/api/rest/v2/openapi.json')->out();
+$openapipath = url::routed_path('/api/rest/v2/openapi.json')->out();
 $swaggerinit = <<<JS
     window.ui = SwaggerUIBundle({
         url: "{$openapipath}",

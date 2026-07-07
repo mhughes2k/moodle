@@ -1,19 +1,19 @@
 @core @core_grades @javascript @_file_upload
-Feature: An admin can import grades into gradebook using a CSV file
-  In order to import grades using a CSV file
+Feature: An admin can import grades into gradebook using a CSV or XML file
+  In order to import grades using a CSV or XML file
   As a teacher
-  I need to be able to upload a CSV file and see uploaded grades in gradebook
+  I need to be able to upload a CSV or XML file and see uploaded grades in gradebook
 
   Background:
     Given the following "courses" exist:
       | fullname | shortname | format |
       | Course 1 | C1        | topics |
     And the following "users" exist:
-      | username | firstname | lastname | email                |
-      | teacher1 | Teacher   | 1        | teacher1@example.com |
-      | student1 | Student   | 1        | student1@example.com |
-      | student2 | Student   | 2        | student2@example.com |
-      | student3 | Student   | 3        | student3@example.com |
+      | username | firstname | lastname | email                | idnumber |
+      | teacher1 | Teacher   | 1        | teacher1@example.com |          |
+      | student1 | Student   | 1        | student1@example.com | 1000     |
+      | student2 | Student   | 2        | student2@example.com | 2000     |
+      | student3 | Student   | 3        | student3@example.com | 3000     |
     And the following "course enrolments" exist:
       | user     | course | role           |
       | teacher1 | C1     | editingteacher |
@@ -23,6 +23,7 @@ Feature: An admin can import grades into gradebook using a CSV file
     And the following "grade item" exists:
       | course   | C1            |
       | itemname | Manual item 1 |
+      | idnumber | item1         |
       | grademin | 10            |
       | grademax | 500           |
     And the following "grade grades" exist:
@@ -65,6 +66,13 @@ Feature: An admin can import grades into gradebook using a CSV file
       | Student 1          | student1@example.com | 400.00 | 400.00 |
       | Student 2          | student2@example.com | 50.00  | 50.00  |
       | Student 3          | student3@example.com | 50.00  | 50.00  |
+
+  Scenario: Importing XML file with an invalid grade
+    Given I am on the "Course 1" "Course" page logged in as "teacher1"
+    And I navigate to "XML file" import page in the course gradebook
+    And I upload "grade/tests/fixtures/grade_import_bad_grade.xml" file to "File" filemanager
+    When I click on "Upload grades" "button"
+    Then I should see "Error - supplied grade 'A' is invalid for user with ID number '2000'."
 
   Scenario: Importing grades with multiple new mappings
     Given I am on the "Course 1" "Course" page logged in as "teacher1"

@@ -259,7 +259,13 @@ class primary implements renderable, templatable {
      * This is leveraging the data from user_get_user_navigation_info and the logic in $OUTPUT->user_menu()
      *
      * @param renderer_base $output
-     * @return array
+     * @return array The template context array, including:
+     *               - userfirstname string The first name of the logged-in user (or real user when impersonating).
+     *               - userfullname  string The full name of the logged-in user (or real user when impersonating).
+     *               - avatardata    array  Avatar image(s) for display in the menu trigger.
+     *               - metadata      array  Additional contextual metadata (role, login failures, etc.).
+     *               - items         array  Navigation links shown in the dropdown.
+     *               - submenus      array  Nested submenus (e.g. language selector).
      */
     public function get_user_menu(renderer_base $output): array {
         global $CFG, $USER, $PAGE;
@@ -279,6 +285,7 @@ class primary implements renderable, templatable {
             'classes' => 'current'
         ];
         $usermenudata['userfullname'] = $info->metadata['realuserfullname'] ?? $info->metadata['userfullname'];
+        $usermenudata['userfirstname'] = $info->metadata['realuserfirstname'] ?? $info->metadata['userfirstname'];
 
         // Logged in as someone else.
         if ($info->metadata['asotheruser']) {
@@ -319,16 +326,6 @@ class primary implements renderable, templatable {
             }
         }
 
-        $modifiedarray = array_map(function($value) {
-            $value->divider = $value->itemtype == 'divider';
-            $value->link = $value->itemtype == 'link';
-            if (isset($value->pix) && !empty($value->pix)) {
-                $value->pixicon = $value->pix;
-                unset($value->pix);
-            }
-            return $value;
-        }, $info->navitems);
-
         // Include the language menu as a submenu within the user menu.
         $languagemenu = new \core\output\language_menu($this->page);
         $langmenu = $languagemenu->export_for_template($output);
@@ -348,11 +345,11 @@ class primary implements renderable, templatable {
 
                 // Place the link before the 'Log out' menu item which is either the last item in the menu or
                 // second to last when 'Switch roles' is available.
-                $menuposition = count($modifiedarray) - 1;
+                $menuposition = count($info->navitems) - 1;
                 if (has_capability('moodle/role:switchroles', $PAGE->context)) {
-                    $menuposition = count($modifiedarray) - 2;
+                    $menuposition = count($info->navitems) - 2;
                 }
-                array_splice($modifiedarray, $menuposition, 0, [$language]);
+                array_splice($info->navitems, $menuposition, 0, [$language]);
 
                 // Generate the data for the language selector submenu.
                 $submenusdata[] = (object)[
@@ -364,8 +361,8 @@ class primary implements renderable, templatable {
         }
 
         // Add divider before the last item.
-        $modifiedarray[count($modifiedarray) - 2]->divider = true;
-        $usermenudata['items'] = $modifiedarray;
+        $info->navitems[count($info->navitems) - 2]->divider = true;
+        $usermenudata['items'] = $info->navitems;
         $usermenudata['submenus'] = array_values($submenusdata);
 
         return $usermenudata;

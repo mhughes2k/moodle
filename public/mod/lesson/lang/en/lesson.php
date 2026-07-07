@@ -349,14 +349,14 @@ $string['modattempts_help'] = 'If enabled, students can navigate through the les
 $string['modattemptsnoteacher'] = 'Student review only works for students.';
 $string['modulename'] = 'Lesson';
 $string['modulename_help'] = '###### Key features
-- Create pages with text, images, video, and questions
-- Design lessons that are either linear or have multiple paths
-- Direct students along different paths depending on their answers
+* Create pages with text, images, video, and questions
+* Design lessons that are either linear or have multiple paths
+* Direct students along different paths depending on their answers
 
 ###### Ways to use it
-- Develop scenario-based exercises for problem solving
-- Build an interactive case study where students\' choices lead to different outcomes
-- Create a tutorial that adapts depending on correct or incorrect answers';
+* Develop scenario-based exercises for problem solving
+* Build an interactive case study where students\' choices lead to different outcomes
+* Create a tutorial that adapts depending on correct or incorrect answers';
 $string['modulename_link'] = 'mod/lesson/view';
 $string['modulename_summary'] = 'Create branching scenarios where students follow different paths based on their answers to questions.';
 $string['modulename_tip'] = 'Map out the flow of your Lesson before building it. Planning the pages and paths ahead of time makes building your Lesson much easier.';
@@ -434,6 +434,8 @@ $string['overridedeletegroupsure'] = 'Are you sure you want to delete the overri
 $string['overridedeleteusersure'] = 'Are you sure you want to delete the override for user {$a}?';
 $string['overridegroup'] = 'Override group';
 $string['overridegroupeventname'] = '{$a->lesson} - {$a->group}';
+$string['overridereason'] = 'Reason for override';
+$string['overridereason_help'] = 'Optionally record the reason for this override.';
 $string['overrides'] = 'Overrides';
 $string['overrideuser'] = 'Override user';
 $string['overrideusereventname'] = '{$a->lesson} - Override';
@@ -500,6 +502,7 @@ $string['privacy:metadata:overrides:maxattempts'] = 'The maximium number of atte
 $string['privacy:metadata:overrides:retake'] = 'Whether re-takes are allowed';
 $string['privacy:metadata:overrides:password'] = 'The password to access the lesson';
 $string['privacy:metadata:overrides'] = 'A record of overrides per lesson';
+$string['privacy:metadata:overrides:reason'] = 'Optional notes documenting the reason for a lesson override.';
 $string['privacy:metadata:userpref:lessonview'] = 'The preferred display mode when editing lessons';
 $string['privacy:path:essayresponses'] = 'Essay responses';
 $string['privacy:path:essayanswers'] = 'Essay answers';
@@ -600,7 +603,7 @@ $string['usemean'] = 'Mean grade of all attempts';
 $string['usepassword'] = 'Password protected lesson';
 $string['usepassword_help'] = 'If enabled, a password is required in order to access the lesson.';
 $string['useroverrides'] = 'User overrides';
-$string['usersnone'] = 'There are no users enrolled in this course.';
+$string['usersnone'] = 'There are no users enrolled in this course or no users can access the lesson.';
 $string['view'] = 'View';
 $string['viewessayanswers'] = 'View essay answers';
 $string['viewgrades'] = 'View grades';

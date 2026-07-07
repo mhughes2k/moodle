@@ -282,13 +282,30 @@ class core_admin_renderer extends plugin_renderer_base {
      *
      * @return string HTML to output.
      */
-    public function admin_notifications_page($maturity, $insecuredataroot, $errorsdisplayed,
-            $cronoverdue, $dbproblems, $maintenancemode, $availableupdates, $availableupdatesfetch,
-            $buggyiconvnomb, $registered, array $cachewarnings = array(), $eventshandlers = 0,
-            $themedesignermode = false, $devlibdir = false, $mobileconfigured = false,
-            $overridetossl = false, $invalidforgottenpasswordurl = false, $croninfrequent = false,
-            $showcampaigncontent = false, bool $showfeedbackencouragement = false, bool $showservicesandsupport = false,
-            $xmlrpcwarning = '') {
+    public function admin_notifications_page(
+        $maturity,
+        $insecuredataroot,
+        $errorsdisplayed,
+        $cronoverdue,
+        $dbproblems,
+        $maintenancemode,
+        $availableupdates,
+        $availableupdatesfetch,
+        $buggyiconvnomb,
+        $registered,
+        array $cachewarnings = [],
+        $eventshandlers = 0,
+        $themedesignermode = false,
+        $devlibdir = false,
+        $mobileconfigured = false,
+        $overridetossl = false,
+        $invalidforgottenpasswordurl = false,
+        $croninfrequent = false,
+        $showcampaigncontent = false,
+        bool $showfeedbackencouragement = false,
+        bool $showservicesandsupport = false,
+        $xmlrpcwarning = ''
+    ) {
 
         global $CFG;
         $output = '';
@@ -313,6 +330,8 @@ class core_admin_renderer extends plugin_renderer_base {
         $output .= $this->mobile_configuration_warning($mobileconfigured);
         $output .= $this->forgotten_password_url_warning($invalidforgottenpasswordurl);
         $output .= $this->mnet_deprecation_warning($xmlrpcwarning);
+        $output .= $this->moodlenet_removal_warning();
+        $output .= $this->marketplace_integration_notice();
         $output .= $this->userfeedback_encouragement($showfeedbackencouragement);
         $output .= $this->services_and_support_content($showservicesandsupport);
         $output .= $this->campaign_content($showcampaigncontent);
@@ -2243,13 +2262,33 @@ class core_admin_renderer extends plugin_renderer_base {
      *
      * @param moodle_url|string $url
      * @return string
+     *
+     * @deprecated Since Moodle 5.2 - please use upgradekey_form_page_with_validation
      */
+    #[\core\attribute\deprecated('::upgradekey_form_page_with_validation', since: '5.2', mdl: 'MDL-87896')]
     public function upgradekey_form_page($url) {
+        \core\deprecation::emit_deprecation([self::class, __FUNCTION__]);
+        return $this->upgradekey_form_page_with_validation($url, false);
+    }
 
+    /**
+     * Render a simple page for providing the upgrade key, providing validation for failed attempts
+     *
+     * @param moodle_url $url
+     * @param bool $upgradekeyerror
+     * @return string
+     */
+    public function upgradekey_form_page_with_validation(moodle_url $url, bool $upgradekeyerror): string {
         $output = '';
         $output .= $this->header();
         $output .= $this->heading(get_string('upgradekeyreq', 'core_admin'));
         $output .= $this->container_start('upgradekeyreq w-25');
+
+        // Inform user if they got it wrong.
+        if ($upgradekeyerror) {
+            $output .= $this->warning(get_string('upgradekeyerror', 'core_admin'), 'danger');
+        }
+
         $output .= html_writer::start_tag('form', array('method' => 'POST', 'action' => $url));
         $output .= html_writer::empty_tag('input', [
             'id' => 'upgradekey',
@@ -2324,6 +2363,33 @@ class core_admin_renderer extends plugin_renderer_base {
         }
 
         return $this->warning($xmlrpcwarning);
+    }
+
+    /**
+     * Display a warning about the removal of MoodleNet integration.
+     *
+     * @return string HTML to output.
+     */
+    protected function moodlenet_removal_warning(): string {
+        $moodlenetenabled = get_config('tool_moodlenet', 'enablemoodlenet');
+        if (!empty($moodlenetenabled)) {
+            $moodlenetwarning = get_string('moodlenetremovalwarning', 'admin');
+            return $this->warning($moodlenetwarning);
+        }
+
+        return '';
+    }
+
+    /**
+     * Display a notice about Moodle Marketplace integration.
+     *
+     * @return string HTML to output.
+     */
+    protected function marketplace_integration_notice(): string {
+        $installer = tool_installaddon_installer::instance();
+        $url = $installer->get_marketplace_url();
+        $notice = get_string('marketplaceavailablenotice', 'admin', $url->out());
+        return $this->warning($notice, 'info');
     }
 
     /**

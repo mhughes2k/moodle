@@ -49,7 +49,7 @@ class auth_plugin_email extends auth_plugin_base {
     function user_login($username, $password) {
         global $CFG, $DB;
         if ($user = $DB->get_record('user', array('username'=>$username, 'mnethostid'=>$CFG->mnet_localhost_id))) {
-            return validate_internal_user_password($user, $password);
+            return \core\di::get(\core\authentication\password::class)->validate($user, $password);
         }
         return false;
     }
@@ -69,7 +69,7 @@ class auth_plugin_email extends auth_plugin_base {
         // This will also update the stored hash to the latest algorithm
         // if the existing hash is using an out-of-date algorithm (or the
         // legacy md5 algorithm).
-        return update_internal_user_password($user, $newpassword);
+        return \core\di::get(\core\authentication\password::class)->update($user, $newpassword);
     }
 
     function can_signup() {
@@ -107,7 +107,7 @@ class auth_plugin_email extends auth_plugin_base {
         require_once($CFG->dirroot.'/user/lib.php');
 
         $plainpassword = $user->password;
-        $user->password = hash_internal_user_password($user->password);
+        $user->password = \core\di::get(\core\authentication\password::class)->hash($user->password);
         if (empty($user->calendartype)) {
             $user->calendartype = $CFG->calendartype;
         }
@@ -160,7 +160,7 @@ class auth_plugin_email extends auth_plugin_base {
      * @param string $confirmsecret
      */
     function user_confirm($username, $confirmsecret) {
-        global $DB, $SESSION;
+        global $DB;
         $user = get_complete_user_data('username', $username);
 
         if (!empty($user)) {
@@ -168,17 +168,15 @@ class auth_plugin_email extends auth_plugin_base {
                 return AUTH_CONFIRM_ERROR;
 
             } else if ($user->secret === $confirmsecret && $user->confirmed) {
+                // Clean up stale wantsurl preference if user clicks confirmation link again.
+                unset_user_preference('auth_email_wantsurl', $user);
                 return AUTH_CONFIRM_ALREADY;
 
             } else if ($user->secret === $confirmsecret) {   // They have provided the secret key to get in
                 $DB->set_field("user", "confirmed", 1, array("id"=>$user->id));
-
-                if ($wantsurl = get_user_preferences('auth_email_wantsurl', false, $user)) {
-                    // Ensure user gets returned to page they were trying to access before signing up.
-                    $SESSION->wantsurl = $wantsurl;
-                    unset_user_preference('auth_email_wantsurl', $user);
-                }
-
+                // Clean up the wantsurl preference regardless of how confirmation was triggered
+                // (e.g. /login/confirm.php, admin single confirm, bulk confirm, web service).
+                unset_user_preference('auth_email_wantsurl', $user);
                 return AUTH_CONFIRM_OK;
             }
         } else {

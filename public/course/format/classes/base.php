@@ -81,6 +81,8 @@ abstract class base {
     protected $singlesection = null;
     /** @var int|null the sectionid when a single section is selected, null when multiple sections are displayed. */
     protected $singlesectionid = null;
+    /** @var bool Whether restrictions should be expanded. */
+    protected $showrestrictionsexpanded = false;
     /** @var course_modinfo the current course modinfo, please use course_format::get_modinfo() */
     private $modinfo = null;
     /** @var array cached instances */
@@ -665,6 +667,24 @@ abstract class base {
     }
 
     /**
+     * Set whether restrictions should be expanded.
+     *
+     * @param bool $expanded True if restrictions should be expanded, false otherwise.
+     */
+    public function set_show_restrictions_expanded(bool $expanded): void {
+        $this->showrestrictionsexpanded = $expanded;
+    }
+
+    /**
+     * Get whether restrictions should be expanded.
+     *
+     * @return bool True if restrictions should be expanded, false otherwise.
+     */
+    public function get_show_restrictions_expanded(): bool {
+        return $this->showrestrictionsexpanded;
+    }
+
+    /**
      * Set the current section number to display.
      * Some formats has the hability to swith from one section to multiple sections per page.
      *
@@ -901,32 +921,32 @@ abstract class base {
      *     'expanded' (bool) if true the section will be shown expanded, true by default
      * @return null|moodle_url
      */
-    public function get_view_url($section, $options = array()) {
+    public function get_view_url($section, $options = []) {
         $course = $this->get_course();
-        $url = new moodle_url('/course/view.php', ['id' => $course->id]);
+        $section = (is_object($section) || is_null($section)) ? $section : $this->get_section($section, IGNORE_MISSING);
 
+        // Determine page.
         if (array_key_exists('sr', $options)) {
-            $sectionno = $options['sr'];
-        } else if (is_object($section)) {
-            $sectionno = $section->section;
+            $pagesection = !is_null($options['sr']) ? $this->get_section($options['sr'], IGNORE_MISSING) : null;
+        } else if ($options['navigation'] ?? false) {
+            $pagesection = $section;
         } else {
-            $sectionno = $section;
+            $pagesection = null;
         }
-        if ((!empty($options['navigation']) || array_key_exists('sr', $options)) && $sectionno !== null) {
-            // Display section on separate page.
-            $sectioninfo = $this->get_section($sectionno);
-            return new moodle_url('/course/section.php', ['id' => $sectioninfo->id]);
+
+        // Base URL.
+        if (is_null($pagesection)) {
+            $url = new moodle_url('/course/view.php', ['id' => $course->id]);
+        } else {
+            $url = new moodle_url('/course/section.php', ['id' => $pagesection->id]);
         }
-        if ($this->uses_sections() && $sectionno !== null) {
-            // The url includes the parameter to expand the section by default.
-            if (!array_key_exists('expanded', $options)) {
-                $options['expanded'] = true;
+
+        // Add details.
+        if ($this->uses_sections() && $section && ($section->id != $pagesection?->id)) {
+            if ($options['expanded'] ?? true) {
+                $url->param('expandsection', $section->section);
             }
-            if ($options['expanded']) {
-                // This parameter is being set by default.
-                $url->param('expandsection', $sectionno);
-            }
-            $url->set_anchor('section-'.$sectionno);
+            $url->set_anchor('section-' . $section->section);
         }
 
         return $url;
@@ -1285,6 +1305,11 @@ abstract class base {
         $elements = array();
         if ($forsection) {
             $options = $this->section_format_options(true);
+            // Add the component field, so course formats can hide other fields as appropriate.
+            $options = array_merge(
+                ['component' => ['default' => '', 'type' => PARAM_TEXT, 'label' => '', 'element_type' => 'hidden']],
+                $options,
+            );
         } else {
             $options = $this->course_format_options(true);
         }
@@ -1297,12 +1322,21 @@ abstract class base {
                 $args = array_merge($args, $option['element_attributes']);
             }
             $elements[] = call_user_func_array(array($mform, 'addElement'), $args);
+            $helpcomponent = 'format_' . $this->get_format();
+            if (isset($option['help_component'])) {
+                $helpcomponent = $option['help_component'];
+            }
             if (isset($option['help'])) {
-                $helpcomponent = 'format_'. $this->get_format();
-                if (isset($option['help_component'])) {
-                    $helpcomponent = $option['help_component'];
-                }
                 $mform->addHelpButton($optionname, $option['help'], $helpcomponent);
+            }
+            if (isset($option['inline_help'])) {
+                $helpdata = get_formatted_help_string($option['inline_help'], $helpcomponent);
+                $helptext = $helpdata->text ?? '';
+                if (isset($helpdata->completedoclink)) {
+                    $helptext .= " {$helpdata->completedoclink}";
+                }
+                $mform->addElement('static', $optionname . '_desc', '', $helptext);
+                $elements[] = $mform->getElement($optionname . '_desc');
             }
             if (isset($option['type'])) {
                 $mform->setType($optionname, $option['type']);
@@ -1689,8 +1723,8 @@ abstract class base {
         // but there is some available info text which explains the reason & should display,
         // OR it is hidden but the course has a setting to display hidden sections as unavailable.
         return $section->uservisible ||
-            ($section->visible && !$section->available && !empty($section->availableinfo)) ||
-            (!$section->visible && !$hidesections);
+            ($section->visible || !$hidesections)
+            && ($section->available || !empty($section->availableinfo));
     }
 
     /**
@@ -2182,7 +2216,12 @@ abstract class base {
                     continue;
                 }
                 if (!$originalcm->deletioninprogress) {
-                    duplicate_module($course, $originalcm, $newsection->id, false);
+                    $cmaction = \core_courseformat\formatactions::cm($course->id);
+                    $cmaction->duplicate(
+                        cmid: $originalcm->id,
+                        targetsectionid: $newsection->id,
+                        newname: $originalcm->name  // Do not change name.
+                    );
                 }
             }
         }
@@ -2220,5 +2259,14 @@ abstract class base {
             return false;
         }
         return true;
+    }
+
+    /**
+     * Determines whether the course format supports linear navigation.
+     *
+     * @return bool True if linear navigation is supported, false otherwise.
+     */
+    public static function uses_linear_navigation(): bool {
+        return false;
     }
 }

@@ -360,10 +360,11 @@ function uu_process_template_callback($username, $firstname, $lastname, $block) 
  */
 function uu_supported_auths() {
     // Get all the enabled plugins.
-    $plugins = get_enabled_auth_plugins();
+    $authentication = \core\di::get(\core\authentication::class);
+    $plugins = $authentication->get_enabled_plugins();
     $choices = array();
     foreach ($plugins as $plugin) {
-        $objplugin = get_auth_plugin($plugin);
+        $objplugin = $authentication->get_plugin($plugin);
         // If the plugin can not be manually set skip it.
         if (!$objplugin->can_be_manually_set()) {
             continue;
@@ -481,7 +482,11 @@ function uu_check_custom_profile_data(&$data, array &$profilefieldvalues = []) {
     $noerror = true;
     $testuserid = null;
 
-    if (!empty($data['username'])) {
+    // Allow callers (e.g. process.php) to supply the existing user ID directly.
+    if (!empty($data['id'])) {
+        $testuserid = $data['id'];
+    } else if (!empty($data['username'])) {
+        // Fallback: preview.php wraps the username in an HTML anchor whose href contains the user ID, so parse it out.
         if (preg_match('/id=(.*)"/i', $data['username'], $result)) {
             $testuserid = $result[1];
         }
@@ -504,7 +509,7 @@ function uu_check_custom_profile_data(&$data, array &$profilefieldvalues = []) {
                     if ($formfieldunique && array_key_exists($shortname, $profilefieldvalues) &&
                             (array_search($value, $profilefieldvalues[$shortname]) !== false)) {
 
-                        $data['status'][] = get_string('valuealreadyused') . " ({$key})";
+                        $data['status'][] = get_string('duplicatevalueupload', 'tool_uploaduser') . " ({$key})";
                         $noerror = false;
                     }
 

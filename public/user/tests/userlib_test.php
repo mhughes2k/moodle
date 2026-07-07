@@ -37,6 +37,7 @@ final class userlib_test extends \advanced_testcase {
         global $DB;
 
         $this->resetAfterTest();
+        $this->setAdminUser();
 
         // Create user and modify user profile.
         $user1 = $this->getDataGenerator()->create_user();
@@ -204,7 +205,7 @@ final class userlib_test extends \advanced_testcase {
         $this->assertEquals(\context_user::instance($user->id), $event->get_context());
 
         // Update user with no password update.
-        $password = $user->password = hash_internal_user_password('M00dLe@T');
+        $password = $user->password = \core\di::get(\core\authentication\password::class)->hash('M00dLe@T');
         user_update_user($user, false);
         $dbuser = $DB->get_record('user', array('id' => $user->id));
         $this->assertSame($password, $dbuser->password);
@@ -651,6 +652,25 @@ final class userlib_test extends \advanced_testcase {
     }
 
     /**
+     * Test that user_get_user_navigation_info includes the user's first name in metadata.
+     *
+     * @covers ::user_get_user_navigation_info
+     */
+    public function test_user_navigation_info_includes_userfirstname(): void {
+        global $PAGE;
+        $this->resetAfterTest();
+
+        $PAGE->set_url('/');
+        $user = $this->getDataGenerator()->create_user(['firstname' => 'Testfirstname']);
+        $this->setUser($user);
+
+        $opts = user_get_user_navigation_info($user, $PAGE);
+
+        $this->assertArrayHasKey('userfirstname', $opts->metadata);
+        $this->assertEquals('Testfirstname', $opts->metadata['userfirstname']);
+    }
+
+    /**
      * Test user_can_view_profile
      */
     public function test_user_can_view_profile(): void {
@@ -937,6 +957,7 @@ final class userlib_test extends \advanced_testcase {
         global $CFG;
 
         $this->resetAfterTest();
+        $this->setAdminUser();
 
         // Create user and modify user profile.
         $teacher = $this->getDataGenerator()->create_user();

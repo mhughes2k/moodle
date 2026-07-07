@@ -738,7 +738,7 @@ class external extends external_api {
 
         $validated = false;
         $sitesubscriptionkey = get_config('tool_mobile', 'sitesubscriptionkey');
-        if (!empty($sitesubscriptionkey) && $CFG->enablemobilewebservice && empty($CFG->disablemobileappsubscription)) {
+        if (!empty($sitesubscriptionkey) && $CFG->enablemobilewebservice) {
             $sitesubscriptionkey = json_decode($sitesubscriptionkey);
             $validated = time() < $sitesubscriptionkey->validuntil && $params['key'] === $sitesubscriptionkey->key;
             // Delete existing, even if not validated to enforce security and attacks prevention.

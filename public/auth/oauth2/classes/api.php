@@ -24,6 +24,8 @@
 namespace auth_oauth2;
 
 use context_user;
+use core\clock;
+use core\di;
 use stdClass;
 use moodle_exception;
 use moodle_url;
@@ -38,6 +40,11 @@ defined('MOODLE_INTERNAL') || die();
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class api {
+    /**
+     * @var string Interval string of the expiration duration
+     * @see https://www.php.net/manual/en/dateinterval.construct.php
+     */
+    public const CONFIRMTOKEN_EXPIRES = 'PT30M';
 
     /**
      * Remove all linked logins that are using issuers that have been deleted.
@@ -71,7 +78,8 @@ class api {
         $context = context_user::instance($userid);
         require_capability('auth/oauth2:managelinkedlogins', $context);
 
-        return linked_login::get_records(['userid' => $userid, 'confirmtoken' => '']);
+        $logins = linked_login::get_records(['userid' => $userid, 'confirmtoken' => '']);
+        return array_values($logins);
     }
 
     /**
@@ -82,13 +90,20 @@ class api {
      * @return linked_login|false record if found and user exists, false otherwise.
      */
     public static function match_username_to_user($username, $issuer) {
-        $params = [
-            'issuerid' => $issuer->get('id'),
-            'username' => $username
-        ];
-        $result = linked_login::get_record($params);
+        global $DB;
 
-        if ($result) {
+        $where = "issuerid = :issuerid
+              AND username = :username
+              AND (confirmtokenexpires = 0 OR confirmtokenexpires > :now)";
+
+        $record = $DB->get_record_select(linked_login::TABLE, $where, [
+            'issuerid' => $issuer->get('id'),
+            'username' => $username,
+            'now' => di::get(clock::class)->now()->getTimestamp(),
+        ]);
+
+        if ($record) {
+            $result = new linked_login(0, $record);
             $user = \core_user::get_user($result->get('userid'));
             if (!empty($user) && !$user->deleted) {
                 return $result;
@@ -164,8 +179,10 @@ class api {
         $record->email = $userinfo['email'];
         $record->confirmtoken = random_string(32);
         $expires = new \DateTime('NOW');
-        $expires->add(new \DateInterval('PT30M'));
+        $expires->add(new \DateInterval(self::CONFIRMTOKEN_EXPIRES));
         $record->confirmtokenexpires = $expires->getTimestamp();
+
+        linked_login::delete_expired_pending($issuer, $userinfo['username'], $userid);
 
         $linkedlogin = new linked_login(0, $record);
         $linkedlogin->create();
@@ -197,9 +214,7 @@ class api {
 
         $data->link = $confirmationurl->out(false);
         $message = get_string('confirmlinkedloginemail', 'auth_oauth2', $data);
-
-        $data->link = $confirmationurl->out();
-        $messagehtml = text_to_html(get_string('confirmlinkedloginemail', 'auth_oauth2', $data), false, false, true);
+        $messagehtml = text_to_html(get_string('confirmlinkedloginemail', 'auth_oauth2', $data), false, false);
 
         $user->mailformat = 1;  // Always send HTML version as well.
 
@@ -339,9 +354,7 @@ class api {
 
         $data->link = $confirmationurl->out(false);
         $message = get_string('confirmaccountemail', 'auth_oauth2', $data);
-
-        $data->link = $confirmationurl->out();
-        $messagehtml = text_to_html(get_string('confirmaccountemail', 'auth_oauth2', $data), false, false, true);
+        $messagehtml = text_to_html(get_string('confirmaccountemail', 'auth_oauth2', $data), false, false);
 
         $user->mailformat = 1;  // Always send HTML version as well.
 
@@ -396,7 +409,7 @@ class api {
      * @return bool
      */
     public static function is_enabled() {
-        return is_enabled_auth('oauth2');
+        return \core\di::get(\core\authentication::class)->is_enabled('oauth2');
     }
 
     /**

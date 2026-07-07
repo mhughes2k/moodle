@@ -467,6 +467,30 @@ final class course_enrolment_manager_test extends \advanced_testcase {
     }
 
     /**
+     * Test getting potential users allows searching by configured user fullname display
+     */
+    public function test_get_potential_users_fullname_display(): void {
+        global $PAGE, $DB;
+
+        $this->resetAfterTest();
+
+        $user = $this->getDataGenerator()->create_user(['firstname' => 'Fred', 'lastname' => 'Frogs']);
+        $this->setUser($user);
+
+        $manager = new course_enrolment_manager($PAGE, $this->course);
+        $enrol = $DB->get_record('enrol', ['enrol' => 'manual', 'courseid' => $this->course->id]);
+
+        // Default (language) fullname display.
+        $users = $manager->get_potential_users($enrol->id, 'Fred Frogs');
+        $this->assertEquals([$user->id], array_keys($users['users']));
+
+        // Switch display format.
+        set_config('fullnamedisplay', 'lastname firstname');
+        $users = $manager->get_potential_users($enrol->id, 'Frogs Fred');
+        $this->assertEquals([$user->id], array_keys($users['users']));
+    }
+
+    /**
      * Test search_other_users with returnexactcount param.
      *
      * @dataProvider search_users_provider
@@ -498,6 +522,29 @@ final class course_enrolment_manager_test extends \advanced_testcase {
         } else {
             $this->assertArrayNotHasKey('totalusers', $users);
         }
+    }
+
+    /**
+     * Test searching others users allows searching by configured user fullname display
+     */
+    public function test_search_other_users_fullname_display(): void {
+        global $PAGE;
+
+        $this->resetAfterTest();
+
+        $user = $this->getDataGenerator()->create_user(['firstname' => 'Fred', 'lastname' => 'Frogs']);
+        $this->setUser($user);
+
+        $manager = new course_enrolment_manager($PAGE, $this->course);
+
+        // Default (language) fullname display.
+        $users = $manager->search_other_users('Fred Frogs');
+        $this->assertEquals([$user->id], array_keys($users['users']));
+
+        // Switch display format.
+        set_config('fullnamedisplay', 'lastname firstname');
+        $users = $manager->search_other_users('Frogs Fred');
+        $this->assertEquals([$user->id], array_keys($users['users']));
     }
 
     /**
@@ -550,6 +597,32 @@ final class course_enrolment_manager_test extends \advanced_testcase {
         } else {
             $this->assertArrayNotHasKey('totalusers', $users);
         }
+    }
+
+    /**
+     * Test searching users allows searching by configured user fullname display
+     */
+    public function test_search_users_fullname_display(): void {
+        global $PAGE;
+
+        $this->resetAfterTest();
+
+        $user = $this->getDataGenerator()->create_and_enrol($this->course, 'student', [
+            'firstname' => 'Fred',
+            'lastname' => 'Frogs',
+        ]);
+        $this->setUser($user);
+
+        $manager = new course_enrolment_manager($PAGE, $this->course);
+
+        // Default (language) fullname display.
+        $users = $manager->search_users('Fred Frogs');
+        $this->assertEquals([$user->id], array_keys($users['users']));
+
+        // Switch display format.
+        set_config('fullnamedisplay', 'lastname firstname');
+        $users = $manager->search_users('Frogs Fred');
+        $this->assertEquals([$user->id], array_keys($users['users']));
     }
 
     /**

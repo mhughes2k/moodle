@@ -29,7 +29,9 @@
  */
 
 use core\di;
+use core\email;
 use core\hook;
+use core\hook\email\before_email_to_user;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -40,7 +42,6 @@ defined('MOODLE_INTERNAL') || die();
  * Time constant - the number of seconds in a year
  */
 define('YEARSECS', 31536000);
-
 /**
  * Time constant - the number of seconds in a week
  */
@@ -1259,7 +1260,7 @@ function purge_caches($options = []) {
  * Purge all non-MUC caches not otherwise purged in purge_caches.
  *
  * IMPORTANT - If you are adding anything here to do with the cache directory you should also have a look at
- * {@link phpunit_util::reset_dataroot()}
+ * {@link \core\test\phpunit\phpunit_util::reset_dataroot()}
  */
 function purge_other_caches() {
     global $DB, $CFG;
@@ -2277,6 +2278,11 @@ function require_login($courseorid = null, $autologinguest = true, $cm = null, $
         } else {
             $course = $DB->get_record('course', array('id' => $courseorid), '*', MUST_EXIST);
         }
+
+        if (!empty($course->deletioninprogress)) {
+            throw new moodle_exception('deletingcourseasynchronously_exception', 'core');
+        }
+
         if ($cm) {
             if ($cm->course != $course->id) {
                 throw new coding_exception('course and cm parameters in require_login() call do not match!!');
@@ -2341,9 +2347,10 @@ function require_login($courseorid = null, $autologinguest = true, $cm = null, $
             }
 
             // Give auth plugins an opportunity to authenticate or redirect to an external login page
-            $authsequence = get_enabled_auth_plugins(); // Auths, in sequence.
+            $authentication = \core\di::get(\core\authentication::class);
+            $authsequence = $authentication->get_enabled_plugins(); // Auths, in sequence.
             foreach($authsequence as $authname) {
-                $authplugin = get_auth_plugin($authname);
+                $authplugin = $authentication->get_plugin($authname);
                 $authplugin->pre_loginpage_hook();
                 if (isloggedin()) {
                     if ($cm) {
@@ -2375,7 +2382,7 @@ function require_login($courseorid = null, $autologinguest = true, $cm = null, $
 
     // Check whether the user should be changing password (but only if it is REALLY them).
     if (get_user_preferences('auth_forcepasswordchange') && !\core\session\manager::is_loggedinas()) {
-        $userauth = get_auth_plugin($USER->auth);
+        $userauth = \core\di::get(\core\authentication::class)->get_plugin($USER->auth);
         if ($userauth->can_change_password() and !$preventredirect) {
             if ($setwantsurltome) {
                 $SESSION->wantsurl = qualified_me();
@@ -2481,7 +2488,9 @@ function require_login($courseorid = null, $autologinguest = true, $cm = null, $
     }
 
     // If the site is currently under maintenance, then print a message.
-    if (!empty($CFG->maintenance_enabled) and !has_capability('moodle/site:maintenanceaccess', $sysctx)) {
+    try {
+        di::get(\core_auth\validate_user::class)->validate_maintenance_mode_access($USER);
+    } catch (\core_auth\exception\maintenance_mode_enabled_exception $e) {
         if ($preventredirect) {
             throw new require_login_exception('Maintenance in progress');
         }
@@ -2653,14 +2662,17 @@ function require_login($courseorid = null, $autologinguest = true, $cm = null, $
         $PAGE->set_course($course);
         $renderer = $PAGE->get_renderer('course');
         $message = $renderer->course_section_cm_unavailable_error_message($cm);
-        redirect(course_get_url($course), $message, null, \core\output\notification::NOTIFY_ERROR);
+        redirect(course_get_url($course), $message, null, \core\output\notification::NOTIFY_INFO);
     }
 
     if ($cm && !$cm->uservisible) {
         if ($cm->is_visible_on_course_page()) {
+            if ($preventredirect) {
+                throw new require_login_exception('Activity is restricted');
+            }
             $url = \core\router\util::get_path_for_callable(
                 [\core_course\route\controller\restricted_module::class, 'restricted_module_page'],
-                ['course' => $course->id, 'cm' => $cm->id],
+                ['cm' => $cm->id],
             );
             redirect($url, '', null);
         }
@@ -2714,9 +2726,10 @@ function require_logout() {
 
     // Execute hooks before action.
     $authplugins = array();
-    $authsequence = get_enabled_auth_plugins();
+    $authentication = \core\di::get(\core\authentication::class);
+    $authsequence = $authentication->get_enabled_plugins();
     foreach ($authsequence as $authname) {
-        $authplugins[$authname] = get_auth_plugin($authname);
+        $authplugins[$authname] = $authentication->get_plugin($authname);
         $authplugins[$authname]->prelogout_hook();
     }
 
@@ -2865,7 +2878,6 @@ function validate_user_key($keyvalue, $script, $instance) {
 /**
  * Require key login. Function terminates with error if key not found or incorrect.
  *
- * @uses NO_MOODLE_COOKIES
  * @uses PARAM_ALPHANUM
  * @param string $script unique script identifier
  * @param int $instance optional instance id
@@ -2875,7 +2887,7 @@ function validate_user_key($keyvalue, $script, $instance) {
 function require_user_key_login($script, $instance = null, $keyvalue = null) {
     global $DB;
 
-    if (!NO_MOODLE_COOKIES) {
+    if (\core\session\manager::supports_cookies()) {
         throw new \moodle_exception('sessioncookiesdisable');
     }
 
@@ -3265,12 +3277,7 @@ function order_in_string($values, $stringformat) {
  * @return boolean Whether the plugin is available.
  */
 function exists_auth_plugin($auth) {
-    global $CFG;
-
-    if (file_exists("{$CFG->dirroot}/auth/$auth/auth.php")) {
-        return is_readable("{$CFG->dirroot}/auth/$auth/auth.php");
-    }
-    return false;
+    return \core\di::get(\core\authentication::class)->plugin_exists($auth);
 }
 
 /**
@@ -3280,13 +3287,7 @@ function exists_auth_plugin($auth) {
  * @return boolean Whether the plugin is enabled.
  */
 function is_enabled_auth($auth) {
-    if (empty($auth)) {
-        return false;
-    }
-
-    $enabled = get_enabled_auth_plugins();
-
-    return in_array($auth, $enabled);
+    return \core\di::get(\core\authentication::class)->is_enabled($auth);
 }
 
 /**
@@ -3296,17 +3297,7 @@ function is_enabled_auth($auth) {
  * @return auth_plugin_base An instance of the required authentication plugin.
  */
 function get_auth_plugin($auth) {
-    global $CFG;
-
-    // Check the plugin exists first.
-    if (! exists_auth_plugin($auth)) {
-        throw new \moodle_exception('authpluginnotfound', 'debug', '', $auth);
-    }
-
-    // Return auth plugin instance.
-    require_once("{$CFG->dirroot}/auth/$auth/auth.php");
-    $class = "auth_plugin_$auth";
-    return new $class;
+    return \core\di::get(\core\authentication::class)->get_plugin($auth);
 }
 
 /**
@@ -3316,39 +3307,7 @@ function get_auth_plugin($auth) {
  * @return array
  */
 function get_enabled_auth_plugins($fix=false) {
-    global $CFG;
-
-    $default = array('manual', 'nologin');
-
-    if (empty($CFG->auth)) {
-        $auths = array();
-    } else {
-        $auths = explode(',', $CFG->auth);
-    }
-
-    $auths = array_unique($auths);
-    $oldauthconfig = implode(',', $auths);
-    foreach ($auths as $k => $authname) {
-        if (in_array($authname, $default)) {
-            // The manual and nologin plugin never need to be stored.
-            unset($auths[$k]);
-        } else if (!exists_auth_plugin($authname)) {
-            debugging(get_string('authpluginnotfound', 'debug', $authname));
-            unset($auths[$k]);
-        }
-    }
-
-    // Ideally only explicit interaction from a human admin should trigger a
-    // change in auth config, see MDL-70424 for details.
-    if ($fix) {
-        $newconfig = implode(',', $auths);
-        if (!isset($CFG->auth) or $newconfig != $CFG->auth) {
-            add_to_config_log('auth', $oldauthconfig, $newconfig, 'core');
-            set_config('auth', $newconfig);
-        }
-    }
-
-    return (array_merge($default, $auths));
+    return \core\di::get(\core\authentication::class)->get_enabled_plugins($fix);
 }
 
 /**
@@ -3359,9 +3318,7 @@ function get_enabled_auth_plugins($fix=false) {
  * @return bool
  */
 function is_internal_auth($auth) {
-    // Throws error if bad $auth.
-    $authplugin = get_auth_plugin($auth);
-    return $authplugin->is_internal();
+    return \core\di::get(\core\authentication::class)->is_internal($auth);
 }
 
 /**
@@ -3373,9 +3330,7 @@ function is_internal_auth($auth) {
  * @return bool
  */
 function is_restored_user($username) {
-    global $CFG, $DB;
-
-    return $DB->record_exists('user', array('username' => $username, 'mnethostid' => $CFG->mnet_localhost_id, 'password' => 'restored'));
+    return \core\di::get(\core\authentication::class)->is_restored_user($username);
 }
 
 /**
@@ -3421,7 +3376,7 @@ function create_user_record($username, $password, $auth = 'manual') {
     // Just in case check text case.
     $username = trim(core_text::strtolower($username));
 
-    $authplugin = get_auth_plugin($auth);
+    $authplugin = \core\di::get(\core\authentication::class)->get_plugin($auth);
     $customfields = $authplugin->get_custom_user_profile_fields();
     $newuser = new stdClass();
     if ($newinfo = $authplugin->get_userinfo($username)) {
@@ -3464,7 +3419,7 @@ function create_user_record($username, $password, $auth = 'manual') {
         set_user_preference('auth_forcepasswordchange', 1, $user);
     }
     // Set the password.
-    update_internal_user_password($user, $password);
+    \core\di::get(\core\authentication\password::class)->update($user, $password);
 
     // Trigger event.
     \core\event\user_created::create_from_userid($newuser->id)->trigger();
@@ -3502,7 +3457,7 @@ function update_user_record_by_id($id) {
     $oldinfo = $DB->get_record('user', $params, '*', MUST_EXIST);
 
     $newuser = array();
-    $userauth = get_auth_plugin($oldinfo->auth);
+    $userauth = \core\di::get(\core\authentication::class)->get_plugin($oldinfo->auth);
 
     if ($newinfo = $userauth->get_userinfo($oldinfo->username)) {
         $newinfo = truncate_userinfo($newinfo);
@@ -3787,7 +3742,7 @@ function delete_user(stdClass $user) {
     $user->timemodified = $updateuser->timemodified;
 
     // Notify auth plugin - do not block the delete even when plugin fails.
-    $authplugin = get_auth_plugin($user->auth);
+    $authplugin = \core\di::get(\core\authentication::class)->get_plugin($user->auth);
     $authplugin->user_delete($user);
 
     return true;
@@ -3845,13 +3800,47 @@ function authenticate_user_login(
     global $CFG, $DB, $PAGE, $SESSION;
     require_once("$CFG->libdir/authlib.php");
 
-    if ($user = get_complete_user_data('username', $username, $CFG->mnet_localhost_id)) {
-        // we have found the user
+    $logerror = function (
+        string $warning,
+    ): void {
+        global $CFG;
 
+        // phpcs:ignore moodle.PHP.ForbiddenFunctions.FoundWithAlternative
+        error_log(sprintf(
+            '[client %s]  %s  %s  %s',
+            getremoteaddr(),
+            $CFG->wwwroot,
+            $warning,
+            $_SERVER['HTTP_USER_AGENT'],
+        ));
+    };
+
+    $triggerloginfailed = function (
+        string $username,
+        int $failurereason,
+        ?int $userid = null,
+    ): void {
+        $data = [
+            'other' => [
+                'username' => $username,
+                'reason' => $failurereason,
+            ],
+        ];
+
+        if ($userid !== null) {
+            $data['userid'] = $userid;
+        }
+
+        \core\event\user_login_failed::create($data)->trigger();
+    };
+
+    // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedIf
+    if ($user = get_complete_user_data('username', $username, $CFG->mnet_localhost_id)) {
+        // We have found the user.
     } else if (!empty($CFG->authloginviaemail)) {
         if ($email = clean_param($username, PARAM_EMAIL)) {
             $select = "mnethostid = :mnethostid AND LOWER(email) = LOWER(:email) AND deleted = 0";
-            $params = array('mnethostid' => $CFG->mnet_localhost_id, 'email' => $email);
+            $params = ['mnethostid' => $CFG->mnet_localhost_id, 'email' => $email];
             $users = $DB->get_records_select('user', $select, $params, 'id', 'id', 0, 2);
             if (count($users) === 1) {
                 // Use email for login only if unique.
@@ -3868,15 +3857,9 @@ function authenticate_user_login(
         $failurereason = AUTH_LOGIN_FAILED;
 
         // Trigger login failed event (specifying the ID of the found user, if available).
-        \core\event\user_login_failed::create([
-            'userid' => ($user->id ?? 0),
-            'other' => [
-                'username' => $username,
-                'reason' => $failurereason,
-            ],
-        ])->trigger();
+        $triggerloginfailed($username, $failurereason, $user->id ?? 0);
 
-        error_log('[client '.getremoteaddr()."]  $CFG->wwwroot  Invalid Login Token:  $username  ".$_SERVER['HTTP_USER_AGENT']);
+        $logerror("Invalid Login Token:  {$username}");
         return false;
     }
 
@@ -3884,69 +3867,57 @@ function authenticate_user_login(
     if (login_captcha_enabled() && !validate_login_captcha($loginrecaptcha)) {
         $failurereason = AUTH_LOGIN_FAILED_RECAPTCHA;
         // Trigger login failed event (specifying the ID of the found user, if available).
-        \core\event\user_login_failed::create([
-            'userid' => ($user->id ?? 0),
-            'other' => [
-                'username' => $username,
-                'reason' => $failurereason,
-            ],
-        ])->trigger();
+        $triggerloginfailed($username, $failurereason, $user->id ?? 0);
         return false;
     }
 
-    $authsenabled = get_enabled_auth_plugins();
+    $authentication = di::get(\core\authentication::class);
+    $authsenabled = $authentication->get_enabled_plugins();
+    $uservalidator = di::get(\core_auth\validate_user::class);
 
     if ($user) {
         // Use manual if auth not set.
         $auth = empty($user->auth) ? 'manual' : $user->auth;
 
         if (in_array($user->auth, $authsenabled)) {
-            $authplugin = get_auth_plugin($user->auth);
+            $authplugin = $authentication->get_plugin($user->auth);
             $authplugin->pre_user_login_hook($user);
         }
 
-        if (!empty($user->suspended)) {
+        try {
+            $uservalidator->validate_before_web_login($user);
+        } catch (\core_auth\exception\user_suspended_exception $e) {
             $failurereason = AUTH_LOGIN_SUSPENDED;
+            $triggerloginfailed($username, $failurereason);
+            $logerror("Suspended Login:  {$username}");
 
-            // Trigger login failed event.
-            $event = \core\event\user_login_failed::create(array('userid' => $user->id,
-                    'other' => array('username' => $username, 'reason' => $failurereason)));
-            $event->trigger();
-            error_log('[client '.getremoteaddr()."]  $CFG->wwwroot  Suspended Login:  $username  ".$_SERVER['HTTP_USER_AGENT']);
+            return false;
+        } catch (\core_auth\exception\auth_disabled_exception $e) {
+            $failurereason = AUTH_LOGIN_SUSPENDED;
+            $triggerloginfailed($username, $failurereason);
+            $logerror("Disabled Login:  {$username}");
+
             return false;
         }
-        if ($auth=='nologin' or !is_enabled_auth($auth)) {
-            // Legacy way to suspend user.
-            $failurereason = AUTH_LOGIN_SUSPENDED;
 
-            // Trigger login failed event.
-            $event = \core\event\user_login_failed::create(array('userid' => $user->id,
-                    'other' => array('username' => $username, 'reason' => $failurereason)));
-            $event->trigger();
-            error_log('[client '.getremoteaddr()."]  $CFG->wwwroot  Disabled Login:  $username  ".$_SERVER['HTTP_USER_AGENT']);
-            return false;
-        }
-        $auths = array($auth);
-
+        $auths = [$auth];
     } else {
         // Check if there's a deleted record (cheaply), this should not happen because we mangle usernames in delete_user().
-        if ($DB->get_field('user', 'id', array('username' => $username, 'mnethostid' => $CFG->mnet_localhost_id,  'deleted' => 1))) {
+        if ($DB->get_field('user', 'id', ['username' => $username, 'mnethostid' => $CFG->mnet_localhost_id, 'deleted' => 1])) {
             $failurereason = AUTH_LOGIN_NOUSER;
-
-            // Trigger login failed event.
-            $event = \core\event\user_login_failed::create(array('other' => array('username' => $username,
-                    'reason' => $failurereason)));
-            $event->trigger();
-            error_log('[client '.getremoteaddr()."]  $CFG->wwwroot  Deleted Login:  $username  ".$_SERVER['HTTP_USER_AGENT']);
+            $triggerloginfailed($username, $failurereason);
+            $logerror("Deleted Login:  {$username}");
             return false;
         }
 
         // User does not exist.
         $auths = $authsenabled;
-        $user = new stdClass();
-        $user->id = 0;
+        $user = (object) [
+            'id' => 0,
+        ];
     }
 
+    // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedIf
     if ($ignorelockout) {
         // Some other mechanism protects against brute force password guessing, for example login form might include reCAPTCHA
         // or this function is called from a SSO script.
@@ -3954,23 +3925,19 @@ function authenticate_user_login(
         // Verify login lockout after other ways that may prevent user login.
         if (login_is_lockedout($user)) {
             $failurereason = AUTH_LOGIN_LOCKOUT;
+            $triggerloginfailed($username, $failurereason);
 
-            // Trigger login failed event.
-            $event = \core\event\user_login_failed::create(array('userid' => $user->id,
-                    'other' => array('username' => $username, 'reason' => $failurereason)));
-            $event->trigger();
-
-            error_log('[client '.getremoteaddr()."]  $CFG->wwwroot  Login lockout:  $username  ".$_SERVER['HTTP_USER_AGENT']);
+            $logerror("Login lockout:  {$username}");
             $SESSION->loginerrormsg = get_string('accountlocked', 'admin');
 
             return false;
         }
-    } else {
+    } else { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedElse
         // We can not lockout non-existing accounts.
     }
 
     foreach ($auths as $auth) {
-        $authplugin = get_auth_plugin($auth);
+        $authplugin = $authentication->get_plugin($auth);
 
         // On auth fail fall through to the next plugin.
         if (!$authplugin->user_login($username, $password)) {
@@ -4018,13 +3985,13 @@ function authenticate_user_login(
             // User already exists in database.
             if (empty($user->auth)) {
                 // For some reason auth isn't set yet.
-                $DB->set_field('user', 'auth', $auth, array('id' => $user->id));
+                $DB->set_field('user', 'auth', $auth, ['id' => $user->id]);
                 $user->auth = $auth;
             }
 
             // If the existing hash is using an out-of-date algorithm (or the legacy md5 algorithm), then we should update to
             // the current hash algorithm while we have access to the user's password.
-            update_internal_user_password($user, $password);
+            di::get(\core\authentication\password::class)->update($user, $password);
 
             if ($authplugin->is_synchronised_with_external()) {
                 // Update user record from external DB.
@@ -4034,14 +4001,9 @@ function authenticate_user_login(
             // The user is authenticated but user creation may be disabled.
             if (!empty($CFG->authpreventaccountcreation)) {
                 $failurereason = AUTH_LOGIN_UNAUTHORISED;
+                $triggerloginfailed($username, $failurereason);
+                $logerror("Unknown user, can not create new accounts:  {$username}");
 
-                // Trigger login failed event.
-                $event = \core\event\user_login_failed::create(array('other' => array('username' => $username,
-                        'reason' => $failurereason)));
-                $event->trigger();
-
-                error_log('[client '.getremoteaddr()."]  $CFG->wwwroot  Unknown user, can not create new accounts:  $username  ".
-                        $_SERVER['HTTP_USER_AGENT']);
                 return false;
             } else {
                 $user = create_user_record($username, $password, $auth);
@@ -4051,27 +4013,23 @@ function authenticate_user_login(
         $authplugin->sync_roles($user);
 
         foreach ($authsenabled as $hau) {
-            $hauth = get_auth_plugin($hau);
+            $hauth = $authentication->get_plugin($hau);
             $hauth->user_authenticated_hook($user, $username, $password);
         }
 
         if (empty($user->id)) {
             $failurereason = AUTH_LOGIN_NOUSER;
-            // Trigger login failed event.
-            $event = \core\event\user_login_failed::create(array('other' => array('username' => $username,
-                    'reason' => $failurereason)));
-            $event->trigger();
+            $triggerloginfailed($username, $failurereason);
             return false;
         }
 
-        if (!empty($user->suspended)) {
-            // Just in case some auth plugin suspended account.
+        try {
+            $uservalidator->validate_is_not_suspended($user);
+        } catch (\core_auth\exception\user_suspended_exception $e) {
             $failurereason = AUTH_LOGIN_SUSPENDED;
-            // Trigger login failed event.
-            $event = \core\event\user_login_failed::create(array('userid' => $user->id,
-                    'other' => array('username' => $username, 'reason' => $failurereason)));
-            $event->trigger();
-            error_log('[client '.getremoteaddr()."]  $CFG->wwwroot  Suspended Login:  $username  ".$_SERVER['HTTP_USER_AGENT']);
+            $triggerloginfailed($username, $failurereason);
+            $logerror("Suspended Login:  {$username}");
+
             return false;
         }
 
@@ -4082,22 +4040,16 @@ function authenticate_user_login(
 
     // Failed if all the plugins have failed.
     if (debugging('', DEBUG_ALL)) {
-        error_log('[client '.getremoteaddr()."]  $CFG->wwwroot  Failed Login:  $username  ".$_SERVER['HTTP_USER_AGENT']);
+        $logerror("Failed login:  {$username}");
     }
 
     if ($user->id) {
         login_attempt_failed($user);
         $failurereason = AUTH_LOGIN_FAILED;
-        // Trigger login failed event.
-        $event = \core\event\user_login_failed::create(array('userid' => $user->id,
-                'other' => array('username' => $username, 'reason' => $failurereason)));
-        $event->trigger();
+        $triggerloginfailed($username, $failurereason);
     } else {
         $failurereason = AUTH_LOGIN_NOUSER;
-        // Trigger login failed event.
-        $event = \core\event\user_login_failed::create(array('other' => array('username' => $username,
-                'reason' => $failurereason)));
-        $event->trigger();
+        $triggerloginfailed($username, $failurereason);
     }
 
     return false;
@@ -4152,7 +4104,8 @@ function complete_user_login($user, array $extrauserinfo = []) {
     // Skip Web Service requests, CLI scripts, AJAX scripts, and request from the mobile app itself.
     $loginip = getremoteaddr();
     $isnewip = isset($SESSION->userpreviousip) && $SESSION->userpreviousip != $loginip;
-    $isvalidenv = (!WS_SERVER && !CLI_SCRIPT && !NO_MOODLE_COOKIES) || PHPUNIT_TEST;
+    $isvalidenv = (!WS_SERVER && !CLI_SCRIPT) || PHPUNIT_TEST;
+    $isvalidenv = $isvalidenv && \core\session\manager::supports_cookies();
 
     if (!empty($SESSION->isnewsessioncookie) && $isnewip && $isvalidenv && !\core_useragent::is_moodle_app()) {
 
@@ -4203,7 +4156,7 @@ function complete_user_login($user, array $extrauserinfo = []) {
     }
 
     // Select password change url.
-    $userauth = get_auth_plugin($USER->auth);
+    $userauth = \core\di::get(\core\authentication::class)->get_plugin($USER->auth);
 
     // Check whether the user should be changing password.
     if (get_user_preferences('auth_forcepasswordchange', false)) {
@@ -4229,7 +4182,7 @@ function complete_user_login($user, array $extrauserinfo = []) {
  * @return bool True if the $password matches the format of a bcrypt hash.
  */
 function password_is_legacy_hash(#[\SensitiveParameter] string $password): bool {
-    return (bool) preg_match('/^\$2y\$[\d]{2}\$[A-Za-z0-9\.\/]{53}$/', $password);
+    return \core\di::get(\core\authentication\password::class)->is_legacy_hash($password);
 }
 
 /**
@@ -4272,26 +4225,7 @@ function calculate_entropy(#[\SensitiveParameter] string $pepper): float {
  * @throws coding_exception If the entropy of the password pepper is less than the recommended minimum.
  */
 function get_password_peppers(): array {
-    global $CFG;
-
-    // Get all available peppers.
-    if (isset($CFG->passwordpeppers) && is_array($CFG->passwordpeppers)) {
-        // Sort the array in descending order of keys (numerical).
-        $peppers = $CFG->passwordpeppers;
-        krsort($peppers, SORT_NUMERIC);
-    } else {
-        $peppers = [];  // Set an empty array if no peppers are found.
-    }
-
-    // Check if the entropy of the most recent pepper is less than the minimum.
-    // Also, we allow the most recent pepper to be empty, to allow admins to migrate off peppers.
-    $lastpepper = reset($peppers);
-    if (!empty($peppers) && $lastpepper !== '' && calculate_entropy($lastpepper) < PEPPER_ENTROPY) {
-        throw new coding_exception(
-                'password pepper below minimum',
-                'The entropy of the password pepper is less than the recommended minimum.');
-    }
-    return $peppers;
+    return \core\di::get(\core\authentication\password::class)->get_peppers();
 }
 
 /**
@@ -4304,45 +4238,7 @@ function get_password_peppers(): array {
  * @return bool True if password is valid.
  */
 function validate_internal_user_password(stdClass $user, #[\SensitiveParameter] string $password): bool {
-
-    if (exceeds_password_length($password)) {
-        // Password cannot be more than MAX_PASSWORD_CHARACTERS characters.
-        return false;
-    }
-
-    if ($user->password === AUTH_PASSWORD_NOT_CACHED) {
-        // Internal password is not used at all, it can not validate.
-        return false;
-    }
-
-    $peppers = get_password_peppers(); // Get the array of available peppers.
-    $islegacy = password_is_legacy_hash($user->password); // Check if the password is a legacy bcrypt hash.
-
-    // If the password is a legacy hash, no peppers were used, so verify and update directly.
-    if ($islegacy && password_verify($password, $user->password)) {
-        update_internal_user_password($user, $password);
-        return true;
-    }
-
-    // If the password is not a legacy hash, iterate through the peppers.
-    $latestpepper = reset($peppers);
-    // Add an empty pepper to the beginning of the array. To make it easier to check if the password matches without any pepper.
-    $peppers = [-1 => ''] + $peppers;
-    foreach ($peppers as $pepper) {
-        $pepperedpassword = $password . $pepper;
-
-        // If the peppered password is correct, update (if necessary) and return true.
-        if (password_verify($pepperedpassword, $user->password)) {
-            // If the pepper used is not the latest one, update the password.
-            if ($pepper !== $latestpepper) {
-                update_internal_user_password($user, $password);
-            }
-            return true;
-        }
-    }
-
-    // If no peppered password was correct, the password is wrong.
-    return false;
+    return \core\di::get(\core\authentication\password::class)->validate($user, $password);
 }
 
 /**
@@ -4358,34 +4254,7 @@ function validate_internal_user_password(stdClass $user, #[\SensitiveParameter] 
  * @throws moodle_exception If a problem occurs while generating the hash.
  */
 function hash_internal_user_password(#[\SensitiveParameter] string $password, $fasthash = false, $pepperlength = 0): string {
-    if (exceeds_password_length($password, $pepperlength)) {
-        // Password cannot be more than MAX_PASSWORD_CHARACTERS.
-        throw new \moodle_exception(get_string("passwordexceeded", 'error', MAX_PASSWORD_CHARACTERS));
-    }
-
-    // Set the cost factor to 5000 for fast hashing, otherwise use default cost.
-    $rounds = $fasthash ? 5000 : 10000;
-
-    // First generate a cryptographically suitable salt.
-    $randombytes = random_bytes(16);
-    $salt = substr(strtr(base64_encode($randombytes), '+', '.'), 0, 16);
-
-    // Now construct the password string with the salt and number of rounds.
-    // The password string is in the format $algorithm$rounds$salt$hash. ($6 is the SHA512 algorithm).
-    $generatedhash = crypt($password, implode('$', [
-        '',
-        // The SHA512 Algorithm
-        '6',
-        "rounds={$rounds}",
-        $salt,
-        '',
-    ]));
-
-    if ($generatedhash === false || $generatedhash === null) {
-        throw new moodle_exception('Failed to generate password hash.');
-    }
-
-    return $generatedhash;
+    return \core\di::get(\core\authentication\password::class)->hash($password, $fasthash, $pepperlength);
 }
 
 /**
@@ -4416,59 +4285,7 @@ function update_internal_user_password(
         #[\SensitiveParameter] ?string $password,
         bool $fasthash = false
 ): bool {
-    global $CFG, $DB;
-
-    // Add the latest password pepper to the password before further processing.
-    $peppers = get_password_peppers();
-    if (!empty($peppers)) {
-        $password = $password . reset($peppers);
-    }
-
-    // Figure out what the hashed password should be.
-    if (!isset($user->auth)) {
-        debugging('User record in update_internal_user_password() must include field auth',
-                DEBUG_DEVELOPER);
-        $user->auth = $DB->get_field('user', 'auth', array('id' => $user->id));
-    }
-    $authplugin = get_auth_plugin($user->auth);
-    if ($authplugin->prevent_local_passwords()) {
-        $hashedpassword = AUTH_PASSWORD_NOT_CACHED;
-    } else {
-        $hashedpassword = hash_internal_user_password($password, $fasthash);
-    }
-
-    $algorithmchanged = false;
-
-    if ($hashedpassword === AUTH_PASSWORD_NOT_CACHED) {
-        // Password is not cached, update it if not set to AUTH_PASSWORD_NOT_CACHED.
-        $passwordchanged = ($user->password !== $hashedpassword);
-
-    } else if (isset($user->password)) {
-        // If verification fails then it means the password has changed.
-        $passwordchanged = !password_verify($password, $user->password);
-        $algorithmchanged = password_is_legacy_hash($user->password);
-    } else {
-        // While creating new user, password in unset in $user object, to avoid
-        // saving it with user_create()
-        $passwordchanged = true;
-    }
-
-    if ($passwordchanged || $algorithmchanged) {
-        $DB->set_field('user', 'password',  $hashedpassword, array('id' => $user->id));
-        $user->password = $hashedpassword;
-
-        // Trigger event.
-        $user = $DB->get_record('user', array('id' => $user->id));
-        \core\event\user_password_updated::create_from_user($user)->trigger();
-
-        // Remove WS user tokens.
-        if (!empty($CFG->passwordchangetokendeletion)) {
-            require_once($CFG->dirroot.'/webservice/lib.php');
-            webservice::delete_user_ws_tokens($user->id);
-        }
-    }
-
-    return true;
+    return \core\di::get(\core\authentication\password::class)->update($user, $password, $fasthash);
 }
 
 /**
@@ -4603,16 +4420,7 @@ function get_complete_user_data($field, $value, $mnethostid = null, $throwexcept
  * @return bool true if the password is valid according to the policy. false otherwise.
  */
 function check_password_policy(string $password, ?string &$errmsg, ?stdClass $user = null) {
-    global $CFG;
-    if (!empty($CFG->passwordpolicy) && !isguestuser($user)) {
-        $errors = get_password_policy_errors($password, $user);
-
-        foreach ($errors as $error) {
-            $errmsg .= '<div>' . $error . '</div>';
-        }
-    }
-
-    return $errmsg == '';
+    return \core\di::get(\core\authentication\password::class)->check_policy($password, $errmsg, $user);
 }
 
 /**
@@ -4625,42 +4433,7 @@ function check_password_policy(string $password, ?string &$errmsg, ?stdClass $us
  * @return string[] Array of error messages.
  */
 function get_password_policy_errors(string $password, ?stdClass $user = null) : array {
-    global $CFG;
-
-    $errors = [];
-
-    if (core_text::strlen($password) < $CFG->minpasswordlength) {
-        $errors[] = get_string('errorminpasswordlength', 'auth', $CFG->minpasswordlength);
-    }
-    if (preg_match_all('/[[:digit:]]/u', $password, $matches) < $CFG->minpassworddigits) {
-        $errors[] = get_string('errorminpassworddigits', 'auth', $CFG->minpassworddigits);
-    }
-    if (preg_match_all('/[[:lower:]]/u', $password, $matches) < $CFG->minpasswordlower) {
-        $errors[] = get_string('errorminpasswordlower', 'auth', $CFG->minpasswordlower);
-    }
-    if (preg_match_all('/[[:upper:]]/u', $password, $matches) < $CFG->minpasswordupper) {
-        $errors[] = get_string('errorminpasswordupper', 'auth', $CFG->minpasswordupper);
-    }
-    if (preg_match_all('/[^[:upper:][:lower:][:digit:]]/u', $password, $matches) < $CFG->minpasswordnonalphanum) {
-        $errors[] = get_string('errorminpasswordnonalphanum', 'auth', $CFG->minpasswordnonalphanum);
-    }
-    if (!check_consecutive_identical_characters($password, $CFG->maxconsecutiveidentchars)) {
-        $errors[] = get_string('errormaxconsecutiveidentchars', 'auth', $CFG->maxconsecutiveidentchars);
-    }
-
-    // Fire any additional password policy functions from plugins.
-    // Plugin functions should output an error message string or empty string for success.
-    $pluginsfunction = get_plugins_with_function('check_password_policy');
-    foreach ($pluginsfunction as $plugintype => $plugins) {
-        foreach ($plugins as $pluginfunction) {
-            $pluginerr = $pluginfunction($password, $user);
-            if ($pluginerr) {
-                $errors[] = $pluginerr;
-            }
-        }
-    }
-
-    return $errors;
+    return \core\di::get(\core\authentication\password::class)->get_policy_errors($password, $user);
 }
 
 /**
@@ -4682,11 +4455,14 @@ function set_login_session_preferences() {
  *
  * @param mixed $courseorid The id of the course or course object to delete.
  * @param bool $showfeedback Whether to display notifications of each action the function performs.
+ * @param bool $asyncpreferred Whether the course should be deleted asynchronously. Will only be asynchronous,
+ *                    if the admin setting for asynchronous course deletion is enabled as well.
+ *                    Set to false to force immediate course deletion within this function call.
  * @return bool true if all the removals succeeded. false if there were any failures. If this
  *             method returns false, some of the removals will probably have succeeded, and others
  *             failed, but you have no way of knowing which.
  */
-function delete_course($courseorid, $showfeedback = true) {
+function delete_course($courseorid, $showfeedback = true, bool $asyncpreferred = true) {
     global $DB, $CFG;
 
     if (is_object($courseorid)) {
@@ -4705,6 +4481,14 @@ function delete_course($courseorid, $showfeedback = true) {
         return false;
     }
 
+    // Check if there are any pending backup or restore operations for this course.
+    // This prevents deletion of the course if any backup/restore is in progress or pending
+    // (course, section, or activity level). This will prevent database inconsistencies.
+    require_once($CFG->dirroot . '/backup/util/helper/backup_helper.class.php');
+    if (backup_helper::is_async_pending_for_course($courseid)) {
+        return false;
+    }
+
     // Allow plugins to use this course before we completely delete it.
     if ($pluginsfunction = get_plugins_with_function('pre_course_delete')) {
         foreach ($pluginsfunction as $plugintype => $plugins) {
@@ -4719,6 +4503,21 @@ function delete_course($courseorid, $showfeedback = true) {
         course: $course,
     );
     \core\di::get(\core\hook\manager::class)->dispatch($hook);
+
+    // Mark a course for deletion, regardless of whether synchronous or asynchronous deletion takes place,
+    // to prevent interference between backup/restore processes.
+    \core_course\management\helper::action_course_mark_for_deletioninprogress($course);
+
+    // Eventually delete the course asynchronously.
+    if ($asyncpreferred && !empty(get_config('moodlecourse', 'enablecourseasyncdeletion'))) {
+        // Trigger an adhoc task to delete the course asynchronously .
+        $task = new \core_course\task\course_async_deletion();
+        $task->set_custom_data(['courseid' => (int) $courseid]);
+        \core\task\manager::queue_adhoc_task($task, true);
+
+        // Early exit, because the course will be deleted later.
+        return true;
+    }
 
     // Tell the search manager we are about to delete a course. This prevents us sending updates
     // for each individual context being deleted.
@@ -5089,10 +4888,12 @@ function shift_course_mod_dates($modname, $fields, $timeshift, $courseid, $modid
  * This function will empty a course of user data.
  * It will retain the activities and the structure of the course.
  *
- * @param object $data an object containing all the settings including courseid (without magic quotes)
+ * @param object $data an object containing all the settings including courseid (without magic quotes).
+ * @param \core_course\exception\reset_timeout|null $timeout An optional timeout. This will be thrown if the time limit is exceeded.
+ * @param \core\progress\base|null $progress Progress component, used for tracking process when called asynchronously.
  * @return array status array of array component, item, error
  */
-function reset_course_userdata($data) {
+function reset_course_userdata($data, ?\core_course\exception\reset_timeout $timeout = null, ?core\progress\base $progress = null) {
     global $CFG, $DB;
     require_once($CFG->libdir.'/gradelib.php');
     require_once($CFG->libdir.'/completionlib.php');
@@ -5122,11 +4923,37 @@ function reset_course_userdata($data) {
     // Result array: component, item, error.
     $status = array();
 
+    $progress ??= new core\progress\none();
+    $progressitems = [
+        'startdate' => !empty($data->reset_start_date) && $data->timeshift,
+        'enddate' => !empty($data->reset_end_date) || ($data->timeshift > 0 && $data->reset_end_date_old),
+        'events' => !empty($data->reset_events),
+        'notes' => !empty($data->reset_notes),
+        'blogs' => !empty($data->delete_blog_associations),
+        'completion' => !empty($data->reset_completion),
+        'competencies' => !empty($data->reset_competency_ratings),
+        'roleoverrides' => !empty($data->reset_roles_overrides),
+        'roles' => !empty($data->reset_roles_local),
+        'users' => !empty($data->unenrol_users),
+        'groupmembers' => !empty($data->reset_groups_members),
+        'groups' => !empty($data->reset_groups_remove),
+        'groupingmembers' => !empty($data->reset_groupings_members),
+        'groupings' => !empty($data->reset_groupings_remove),
+        'mods' => true,
+        'gradebookitems' => !empty($data->reset_gradebook_items),
+        'gradebookgrades' => !empty($data->reset_gradebook_grades),
+        'comments' => !empty($data->reset_comments),
+    ];
+    $progressitems = array_filter($progressitems);
+    $progress->start_progress(get_string('resetcourse'), count($progressitems));
+
     // Start the resetting.
     $componentstr = get_string('general');
 
     // Move the course start time.
     if (!empty($data->reset_start_date) and $data->timeshift) {
+        $itemstr = get_string('date');
+        $progress->start_progress($itemstr);
         // Change course start data.
         $DB->set_field('course', 'startdate', $data->reset_start_date, array('id' => $data->courseid));
         // Update all course and group events - do not move activity events.
@@ -5161,67 +4988,102 @@ function reset_course_userdata($data) {
             \completion_criteria_date::update_date($data->courseid, $data->timeshift);
         }
 
-        $status[] = ['component' => $componentstr, 'item' => get_string('date'), 'error' => false];
+        $status[] = ['component' => $componentstr, 'item' => $itemstr, 'error' => false];
+        $progress->end_progress();
+        // If the timeout has been defined and it's been exceeded, throw the exception.
+        \core_course\exception\reset_timeout::throw_if_expired($timeout);
     }
 
     if (!empty($data->reset_end_date)) {
         // If the user set a end date value respect it.
         $DB->set_field('course', 'enddate', $data->reset_end_date, array('id' => $data->courseid));
+        $progress->increment_progress();
+        \core_course\exception\reset_timeout::throw_if_expired($timeout);
     } else if ($data->timeshift > 0 && $data->reset_end_date_old) {
         // If there is a time shift apply it to the end date as well.
         $enddate = $data->reset_end_date_old + $data->timeshift;
         $DB->set_field('course', 'enddate', $enddate, array('id' => $data->courseid));
+        $progress->increment_progress();
+        \core_course\exception\reset_timeout::throw_if_expired($timeout);
     }
 
     if (!empty($data->reset_events)) {
+        $itemstr = get_string('deleteevents', 'calendar');
+        $progress->start_progress($itemstr);
         $DB->delete_records('event', array('courseid' => $data->courseid));
-        $status[] = array('component' => $componentstr, 'item' => get_string('deleteevents', 'calendar'), 'error' => false);
+        $status[] = ['component' => $componentstr, 'item' => $itemstr, 'error' => false];
+        $progress->end_progress();
+        \core_course\exception\reset_timeout::throw_if_expired($timeout);
     }
 
     if (!empty($data->reset_notes)) {
         require_once($CFG->dirroot.'/notes/lib.php');
+        $itemstr = get_string('deletenotes', 'notes');
+        $progress->start_progress($itemstr);
         note_delete_all($data->courseid);
-        $status[] = array('component' => $componentstr, 'item' => get_string('deletenotes', 'notes'), 'error' => false);
+        $status[] = ['component' => $componentstr, 'item' => $itemstr, 'error' => false];
+        $progress->end_progress();
+        \core_course\exception\reset_timeout::throw_if_expired($timeout);
     }
 
     if (!empty($data->delete_blog_associations)) {
         require_once($CFG->dirroot.'/blog/lib.php');
+        $itemstr = get_string('deleteblogassociations', 'blog');
+        $progress->start_progress($itemstr);
         blog_remove_associations_for_course($data->courseid);
-        $status[] = array('component' => $componentstr, 'item' => get_string('deleteblogassociations', 'blog'), 'error' => false);
+        $status[] = ['component' => $componentstr, 'item' => $itemstr, 'error' => false];
+        $progress->end_progress();
+        \core_course\exception\reset_timeout::throw_if_expired($timeout);
     }
 
     if (!empty($data->reset_completion)) {
         // Delete course and activity completion information.
+        $itemstr = get_string('deletecompletiondata', 'completion');
+        $progress->start_progress($itemstr);
         $course = $DB->get_record('course', array('id' => $data->courseid));
         $cc = new completion_info($course);
         $cc->delete_all_completion_data();
-        $status[] = array('component' => $componentstr,
-                'item' => get_string('deletecompletiondata', 'completion'), 'error' => false);
+        $status[] = ['component' => $componentstr, 'item' => $itemstr, 'error' => false];
+        $progress->end_progress();
+        \core_course\exception\reset_timeout::throw_if_expired($timeout);
     }
 
     if (!empty($data->reset_competency_ratings)) {
+        $itemstr = get_string('deletecompetencyratings', 'core_competency');
+        $progress->start_progress($itemstr);
         \core_competency\api::hook_course_reset_competency_ratings($data->courseid);
-        $status[] = array('component' => $componentstr,
-            'item' => get_string('deletecompetencyratings', 'core_competency'), 'error' => false);
+        $status[] = ['component' => $componentstr, 'item' => $itemstr, 'error' => false];
+        $progress->end_progress();
+        \core_course\exception\reset_timeout::throw_if_expired($timeout);
     }
 
     $componentstr = get_string('roles');
 
     if (!empty($data->reset_roles_overrides)) {
+        $itemstr = get_string('deletecourseoverrides', 'role');
         $children = $context->get_child_contexts();
+        $progress->start_progress($itemstr, count($children));
         foreach ($children as $child) {
             $child->delete_capabilities();
+            $progress->increment_progress();
         }
         $context->delete_capabilities();
-        $status[] = array('component' => $componentstr, 'item' => get_string('deletecourseoverrides', 'role'), 'error' => false);
+        $status[] = ['component' => $componentstr, 'item' => $itemstr, 'error' => false];
+        $progress->end_progress();
+        \core_course\exception\reset_timeout::throw_if_expired($timeout);
     }
 
     if (!empty($data->reset_roles_local)) {
+        $itemstr = get_string('deletelocalroles', 'role');
         $children = $context->get_child_contexts();
+        $progress->start_progress($itemstr, count($children));
         foreach ($children as $child) {
             role_unassign_all(array('contextid' => $child->id));
+            $progress->increment_progress();
         }
-        $status[] = array('component' => $componentstr, 'item' => get_string('deletelocalroles', 'role'), 'error' => false);
+        $status[] = ['component' => $componentstr, 'item' => $itemstr, 'error' => false];
+        $progress->end_progress();
+        \core_course\exception\reset_timeout::throw_if_expired($timeout);
     }
 
     // First unenrol users - this cleans some of related user data too, such as forum subscriptions, tracking, etc.
@@ -5237,7 +5099,9 @@ function reset_course_userdata($data) {
         }
 
         $usersroles = enrol_get_course_users_roles($data->courseid);
+        $progress->start_progress(get_string('unenrol', 'enrol'), count($data->unenrol_users));
         foreach ($data->unenrol_users as $withroleid) {
+            $progress->start_progress(get_string('unenrolroleusers', 'enrol'));
             if ($withroleid) {
                 $sql = "SELECT ue.*
                           FROM {user_enrolments} ue
@@ -5278,47 +5142,70 @@ function reset_course_userdata($data) {
                     $plugin->unenrol_user($instance, $ue->userid);
                 }
                 $data->unenrolled[$ue->userid] = $ue->userid;
+                $progress->progress();
+                \core_course\exception\reset_timeout::throw_if_expired($timeout);
             }
             $rs->close();
+            $progress->end_progress();
+            \core_course\exception\reset_timeout::throw_if_expired($timeout);
         }
+        $progress->end_progress();
+        \core_course\exception\reset_timeout::throw_if_expired($timeout);
     }
     if (!empty($data->unenrolled)) {
-        $status[] = array(
+        $status[] = [
             'component' => $componentstr,
             'item' => get_string('unenrol', 'enrol').' ('.count($data->unenrolled).')',
             'error' => false
-        );
+        ];
     }
 
     $componentstr = get_string('groups');
 
     // Remove all group members.
     if (!empty($data->reset_groups_members)) {
+        $itemstr = get_string('removegroupsmembers', 'group');
+        $progress->start_progress($itemstr);
         groups_delete_group_members($data->courseid);
-        $status[] = array('component' => $componentstr, 'item' => get_string('removegroupsmembers', 'group'), 'error' => false);
+        $status[] = ['component' => $componentstr, 'item' => $itemstr, 'error' => false];
+        $progress->end_progress();
+        \core_course\exception\reset_timeout::throw_if_expired($timeout);
     }
 
     // Remove all groups.
     if (!empty($data->reset_groups_remove)) {
+        $itemstr = get_string('deleteallgroups', 'group');
+        $progress->start_progress($itemstr);
         groups_delete_groups($data->courseid, false);
-        $status[] = array('component' => $componentstr, 'item' => get_string('deleteallgroups', 'group'), 'error' => false);
+        $status[] = ['component' => $componentstr, 'item' => get_string('deleteallgroups', 'group'), 'error' => false];
+        $progress->end_progress();
+        \core_course\exception\reset_timeout::throw_if_expired($timeout);
     }
 
     // Remove all grouping members.
     if (!empty($data->reset_groupings_members)) {
+        $itemstr = get_string('removegroupingsmembers', 'group');
+        $progress->start_progress($itemstr);
         groups_delete_groupings_groups($data->courseid, false);
-        $status[] = array('component' => $componentstr, 'item' => get_string('removegroupingsmembers', 'group'), 'error' => false);
+        $status[] = ['component' => $componentstr, 'item' => $itemstr, 'error' => false];
+        $progress->end_progress();
+        \core_course\exception\reset_timeout::throw_if_expired($timeout);
     }
 
     // Remove all groupings.
     if (!empty($data->reset_groupings_remove)) {
+        $itemstr = get_string('deleteallgroupings', 'group');
+        $progress->start_progress($itemstr);
         groups_delete_groupings($data->courseid, false);
-        $status[] = array('component' => $componentstr, 'item' => get_string('deleteallgroupings', 'group'), 'error' => false);
+        $status[] = ['component' => $componentstr, 'item' => $itemstr, 'error' => false];
+        $progress->end_progress();
+        \core_course\exception\reset_timeout::throw_if_expired($timeout);
     }
 
     // Look in every instance of every module for data to delete.
     $unsupportedmods = array();
     if ($allmods = $DB->get_records('modules') ) {
+        $progress->start_progress(get_string('activities'), count($allmods));
         foreach ($allmods as $mod) {
             $modname = $mod->name;
             $modfile = $CFG->dirroot.'/mod/'. $modname.'/lib.php';
@@ -5343,11 +5230,15 @@ function reset_course_userdata($data) {
             }
             // Update calendar events for all modules.
             course_module_bulk_update_calendar_events($modname, $data->courseid);
+            $progress->increment_progress();
+            \core_course\exception\reset_timeout::throw_if_expired($timeout);
         }
         // Purge the course cache after resetting course start date. MDL-76936
         if ($data->timeshift) {
             course_modinfo::purge_course_cache($data->courseid);
         }
+        $progress->end_progress();
+        \core_course\exception\reset_timeout::throw_if_expired($timeout);
     }
 
     // Mention unsupported mods.
@@ -5364,22 +5255,33 @@ function reset_course_userdata($data) {
     $componentstr = get_string('gradebook', 'grades');
     // Reset gradebook,.
     if (!empty($data->reset_gradebook_items)) {
+        $itemstr = get_string('removeallcourseitems', 'grades');
+        $progress->start_progress($itemstr);
         remove_course_grades($data->courseid, false);
         grade_grab_course_grades($data->courseid);
         grade_regrade_final_grades($data->courseid, async: true);
-        $status[] = array('component' => $componentstr, 'item' => get_string('removeallcourseitems', 'grades'), 'error' => false);
+        $status[] = ['component' => $componentstr, 'item' => $itemstr, 'error' => false];
+        $progress->end_progress();
+        \core_course\exception\reset_timeout::throw_if_expired($timeout);
 
     } else if (!empty($data->reset_gradebook_grades)) {
+        $itemstr = get_string('removeallcoursegrades', 'grades');
+        $progress->start_progress($itemstr);
         grade_course_reset($data->courseid);
-        $status[] = array('component' => $componentstr, 'item' => get_string('removeallcoursegrades', 'grades'), 'error' => false);
+        $status[] = ['component' => $componentstr, 'item' => $itemstr, 'error' => false];
+        $progress->end_progress();
+        \core_course\exception\reset_timeout::throw_if_expired($timeout);
     }
     // Reset comments.
     if (!empty($data->reset_comments)) {
         \core_comment\manager::reset_course_page_comments($context);
+        $progress->increment_progress();
+        \core_course\exception\reset_timeout::throw_if_expired($timeout);
     }
 
     $event = \core\event\course_reset_ended::create($eventparams);
     $event->trigger();
+    $progress->end_progress();
 
     return $status;
 }
@@ -5435,6 +5337,7 @@ function get_mailer($action='get') {
                 $mailer->Body             = "";
                 $mailer->AltBody          = "";
                 $mailer->ConfirmReadingTo = "";
+                $mailer->MessageID        = "";
 
                 $mailer->clearAllRecipients();
                 $mailer->clearReplyTos();
@@ -5603,6 +5506,44 @@ function email_to_user($user, $from, $subject, $messagetext, $messagehtml = '', 
                        $usetrueaddress = true, $replyto = '', $replytoname = '', $wordwrapwidth = 79) {
 
     global $CFG, $PAGE, $SITE;
+
+    // Emit email to hook subscribers, who may modify the email.
+    $email = new email(
+        $user,
+        $from,
+        $subject,
+        $messagetext,
+        $messagehtml,
+        $attachment,
+        $attachname,
+        $usetrueaddress,
+        $replyto,
+        $replytoname,
+        $wordwrapwidth
+    );
+    $hook = new before_email_to_user($email);
+    \core\di::get(\core\hook\manager::class)->dispatch($hook);
+
+    // Read back out the data from the hook, as it may have been modified by a hook callback.
+    $user = $hook->email->user;
+    $from = $hook->email->from;
+    $from->customheaders = $hook->email->get_additional_headers();
+    $subject = $hook->email->subject;
+    $messagetext = $hook->email->messagetext;
+    $messagehtml = $hook->email->messagehtml;
+    $attachment = $hook->email->attachment;
+    $attachname = $hook->email->attachname;
+    $usetrueaddress = $hook->email->usetrueaddress;
+    $replyto = $hook->email->replyto;
+    $replytoname = $hook->email->replytoname;
+    $wordwrapwidth = $hook->email->wordwrapwidth;
+
+    // Allow plugins to block this email - if blocked log why.
+    if ($hook->email->is_blocked()) {
+        $reasons = implode(', ', $hook->email->get_block_reasons());
+        debugging("email_to_user: blocked by hook subscriber: " . $reasons, DEBUG_DEVELOPER);
+        return false;
+    }
 
     if (empty($user) or empty($user->id)) {
         debugging('Can not send email to null user', DEBUG_DEVELOPER);
@@ -6057,7 +5998,7 @@ function setnew_password_and_mail($user, $fasthash = false) {
 
     $newpassword = generate_password();
 
-    update_internal_user_password($user, $newpassword, $fasthash);
+    \core\di::get(\core\authentication\password::class)->update($user, $newpassword, $fasthash);
 
     $a = new stdClass();
     $placeholders = \core_user::get_name_placeholders($user);
@@ -6182,14 +6123,16 @@ function send_password_change_info($user) {
     $data->sitename  = format_string($site->fullname);
     $data->admin     = generate_email_signoff();
 
-    if (!is_enabled_auth($user->auth)) {
+    $authentication = \core\di::get(\core\authentication::class);
+
+    if (!$authentication->is_enabled($user->auth)) {
         $message = get_string('emailpasswordchangeinfodisabled', '', $data);
         $subject = get_string('emailpasswordchangeinfosubject', '', format_string($site->fullname));
         // Directly email rather than using the messaging system to ensure its not routed to a popup or jabber.
         return email_to_user($user, $supportuser, $subject, $message);
     }
 
-    $userauth = get_auth_plugin($user->auth);
+    $userauth = $authentication->get_plugin($user->auth);
     ['subject' => $subject, 'message' => $message] = $userauth->get_password_change_info($user);
 
     // Directly email rather than using the messaging system to ensure its not routed to a popup or jabber.
@@ -7617,6 +7560,12 @@ function component_class_callback($classname, $methodname, array $params, $defau
 function plugin_supports($type, $name, $feature, $default = null) {
     global $CFG;
 
+    if ($feature === FEATURE_GROUPMEMBERSONLY) {
+        throw new \core\exception\coding_exception(
+            'The FEATURE_GROUPMEMBERSONLY flag has been deprecated and is no longer supported.'
+        );
+    }
+
     if ($type === 'mod' and $name === 'NEWMODULE') {
         // Somebody forgot to rename the module template.
         return false;
@@ -7843,14 +7792,23 @@ function moodle_setlocale($locale='') {
 /**
  * Count words in a string.
  *
- * Words are defined as things between whitespace.
+ * Words are defined as things between whitespace. Developments have tried to ensure that this
+ * method gives the same results as Libre Office, MS Word, etc. However, word-counting rules are
+ * subtle, and not identical between languages, so there may be differences in non-English languages.
  *
  * @category string
  * @param string $string The text to be searched for words. May be HTML.
- * @param int|null $format
+ * @param int|null $format a FORMAT_... constant. In the API this is optional,
+ *      but really, it is required to get accurate results, so should be passed.
  * @return int The count of words in the specified string
  */
 function count_words($string, $format = null) {
+    // If format is plain, remove < characters that are attached to non-HTML words.
+    if ($format === null || $format == FORMAT_PLAIN) {
+        // Remove < that is attached to a word but doesn't form a valid HTML tag.
+        // This matches < followed by word characters that don't have a closing >.
+        $string = preg_replace('/(\w|^|\s)<(?![^<>]*>)(?=\w)/u', '$1', $string);
+    }
     // Before stripping tags, add a space after the close tag of anything that is not obviously inline.
     // Also, br is a special case because it definitely delimits a word, but has no close tag.
     $string = preg_replace('~
@@ -8186,59 +8144,7 @@ function getweek ($startdate, $thedate) {
  * @return string
  */
 function generate_password($maxlen=10) {
-    global $CFG;
-
-    if (empty($CFG->passwordpolicy)) {
-        $fillers = PASSWORD_DIGITS;
-        $wordlist = file($CFG->wordlist);
-        $word1 = trim($wordlist[rand(0, count($wordlist) - 1)]);
-        $word2 = trim($wordlist[rand(0, count($wordlist) - 1)]);
-        $filler1 = $fillers[rand(0, strlen($fillers) - 1)];
-        $password = $word1 . $filler1 . $word2;
-    } else {
-        $minlen = !empty($CFG->minpasswordlength) ? $CFG->minpasswordlength : 0;
-        $digits = $CFG->minpassworddigits;
-        $lower = $CFG->minpasswordlower;
-        $upper = $CFG->minpasswordupper;
-        $nonalphanum = $CFG->minpasswordnonalphanum;
-        $total = $lower + $upper + $digits + $nonalphanum;
-        // Var minlength should be the greater one of the two ( $minlen and $total ).
-        $minlen = $minlen < $total ? $total : $minlen;
-        // Var maxlen can never be smaller than minlen.
-        $maxlen = $minlen > $maxlen ? $minlen : $maxlen;
-        $additional = $maxlen - $total;
-
-        // Make sure we have enough characters to fulfill
-        // complexity requirements.
-        $passworddigits = PASSWORD_DIGITS;
-        while ($digits > strlen($passworddigits)) {
-            $passworddigits .= PASSWORD_DIGITS;
-        }
-        $passwordlower = PASSWORD_LOWER;
-        while ($lower > strlen($passwordlower)) {
-            $passwordlower .= PASSWORD_LOWER;
-        }
-        $passwordupper = PASSWORD_UPPER;
-        while ($upper > strlen($passwordupper)) {
-            $passwordupper .= PASSWORD_UPPER;
-        }
-        $passwordnonalphanum = PASSWORD_NONALPHANUM;
-        while ($nonalphanum > strlen($passwordnonalphanum)) {
-            $passwordnonalphanum .= PASSWORD_NONALPHANUM;
-        }
-
-        // Now mix and shuffle it all.
-        $password = str_shuffle (substr(str_shuffle ($passwordlower), 0, $lower) .
-                                 substr(str_shuffle ($passwordupper), 0, $upper) .
-                                 substr(str_shuffle ($passworddigits), 0, $digits) .
-                                 substr(str_shuffle ($passwordnonalphanum), 0 , $nonalphanum) .
-                                 substr(str_shuffle ($passwordlower .
-                                                     $passwordupper .
-                                                     $passworddigits .
-                                                     $passwordnonalphanum), 0 , $additional));
-    }
-
-    return substr ($password, 0, $maxlen);
+    return \core\di::get(\core\authentication\password::class)->generate($maxlen);
 }
 
 /**
@@ -9780,30 +9686,7 @@ function get_site_identifier() {
  * @return bool
  */
 function check_consecutive_identical_characters($password, $maxchars) {
-
-    if ($maxchars < 1) {
-        return true; // Zero 0 is to disable this check.
-    }
-    if (strlen($password) <= $maxchars) {
-        return true; // Too short to fail this test.
-    }
-
-    $previouschar = '';
-    $consecutivecount = 1;
-    foreach (str_split($password) as $char) {
-        if ($char != $previouschar) {
-            $consecutivecount = 1;
-        } else {
-            $consecutivecount++;
-            if ($consecutivecount > $maxchars) {
-                return false; // Check failed already.
-            }
-        }
-
-        $previouschar = $char;
-    }
-
-    return true;
+    return \core\di::get(\core\authentication\password::class)->check_consecutive_identical_characters($password, $maxchars);
 }
 
 /**
@@ -9907,21 +9790,39 @@ function mnet_get_idp_jump_url($user) {
 function get_home_page() {
     global $CFG;
 
-    if (isloggedin() && !empty($CFG->defaulthomepage)) {
-        // If dashboard is disabled, home will be set to default page.
+    $homeenabled = !empty($CFG->enablemyhome);
+
+    if (isloggedin() && isset($CFG->defaulthomepage) && $CFG->defaulthomepage !== '') {
+        // If dashboard, mycourses or home is disabled, home will be set to default page.
         $defaultpage = get_default_home_page();
-        if ($CFG->defaulthomepage == HOMEPAGE_MY && (!isguestuser() || !empty($CFG->allowguestmymoodle))) {
+        if ($CFG->defaulthomepage == HOMEPAGE_SITE) {
+            if ($homeenabled) {
+                return HOMEPAGE_SITE;
+            } else {
+                return $defaultpage;
+            }
+        } else if ($CFG->defaulthomepage == HOMEPAGE_MY && (!isguestuser() || !empty($CFG->allowguestmymoodle))) {
             if (!empty($CFG->enabledashboard)) {
                 return HOMEPAGE_MY;
             } else {
                 return $defaultpage;
             }
         } else if ($CFG->defaulthomepage == HOMEPAGE_MYCOURSES && !isguestuser()) {
-            return HOMEPAGE_MYCOURSES;
+            if (!empty($CFG->enablemycourses)) {
+                return HOMEPAGE_MYCOURSES;
+            } else {
+                return $defaultpage;
+            }
         } else if ($CFG->defaulthomepage == HOMEPAGE_USER && !isguestuser()) {
             $userhomepage = get_user_preferences('user_home_page_preference', $defaultpage);
+            if (!$homeenabled && $userhomepage == HOMEPAGE_SITE) {
+                $userhomepage = $defaultpage;
+            }
             if (empty($CFG->enabledashboard) && $userhomepage == HOMEPAGE_MY) {
                 // If the user was using the dashboard but it's disabled, return the default home page.
+                $userhomepage = $defaultpage;
+            } else if (empty($CFG->enablemycourses) && $userhomepage == HOMEPAGE_MYCOURSES) {
+                // If the user was using my courses but it's disabled, return the default home page.
                 $userhomepage = $defaultpage;
             } else if (get_default_home_page_url()) {
                 return HOMEPAGE_URL;
@@ -9931,19 +9832,37 @@ function get_home_page() {
             return HOMEPAGE_URL;
         }
     }
+    if (!$homeenabled && isloggedin()) {
+        return get_default_home_page();
+    }
     return HOMEPAGE_SITE;
 }
 
 /**
  * Returns the default home page to display if current one is not defined or can't be applied.
- * The default behaviour is to return Dashboard if it's enabled or My courses page if it isn't.
+ * The default behaviour is to return Dashboard if enabled, then My Courses, then Site Home,
+ * or User Preference page if all three are disabled.
  *
  * @return int The default home page.
  */
 function get_default_home_page(): int {
     global $CFG;
 
-    return (!isset($CFG->enabledashboard) || $CFG->enabledashboard) ? HOMEPAGE_MY : HOMEPAGE_MYCOURSES;
+    // Priority: Dashboard → My Courses → Site Home → User Preference page.
+    if (!isset($CFG->enabledashboard) || $CFG->enabledashboard) {
+        return HOMEPAGE_MY;
+    }
+
+    if (!isset($CFG->enablemycourses) || $CFG->enablemycourses) {
+        return HOMEPAGE_MYCOURSES;
+    }
+
+    if (!isset($CFG->enablemyhome) || $CFG->enablemyhome) {
+        return HOMEPAGE_SITE;
+    }
+
+    // All three disabled - redirect to User Preference page.
+    return HOMEPAGE_USER;
 }
 
 /**
@@ -10100,7 +10019,7 @@ function site_is_public() {
  * @return bool
  */
 function exceeds_password_length(string $password, int $pepperlength = 0): bool {
-    return (strlen($password) > (MAX_PASSWORD_CHARACTERS + $pepperlength));
+    return \core\di::get(\core\authentication\password::class)->exceeds_max_length($password, $pepperlength);
 }
 
 /**

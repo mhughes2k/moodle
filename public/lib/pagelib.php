@@ -393,9 +393,19 @@ class moodle_page {
     protected $_headeractions = [];
 
     /**
+     * @var array Array of extras HTML to add to the page header.
+     */
+    protected $headerextras = [];
+
+    /**
      * @var bool Should the region main settings menu be rendered in the header.
      */
     protected $_regionmainsettingsinheader = false;
+
+    /**
+     * @var bool Should the settings menu be hidden.
+     */
+    protected $hidesettings = false;
 
     /**
      * @var bool Should the secondary menu be rendered.
@@ -436,6 +446,31 @@ class moodle_page {
      * @var bool Indicates whether the course index drawer should be shown.
      */
     protected bool $_showcourseindex = true;
+
+    /**
+     * Hint indicating whether AI-related UI elements should be shown on this page.
+     *
+     * This value is advisory only. Individual AI placements are responsible
+     * for deciding whether to respect this hint.
+     *
+     * @var bool
+     */
+    protected bool $aivisibilityhint = true;
+
+    /**
+     * @var bool Indicates that the page has a sticky footer
+     */
+    protected bool $hasstickyfooter = false;
+
+    /**
+     * @var bool Indicates whether the navigation sticky footer should be shown.
+     */
+    protected bool $shownavigationfooter = true;
+
+    /**
+     * @var action_link|null Data for supplementary content to be displayed in the sticky footer.
+     */
+    protected ?action_link $supplementarycontent = null;
 
     /**
      * Force the settings menu to be displayed on this page. This will only force the
@@ -1891,6 +1926,9 @@ class moodle_page {
         $this->_cm = null;
         $this->_module = null;
         $this->_context = null;
+        $this->hasstickyfooter = false;
+        $this->shownavigationfooter = true;
+        $this->supplementarycontent = null;
     }
 
     /**
@@ -2365,6 +2403,24 @@ class moodle_page {
     }
 
     /**
+     * Add some HTML to the list of extra information to render in the header.
+     *
+     * @param string $html The HTML to add.
+     */
+    public function add_header_extras(string $html): void {
+        $this->headerextras[] = $html;
+    }
+
+    /**
+     * Get the list of HTML for extras to render in the header.
+     *
+     * @return string[]
+     */
+    public function get_header_extras(): array {
+        return $this->headerextras;
+    }
+
+    /**
      * Set the flag to indicate if the region main settings should be rendered as an action
      * in the header actions menu rather than at the top of the content.
      *
@@ -2382,6 +2438,24 @@ class moodle_page {
      */
     public function include_region_main_settings_in_header_actions(): bool {
         return $this->_regionmainsettingsinheader;
+    }
+
+    /**
+     * Set the flag to indicate if the settings should be hidden or rendered.
+     *
+     * @param bool $value If the settings should be hidden.
+     */
+    public function set_hide_settings(bool $value): void {
+        $this->hidesettings = $value;
+    }
+
+    /**
+     * Check if the settings should be hidden or rendered.
+     *
+     * @return bool
+     */
+    public function hide_settings(): bool {
+        return $this->hidesettings;
     }
 
     /**
@@ -2487,5 +2561,91 @@ class moodle_page {
      */
     public function get_show_course_index(): bool {
         return $this->_showcourseindex;
+    }
+
+    /**
+     * Sets a hint indicating whether AI-related UI elements should be shown
+     * on this page.
+     *
+     * This hint is not enforced globally and does not guarantee that AI UI
+     * elements will be hidden or shown. Each AI placement must explicitly
+     * check this value.
+     *
+     * @param bool $visible
+     * @return void
+     */
+    public function set_ai_visibility_hint(bool $visible): void {
+        $this->aivisibilityhint = $visible;
+    }
+
+    /**
+     * Returns a hint indicating whether AI-related UI elements should be shown
+     * on this page.
+     *
+     * This value does not enforce visibility. AI placements may choose whether
+     * and how to respect this hint.
+     *
+     * @return bool
+     */
+    public function get_ai_visibility_hint(): bool {
+        return $this->aivisibilityhint;
+    }
+
+    /**
+     * Signal that the page has a sticky footer
+     *
+     * @param bool $state
+     *     - `true` if the page has a sticky footer.
+     *     - `false` (default) if the page has (not yet) a sticky footer.
+     */
+    public function set_has_sticky_footer(bool $state): void {
+        $this->hasstickyfooter = $state;
+    }
+
+    /**
+     * Get the current status for sticky footer
+     *
+     * @return bool
+     */
+    public function has_sticky_footer(): bool {
+        return $this->hasstickyfooter;
+    }
+
+    /**
+     * Set the status for displaying the navigation sticky footer.
+     *
+     * @param bool $state
+     *     - `true` (default) if the navigation footer should be shown.
+     *     - `false` if the navigation footer should be hidden.
+     */
+    public function set_show_navigation_footer(bool $state): void {
+        $this->shownavigationfooter = $state;
+    }
+
+    /**
+     * Get the current status for displaying the navigation sticky footer.
+     *
+     * @return bool
+     */
+    public function should_show_navigation_footer(): bool {
+        return $this->shownavigationfooter;
+    }
+
+    /**
+     * Add supplementary content to the page.
+     *
+     * @param action_link|null $link The link to be added as supplementary content.
+     */
+    public function set_supplementary_content(?action_link $link): void {
+        $this->supplementarycontent = $link;
+    }
+
+    /**
+     * Get the current supplementary content.
+     *
+     * @return action_link|null The link added as supplementary content or null if not defined.
+     */
+    public function get_supplementary_content(): ?action_link {
+        return $this->supplementarycontent;
     }
 }

@@ -72,7 +72,7 @@ class custom_report_table extends base_report_table {
         $this->report = manager::get_report_from_persistent($this->persistent);
 
         $fields = $groupby = [];
-        $maintable = $this->report->get_main_table();
+        $maintablesql = $this->report->get_main_table_sql();
         $maintablealias = $this->report->get_main_table_alias();
         $joins = $this->report->get_joins();
         [$where, $params] = $this->report->get_base_condition();
@@ -87,7 +87,7 @@ class custom_report_table extends base_report_table {
         // Retrieve all report columns, exit early if there are none. Defining empty columns prevents errors during out().
         $columns = $this->get_active_columns();
         if (empty($columns)) {
-            $this->init_sql("{$maintablealias}.*", "{{$maintable}} {$maintablealias}", $joins, '1=0', []);
+            $this->init_sql("{$maintablealias}.*", "{$maintablesql} {$maintablealias}", $joins, '1=0', []);
             $this->define_columns([0]);
             return;
         }
@@ -146,12 +146,10 @@ class custom_report_table extends base_report_table {
         $this->collapsible(false);
         $this->pageable(true);
         $this->set_default_per_page($this->report->get_default_per_page());
-
-        // Initialise table SQL properties.
         $this->set_report_editing(static::REPORT_EDITING);
 
-        $fieldsql = implode(', ', $fields);
-        $this->init_sql($fieldsql, "{{$maintable}} {$maintablealias}", $joins, $where, $params, $groupby);
+        // Initialise table SQL properties.
+        $this->init_sql(implode(', ', $fields), "{$maintablesql} {$maintablealias}", $joins, $where, $params, $groupby);
     }
 
     /**

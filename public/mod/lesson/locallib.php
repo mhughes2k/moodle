@@ -898,7 +898,8 @@ function lesson_get_overview_report_table_and_data(lesson $lesson, $currentgroup
             'label' => $selectall,
             'selectall' => $selectall,
             'deselectall' => $deselectall,
-            'labelclasses' => 'form-check-label'
+            'classes' => 'form-check-input',
+            'labelclasses' => 'form-check-label',
         ]);
         $attemptsheader = $OUTPUT->render($togglercheckbox);
     }
@@ -995,9 +996,11 @@ function lesson_get_overview_report_table_and_data(lesson $lesson, $currentgroup
                     $checkbox = new \core\output\checkbox_toggleall('lesson-attempts', false, [
                         'id' => $attemptid,
                         'name' => $attemptname,
-                        'label' => $attemptlink
+                        'label' => $attemptlink,
+                        'classes' => 'form-check-input',
+                        'labelclasses' => 'form-check-label',
                     ]);
-                    $attemptlink = $OUTPUT->render($checkbox);
+                    $attemptlink = html_writer::div($OUTPUT->render($checkbox), 'form-check p-0');
                 }
 
                 // build up the attempts array
@@ -2976,11 +2979,12 @@ class lesson extends lesson_base {
             $attempt = end($allattempts);
             $attemptpage = $this->load_page($attempt->pageid);
             $jumpto = $DB->get_field('lesson_answers', 'jumpto', array('id' => $attempt->answerid));
+            $maxattempts = $this->properties->maxattempts;
             // Convert the jumpto to a proper page id.
             if ($jumpto == 0) {
                 // Check if a question has been incorrectly answered AND no more attempts at it are left.
                 $nattempts = $this->get_attempts($attempt->retry, false, $attempt->pageid, $USER->id);
-                if (count($nattempts) >= $this->properties->maxattempts) {
+                if (count($nattempts) >= $maxattempts && $maxattempts > 0) { // If maxattempts is 0, unlimited attempts are allowed.
                     $lastpageseen = $this->get_next_page($attemptpage->nextpageid);
                 } else {
                     $lastpageseen = $attempt->pageid;

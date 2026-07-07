@@ -36,7 +36,7 @@ $string['chooselanguagesub'] = 'インストールに使用する言語を選択
 $string['clialreadyconfigured'] = '設定ファイルconfig.phpはすでに登録されています。このサイトをインストールする場合、admin/cli/install_database.phpを使用してください。';
 $string['clialreadyinstalled'] = '設定ファイルconfig.phpはすでに登録されています。このサイトをアップグレードする場合、admin/cli/upgrade.phpを使用してください。';
 $string['cliinstallheader'] = 'Moodle {$a} コマンドラインインストレーションプログラム';
-$string['clitablesexist'] = 'データベーステーブルがすでに存在するため、CLIインストールを継続できません。';
+$string['clitablesexist'] = 'データベーステーブルがすでに存在するため、コマンドラインインタフェース (CLI) インストールを継続できません。';
 $string['databasehost'] = 'データベースホスト';
 $string['databasename'] = 'データベース名';
 $string['databasetypehead'] = 'データベースドライバを選択する';
@@ -68,7 +68,7 @@ $string['pathsunsecuredataroot'] = 'datarootの場所が安全ではありませ
 $string['pathswrongadmindir'] = 'adminディレクトリが存在しません。';
 $string['phpextension'] = '{$a} PHP拡張モジュール';
 $string['phpversion'] = 'PHPバージョン';
-$string['webserverconfigproblemdescription'] = 'あなたのウェブサーバは「/public」ディレクトリの外のファイルへのアクセスを防止するよう設定されていません。あなたのウェブサーバの設定方法詳細に関して<a href="https://moodledev.io/docs/5.1/guides/restructure">https://moodledev.io/docs/5.1/guides/restructure</a>をご覧ください。再設定後、<a href="{$a}">ウェブルートに再度アクセス</a>してください。';
+$string['webserverconfigproblemdescription'] = 'あなたのウェブサーバは「/public」ディレクトリ外のファイルへのアクセスを防止するよう設定されていません。あなたのウェブサーバを正しく設定する方法の詳細に関して<a href="https://docs.moodle.org/ja/Moodleをアップグレードする#コードディレクトリの再構成">Moodleをアップグレードする - コードディレクトリの再構成</a>ドキュメンテーションをご覧ください。再設定後、<a href="{$a}">ウェブルートに再度アクセス</a>してください。';
 $string['webservernotconfigured'] = 'ウェブサーバが設定されていません。';
 $string['welcomep10'] = '{$a->installername} ({$a->installerversion})';
 $string['welcomep20'] = 'インストール正常完了後、あなたのコンピュータで<strong>{$a->packname} {$a->packversion}</strong>パッケージが起動されたため、このページが表示されています。おめでとうございます!';

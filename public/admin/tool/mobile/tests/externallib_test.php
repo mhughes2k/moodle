@@ -76,7 +76,7 @@ final class externallib_test extends \core_external\tests\externallib_testcase {
             'registerauth' => $CFG->registerauth,
             'forgottenpasswordurl' => $CFG->forgottenpasswordurl,
             'authinstructions' => $authinstructions,
-            'authnoneenabled' => (int) is_enabled_auth('none'),
+            'authnoneenabled' => (int) \core\di::get(\core\authentication::class)->is_enabled('none'),
             'enablewebservices' => $CFG->enablewebservices,
             'enablemobilewebservice' => $CFG->enablemobilewebservice,
             'maintenanceenabled' => $CFG->maintenance_enabled,
@@ -216,6 +216,7 @@ final class externallib_test extends \core_external\tests\externallib_testcase {
             [ 'name' => 'tool_mobile_filetypeexclusionlist', 'value' => '' ],
             [ 'name' => 'tool_mobile_custommenuitems', 'value' => '' ],
             [ 'name' => 'tool_mobile_customusermenuitems', 'value' => '' ],
+            [ 'name' => 'tool_mobile_scriptallowlist', 'value' => '' ],
             [ 'name' => 'tool_mobile_apppolicy', 'value' => '' ],
             [ 'name' => 'tool_mobile_autologinmintimebetweenreq', 'value' => 6 * MINSECS ],
             [ 'name' => 'tool_mobile_autologout', 'value' => get_config('tool_mobile', 'autologout') ],
@@ -242,7 +243,9 @@ final class externallib_test extends \core_external\tests\externallib_testcase {
         $expected[] = ['name' => 'coursegraceperiodafter', 'value' => $CFG->coursegraceperiodafter];
         $expected[] = ['name' => 'coursegraceperiodbefore', 'value' => $CFG->coursegraceperiodbefore];
 
+        $expected[] = ['name' => 'enablemyhome', 'value' => $CFG->enablemyhome ?? 1];
         $expected[] = ['name' => 'enabledashboard', 'value' => $CFG->enabledashboard];
+        $expected[] = ['name' => 'enablemycourses', 'value' => $CFG->enablemycourses ?? 1];
         $expected[] = ['name' => 'customusermenuitems', 'value' => $CFG->customusermenuitems];
         $expected[] = ['name' => 'timezone', 'value' => $CFG->timezone];
         $expected[] = ['name' => 'forcetimezone', 'value' => $CFG->forcetimezone];
@@ -677,6 +680,7 @@ final class externallib_test extends \core_external\tests\externallib_testcase {
         // Fake the app.
         \core_useragent::instance(true, 'Mozilla/5.0 (Linux; Android 7.1.1; Moto G Play Build/NPIS26.48-43-2; wv) ' .
                 'AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/71.0.3578.99 Mobile Safari/537.36 MoodleMobile');
+        set_config('qrcodetype', api::QR_CODE_LOGIN, 'tool_mobile');
 
         $result = external::get_tokens_for_qr_login($qrloginkey, $USER->id);
         $result = external_api::clean_returnvalue(external::get_tokens_for_qr_login_returns(), $result);
@@ -716,6 +720,7 @@ final class externallib_test extends \core_external\tests\externallib_testcase {
         // Fake the app.
         \core_useragent::instance(true, 'Mozilla/5.0 (Linux; Android 7.1.1; Moto G Play Build/NPIS26.48-43-2; wv) ' .
                 'AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/71.0.3578.99 Mobile Safari/537.36 MoodleMobile');
+        set_config('qrcodetype', api::QR_CODE_LOGIN, 'tool_mobile');
 
         $result = external::get_tokens_for_qr_login($qrloginkey, $USER->id);
         $result = external_api::clean_returnvalue(external::get_tokens_for_qr_login_returns(), $result);
@@ -741,6 +746,7 @@ final class externallib_test extends \core_external\tests\externallib_testcase {
         $user = $this->getDataGenerator()->create_user();
         $this->setUser($user);
 
+        set_config('qrcodetype', api::QR_CODE_LOGIN, 'tool_mobile');
         $mobilesettings = get_config('tool_mobile');
         $mobilesettings->qrsameipcheck = 1;
         $qrloginkey = api::get_qrlogin_key($mobilesettings);
@@ -792,6 +798,7 @@ final class externallib_test extends \core_external\tests\externallib_testcase {
         // Need to disable webservices to verify that's checked.
         $CFG->enablewebservices = 0;
         $CFG->enablemobilewebservice = 0;
+        set_config('qrcodetype', api::QR_CODE_LOGIN, 'tool_mobile');
 
         $this->setAdminUser();
         $this->expectException('moodle_exception');
@@ -804,6 +811,7 @@ final class externallib_test extends \core_external\tests\externallib_testcase {
      */
     public function test_get_tokens_for_qr_login_missing_https(): void {
         global $CFG, $USER;
+        $this->resetAfterTest(true);
 
         // Fake the app.
         \core_useragent::instance(true, 'Mozilla/5.0 (Linux; Android 7.1.1; Moto G Play Build/NPIS26.48-43-2; wv) ' .
@@ -812,7 +820,7 @@ final class externallib_test extends \core_external\tests\externallib_testcase {
         // Need to simulate a non HTTPS site here.
         $CFG->wwwroot = str_replace('https:', 'http:', $CFG->wwwroot);
 
-        $this->resetAfterTest(true);
+        set_config('qrcodetype', api::QR_CODE_LOGIN, 'tool_mobile');
         $this->setAdminUser();
 
         $this->expectException('moodle_exception');
@@ -824,7 +832,7 @@ final class externallib_test extends \core_external\tests\externallib_testcase {
      * Test get_tokens_for_qr_login missing admin.
      */
     public function test_get_tokens_for_qr_login_missing_admin(): void {
-        global $CFG, $USER;
+        global $USER;
 
         $this->resetAfterTest(true);
         $this->setAdminUser();
@@ -832,6 +840,7 @@ final class externallib_test extends \core_external\tests\externallib_testcase {
         // Fake the app.
         \core_useragent::instance(true, 'Mozilla/5.0 (Linux; Android 7.1.1; Moto G Play Build/NPIS26.48-43-2; wv) ' .
             'AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/71.0.3578.99 Mobile Safari/537.36 MoodleMobile');
+        set_config('qrcodetype', api::QR_CODE_LOGIN, 'tool_mobile');
 
         $this->expectException('moodle_exception');
         $this->expectExceptionMessage(get_string('autologinnotallowedtoadmins', 'tool_mobile'));
@@ -842,10 +851,11 @@ final class externallib_test extends \core_external\tests\externallib_testcase {
      * Test get_tokens_for_qr_login missing app_request.
      */
     public function test_get_tokens_for_qr_login_missing_app_request(): void {
-        global $CFG, $USER;
+        global $USER;
 
         $this->resetAfterTest(true);
         $this->setAdminUser();
+        set_config('qrcodetype', api::QR_CODE_LOGIN, 'tool_mobile');
 
         $this->expectException('moodle_exception');
         $this->expectExceptionMessage(get_string('apprequired', 'tool_mobile'));

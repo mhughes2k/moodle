@@ -46,14 +46,13 @@ $PAGE->set_url('/course/editsection.php', $params);
 
 $section = $DB->get_record('course_sections', array('id' => $id), '*', MUST_EXIST);
 $course = $DB->get_record('course', array('id' => $section->course), '*', MUST_EXIST);
-$sectionnum = $section->section;
 
 require_login($course);
 $context = context_course::instance($course->id);
 require_capability('moodle/course:update', $context);
 
 // Get section_info object with all availability options.
-$sectioninfo = get_fast_modinfo($course)->get_section_info($sectionnum);
+$sectioninfo = get_fast_modinfo($course)->get_section_info_by_id($id);
 
 // Deleting the section.
 if ($deletesection) {
@@ -139,6 +138,9 @@ if ($mform->is_cancelled()){
 } else if ($data = $mform->get_data()) {
     // Data submitted and validated, update and return to course.
 
+    // The component field should not be changed.
+    unset($data->component);
+
     // For consistency, we set the availability field to 'null' if it is empty.
     if (!empty($CFG->enableavailability)) {
         // Renamed field.
@@ -155,7 +157,7 @@ if ($mform->is_cancelled()){
 }
 
 // The edit form is displayed for the first time or if there was validation error on the previous step.
-$sectionname = get_section_name($course, $sectionnum);
+$sectionname = get_section_name($course, $sectioninfo);
 $stredit = get_string('editsectiontitle', '', $sectionname);
 $strsummaryof = get_string('editsectionsettings');
 

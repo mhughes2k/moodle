@@ -427,6 +427,37 @@ class main implements renderable, templatable {
             $newcourseurl = new \moodle_url('/course/edit.php', ['category' => $category->id]);
         }
 
+        $courseactionurls = [];
+        if ($coursecat) {
+            $categorytomanage = \core_course_category::get_nearest_editable_subcategory($coursecat, ['manage']);
+            if ($categorytomanage) {
+                $courseactionurls[] = [
+                    'url' => new \moodle_url('/course/management.php', ['categoryid' => $categorytomanage->id]),
+                    'label' => get_string('managecourses'),
+                    'class' => 'btn btn-outline-primary',
+                ];
+            }
+            if (!empty($newcourseurl)) {
+                $courseactionurls[] = [
+                    'url' => $newcourseurl,
+                    'label' => get_string('createcourse', 'block_myoverview'),
+                    'class' => 'btn btn-primary',
+                ];
+            }
+            $categorytorequest = \core_course_category::get_nearest_editable_subcategory(
+                $coursecat,
+                ['moodle/course:request'],
+            );
+            if ($categorytorequest && $categorytorequest->can_request_course()) {
+                $courseactionurls[] = [
+                    'url' => new \moodle_url('/course/request.php', ['categoryid' => $categorytorequest->id]),
+                    'label' => get_string('requestcourse'),
+                    'class' => 'btn btn-primary',
+                ];
+            }
+        }
+        $hascourseactions = !empty($courseactionurls);
+
         $customfieldvalues = $this->get_customfield_values_for_export();
         $selectedcustomfield = '';
         if ($this->grouping == BLOCK_MYOVERVIEW_GROUPING_CUSTOMFIELD) {
@@ -473,6 +504,8 @@ class main implements renderable, templatable {
             'totalcoursecount' => count(enrol_get_all_users_courses($USER->id, true)),
             'nocoursesimg' => $nocoursesurl,
             'newcourseurl' => $newcourseurl,
+            'courseactionurls' => $courseactionurls,
+            'hascourseactions' => $hascourseactions,
             'grouping' => $this->grouping,
             'sort' => $sort,
             // If the user preference display option is not available, default to first available layout.

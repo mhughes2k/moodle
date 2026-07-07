@@ -16,6 +16,7 @@
 
 namespace core_grades\external;
 
+use core_user;
 use core_user_external;
 use core_external\external_api;
 use core_external\external_function_parameters;
@@ -84,6 +85,11 @@ class get_enrolled_users_for_selector extends external_api {
         require_capability('moodle/course:viewparticipants', $coursecontext);
 
         $course = $DB->get_record('course', ['id' => $params['courseid']]);
+
+        if ($params['groupid'] && !groups_group_visible($params['groupid'], $course)) {
+            throw new \moodle_exception('cannotaccessgroup', 'core_grades');
+        }
+
         // Create a graded_users_iterator because it will properly check the groups etc.
         $defaultgradeshowactiveenrol = !empty($CFG->grade_report_showonlyactiveenrol);
         $showonlyactiveenrol = get_user_preferences('grade_report_showonlyactiveenrol', $defaultgradeshowactiveenrol);
@@ -102,6 +108,7 @@ class get_enrolled_users_for_selector extends external_api {
             $userforselector = new \stdClass();
             $userforselector->id = $userdata->user->id;
             $userforselector->fullname = fullname($userdata->user);
+            $userforselector->initials = core_user::get_initials($userdata->user);
             foreach (\core_user\fields::get_name_fields() as $field) {
                 $userforselector->$field = $userdata->user->$field ?? null;
             }

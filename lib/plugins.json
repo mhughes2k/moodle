@@ -5,8 +5,10 @@
             "editor"
         ],
         "aiprovider": [
+            "awsbedrock",
             "azureai",
             "deepseek",
+            "gemini",
             "ollama",
             "openai"
         ],
@@ -238,7 +240,7 @@
             "rubric"
         ],
         "h5plib": [
-            "v127"
+            "v128"
         ],
         "local": [],
         "logstore": [
@@ -495,7 +497,6 @@
             "mfa",
             "mobile",
             "monitor",
-            "moodlenet",
             "multilangupgrade",
             "oauth2",
             "phpunit",
@@ -611,7 +612,8 @@
         ],
         "h5plib": [
             "v124",
-            "v126"
+            "v126",
+            "v127"
         ],
         "logstore": [
             "legacy"
@@ -700,6 +702,7 @@
             "bloglevelupgrade",
             "health",
             "innodb",
+            "moodlenet",
             "qeupgradehelper",
             "timezoneimport"
         ],

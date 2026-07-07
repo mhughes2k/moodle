@@ -27,6 +27,9 @@ defined('MOODLE_INTERNAL') || die();
 require_once($CFG->dirroot. '/course/format/lib.php');
 require_once($CFG->dirroot. '/course/lib.php');
 
+use core\lang_string;
+use core_courseformat\local\linearnavigationsettings;
+
 /**
  * Main class for the Weeks course format
  *
@@ -126,34 +129,36 @@ class format_weeks extends core_courseformat\base {
      *     'sr' (int) used by course formats to specify to which section to return
      * @return moodle_url
      */
-    public function get_view_url($section, $options = array()) {
+    public function get_view_url($section, $options = []) {
         $course = $this->get_course();
-        if (array_key_exists('sr', $options) && !is_null($options['sr'])) {
-            $sectionno = $options['sr'];
-        } else if (is_object($section)) {
-            $sectionno = $section->section;
+        $section = (is_null($section) || $section instanceof section_info) ?
+                    $section
+                    : $this->get_section($section, IGNORE_MISSING);
+
+        // Determine page.
+        if (array_key_exists('sr', $options)) {
+            $pagesection = !is_null($options['sr']) ? $this->get_section($options['sr'], IGNORE_MISSING) : null;
+        } else if ($options['navigation'] ?? false) {
+            $pagesection = ($section && $section->get_component_instance()) ?
+                            $section->get_component_instance()->get_parent_section()
+                            : $section;
         } else {
-            $sectionno = $section;
-        }
-        if ((!empty($options['navigation']) || array_key_exists('sr', $options)) && $sectionno !== null) {
-            $sectioninfo = $this->get_section($sectionno);
-            if (!$sectioninfo->get_component_instance()) {
-                // Display section on separate page.
-                return new moodle_url('/course/section.php', ['id' => $sectioninfo->id]);
-            }
-
-            // Delegated sections are handled differently.
-            $parent = $sectioninfo->get_component_instance()->get_parent_section();
-            if ($parent) {
-                return new core\url(
-                    '/course/section.php',
-                    ['id' => $parent->id],
-                    'section-' . $sectionno,
-                );
-            }
+            $pagesection = null;
         }
 
-        return new moodle_url('/course/view.php', ['id' => $course->id]);
+        // Base URL.
+        if (is_null($pagesection)) {
+            $url = new moodle_url('/course/view.php', ['id' => $course->id]);
+        } else {
+            $url = new moodle_url('/course/section.php', ['id' => $pagesection->id]);
+        }
+
+        // Add details.
+        if ($this->uses_sections() && $section && ($section->id != $pagesection?->id)) {
+            $url->set_anchor('section-' . $section->section);
+        }
+
+        return $url;
     }
 
     /**
@@ -259,19 +264,24 @@ class format_weeks extends core_courseformat\base {
         static $courseformatoptions = false;
         if ($courseformatoptions === false) {
             $courseconfig = get_config('moodlecourse');
-            $courseformatoptions = array(
-                'hiddensections' => array(
+            $courseformatoptions = [
+                'hiddensections' => [
                     'default' => $courseconfig->hiddensections,
                     'type' => PARAM_INT,
-                ),
-                'coursedisplay' => array(
+                ],
+                'coursedisplay' => [
                     'default' => $courseconfig->coursedisplay ?? COURSE_DISPLAY_SINGLEPAGE,
                     'type' => PARAM_INT,
-                ),
-                'automaticenddate' => array(
+                ],
+                'automaticenddate' => [
                     'default' => 1,
                     'type' => PARAM_BOOL,
-                ),
+                ],
+            ];
+            // Add linear navigation settings if enabled for the format.
+            $courseformatoptions = array_merge(
+                linearnavigationsettings::get_course_format_options_default(self::get_format()),
+                $courseformatoptions,
             );
         }
         if ($foreditform && !isset($courseformatoptions['coursedisplay']['label'])) {
@@ -319,6 +329,13 @@ class format_weeks extends core_courseformat\base {
                     'element_type' => 'advcheckbox',
                 ],
             ];
+            // Add linear navigation settings if enabled for the format.
+            $courseformatoptions = array_merge_recursive(
+                $courseformatoptions,
+                linearnavigationsettings::get_course_format_options_edit_form(self::get_format()),
+            );
+
+            // Edit form options should override default ones.
             $courseformatoptions = array_merge_recursive($courseformatoptions, $courseformatoptionsedit);
         }
         return $courseformatoptions;
@@ -362,7 +379,7 @@ class format_weeks extends core_courseformat\base {
             }
         }
 
-        return $elements;
+        return array_values($elements); // Make sure keys are sequential.
     }
 
     /**
@@ -627,6 +644,11 @@ class format_weeks extends core_courseformat\base {
      */
     public function get_required_jsfiles(): array {
         return [];
+    }
+
+    #[\Override]
+    public static function uses_linear_navigation(): bool {
+        return true;
     }
 }
 

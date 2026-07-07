@@ -252,15 +252,18 @@ class renderer extends \plugin_renderer_base {
         $this->page->set_heading($this->page->course->fullname);
 
         $description = $header->preface;
-        if ($header->showintro || $header->activity) {
-            $description = $this->output->box_start('generalbox boxaligncenter');
-            if ($header->showintro) {
-                $description .= format_module_intro('assign', $header->assign, $header->coursemoduleid);
-            }
-            if ($header->activity) {
-                $description .= $this->format_activity_text($header->assign, $header->coursemoduleid);
-            }
-            $description .= $header->postfix;
+        $introcontent = '';
+        if ($header->showintro) {
+            $introcontent .= format_module_intro('assign', $header->assign, $header->coursemoduleid);
+        }
+        if ($header->activity) {
+            $introcontent .= $this->format_activity_text($header->assign, $header->coursemoduleid);
+        }
+        $introcontent .= $header->postfix ?? '';
+
+        if (trim($introcontent) !== '') {
+            $description .= $this->output->box_start('generalbox boxaligncenter');
+            $description .= $introcontent;
             $description .= $this->output->box_end();
         }
 
@@ -293,7 +296,7 @@ class renderer extends \plugin_renderer_base {
     public function render_assign_grading_summary(\assign_grading_summary $summary) {
         // Create a table for the data.
         $o = '';
-        $o .= $this->output->container_start('gradingsummary');
+        $o .= $this->output->container_start('gradingsummary container-fluid');
         $o .= $this->output->heading(get_string('gradingsummary', 'assign'), 3);
 
         if (isset($summary->cm)) {
@@ -427,12 +430,22 @@ class renderer extends \plugin_renderer_base {
             $this->add_table_row_tuple($t, $cell1content, $cell2content);
         }
 
-        if ($status->grader) {
-            // Grader.
+        if ($status->grader || !empty($status->markers)) {
+            $people = [];
+            // Add the overall grader.
+            if ($status->grader) {
+                $people[] = $this->output->user_picture($status->grader) . fullname($status->grader, $status->canviewfullnames);
+            }
+            // Add the markers.
+            foreach ($status->markers as $marker) {
+                // Skip any marker who is already listed as the overall grader.
+                if ($status->grader && $marker->id == $status->grader->id) {
+                    continue;
+                }
+                $people[] = $this->output->user_picture($marker) . fullname($marker, $status->canviewfullnames);
+            }
             $cell1content = get_string('gradedby', 'assign');
-            $cell2content = $this->output->user_picture($status->grader) .
-                            $this->output->spacer(array('width' => 30)) .
-                            fullname($status->grader, $status->canviewfullnames);
+            $cell2content = implode(html_writer::empty_tag('br'), $people);
             $this->add_table_row_tuple($t, $cell1content, $cell2content);
         }
 

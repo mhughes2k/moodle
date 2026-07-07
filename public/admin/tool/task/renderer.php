@@ -58,7 +58,7 @@ class tool_task_renderer extends plugin_renderer_base {
             get_string('nextruntime', 'tool_task'),
         ];
 
-        $table->attributes['class'] = 'admintable table generaltable table-hover';
+        $table->attributes['class'] = 'admintable table generaltable table-striped table-hover';
         $table->colclasses = [];
 
         // For each task entry (row) show action buttons/logs link depending on the user permissions.
@@ -388,7 +388,7 @@ class tool_task_renderer extends plugin_renderer_base {
             get_string('default', 'tool_task'),
         ];
 
-        $table->attributes['class'] = 'admintable table generaltable table-hover';
+        $table->attributes['class'] = 'admintable table generaltable table-striped table-hover';
         $table->colclasses = [];
 
         if (!$showloglink) {
@@ -436,10 +436,49 @@ class tool_task_renderer extends plugin_renderer_base {
             $runnow = '';
             $canrunthistask = $canruntasks && $task->can_run();
             if ($canrunthistask) {
-                $runnow = html_writer::div(html_writer::link(
-                        new moodle_url('/admin/tool/task/schedule_task.php',
-                            ['task' => $classname]),
-                        get_string('runnow', 'tool_task')), 'task-runnow');
+                $runnow .= html_writer::div(
+                    html_writer::link(
+                        new moodle_url('/admin/tool/task/schedule_task.php', [
+                            'task' => $classname,
+                            'confirm' => 1,
+                            'sesskey' => sesskey(),
+                        ]),
+                        get_string('runnow', 'tool_task'),
+                        [
+                            'data-confirmation' => 'modal',
+                            'data-confirmation-title-str' => json_encode(['runnow', 'tool_task']),
+                            'data-confirmation-content-str' => json_encode(
+                                ['runnow_confirm', 'tool_task', $task->get_name()]
+                            ),
+                            'data-confirmation-yes-button-str' => json_encode(['runnow', 'tool_task']),
+                        ]
+                    ),
+                    'task-runnow'
+                );
+
+                $nextruntime = $task->get_next_run_time();
+                if ($nextruntime > time() && $task->is_enabled()) {
+                    $runnow .= html_writer::div(
+                        html_writer::link(
+                            new moodle_url('/admin/tool/task/schedule_task.php', [
+                                'task' => $classname,
+                                'action' => 'asap',
+                                'confirm' => 1,
+                                'sesskey' => sesskey(),
+                            ]),
+                            get_string('runasap', 'tool_task'),
+                            [
+                                'data-confirmation' => 'modal',
+                                'data-confirmation-title-str' => json_encode(['runasap', 'tool_task']),
+                                'data-confirmation-content-str' => json_encode(
+                                    ['runasap_confirm', 'tool_task', $task->get_name()]
+                                ),
+                                'data-confirmation-yes-button-str' => json_encode(['runasap', 'tool_task']),
+                            ]
+                        ),
+                        'task-runnow'
+                    );
+                }
             }
 
             if ($faildelay = $task->get_fail_delay()) {

@@ -36,7 +36,7 @@ $string['chooselanguagesub'] = 'Velg et språk for installasjonen. Dette språke
 $string['clialreadyconfigured'] = 'Konfigurasjonsfilen config.php finnes allerede. Vennligst bruk admin/cli/install_database.php hvis du vil installere Moodle på denne portalen.';
 $string['clialreadyinstalled'] = 'Filen config.php eksisterer allerede. Vennligst bruk admin/cli/install_database.php hvis du vil oppgradere Moodle på denne portalen.';
 $string['cliinstallheader'] = 'Moodle {$a} kommandolinje installasjonsprogram';
-$string['clitablesexist'] = 'Databasetabeller finnes allerede, CLI installasjon kan ikke fortsette.';
+$string['clitablesexist'] = 'Databasetabellene finnes allerede; installasjonen av kommandolinjegrensesnittet (CLI) kan ikke fortsette.';
 $string['databasehost'] = 'Databasevert';
 $string['databasename'] = 'Databasenavn';
 $string['databasetypehead'] = 'Velg databasedriver';
@@ -67,7 +67,7 @@ $string['pathsunsecuredataroot'] = 'Dataroot plassering er ikke sikker';
 $string['pathswrongadmindir'] = 'Adminkatalog finnes ikke';
 $string['phpextension'] = '{$a} PHP-tillegg';
 $string['phpversion'] = 'PHP versjon';
-$string['webserverconfigproblemdescription'] = 'Nettserveren din er ikke konfigurert til å forhindre tilgang til filer utenfor /public-katalogen. Se <a href="https://moodledev.io/docs/5.1/guides/restructure">https://moodledev.io/docs/5.1/guides/restructure</a> for detaljer om hvordan du konfigurerer nettserveren din. Når den er konfigurert på nytt, <a href="{$a}">gå tilbake til web root</a>.';
+$string['webserverconfigproblemdescription'] = 'Webserveren din er ikke konfigurert til å forhindre tilgang til filer utenfor /public-katalogen. For detaljer om hvordan du konfigurerer webserveren riktig, se dokumentasjonen <a href="https://docs.moodle.org/en/Upgrading#Code_directories_restructure">Oppgradering - Omstrukturering av kodekataloger</a>. Når du er konfigurert på nytt, <a href="{$a}">gå tilbake til webroten</a>.';
 $string['webservernotconfigured'] = 'Webserver ikke konfigurert';
 $string['welcomep10'] = '{$a->installername} ({$a->installerversion})';
 $string['welcomep20'] = 'Du ser denne siden fordi du nå har fullført installeringen og kjøringen av pakken <strong>{$a->packname} {$a->packversion}</strong> på datamaskinen din. Gratulerer!';

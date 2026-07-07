@@ -16,6 +16,8 @@
 
 namespace theme_boost\output;
 
+use context_course;
+use context_system;
 use moodle_url;
 use html_writer;
 use get_string;
@@ -30,6 +32,35 @@ defined('MOODLE_INTERNAL') || die;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class core_renderer extends \core_renderer {
+    /**
+     * Returns an inline search box permanently visible in the top navigation.
+     *
+     * @param string $id Passed to parent::search_box() for the mobile fallback.
+     * @return string HTML for the inline and mobile search forms, or empty string.
+     */
+    public function search_box($id = false) {
+        global $CFG;
+
+        if (empty($CFG->enableglobalsearch) || !has_capability('moodle/search:query', context_system::instance())) {
+            return '';
+        }
+
+        $data = [
+            'action' => new moodle_url('/search/index.php'),
+            'hiddenfields' => (object) ['name' => 'context', 'value' => $this->page->context->id],
+            'inputname' => 'q',
+            'searchstring' => get_string('search'),
+            'grouplabel' => get_string('sitewidesearch', 'search'),
+        ];
+
+        // Desktop (md+): new inline, always-visible form.
+        $desktop = $this->render_from_template('core/search_input_navbar_inline', $data);
+
+        // Mobile (< md): keep the original toggle + collapse pattern.
+        $mobile = html_writer::div(parent::search_box($id), 'd-flex d-md-none');
+
+        return $desktop . $mobile;
+    }
 
     /**
      * Returns HTML to display a "Turn editing on/off" button in a form.
@@ -251,5 +282,30 @@ class core_renderer extends \core_renderer {
             }
         }
         return $firstview;
+    }
+
+    /**
+     * Renders the Boost login form context.
+     *
+     * @param \core_auth\output\login $form The renderable.
+     * @return string
+     */
+    public function render_login(\core_auth\output\login $form) {
+        global $CFG, $SITE;
+
+        $context = $form->export_for_template($this);
+        $url = $this->get_logo_url();
+        if ($url) {
+            $url = $url->out(false);
+        }
+        $context->logourl = $url;
+        $context->sitename = format_string(
+            $SITE->fullname,
+            true,
+            ['context' => context_course::instance(SITEID), 'escape' => false]
+        );
+        $context->hasauthinstructions = !empty($CFG->auth_instructions);
+
+        return $this->render_from_template('core/loginform', $context);
     }
 }

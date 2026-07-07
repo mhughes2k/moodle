@@ -640,7 +640,7 @@ final class locallib_test extends \advanced_testcase {
         // Simulate adding a grade.
         $this->add_submission($student, $assign);
         $this->submit_for_grading($student, $assign);
-        $this->mark_submission($teacher, $assign, $student, 50.0);
+        $this->grade_submission($teacher, $assign, $student, 50.0);
 
         // Simulate a submission.
         $this->setUser($student);
@@ -1219,7 +1219,7 @@ final class locallib_test extends \advanced_testcase {
         $this->add_submission($student, $assign);
         $this->submit_for_grading($student, $assign);
 
-        $this->mark_submission($teacher, $assign, $student, 50.0);
+        $this->grade_submission($teacher, $assign, $student, 50.0);
 
         $data = new \stdClass();
         $data->grade = '50.0';
@@ -1486,7 +1486,7 @@ final class locallib_test extends \advanced_testcase {
 
         $this->add_submission($student, $assign);
         $this->submit_for_grading($student, $assign);
-        $this->mark_submission($teacher, $assign, $student, 50.0);
+        $this->grade_submission($teacher, $assign, $student, 50.0);
 
         // Although it has been graded, it is still marked as submitted.
         $this->assertEquals(1, $assign->count_grades());
@@ -1661,6 +1661,44 @@ final class locallib_test extends \advanced_testcase {
         ));
     }
 
+    /**
+     * Tests that unenrolled users are not included in the count of submissions with status and groups.
+     *
+     * @covers \assign::count_submissions_with_status_and_groups
+     */
+    public function test_count_submissions_with_status_and_groups_unenrolled_users(): void {
+        global $DB;
+
+        $this->resetAfterTest();
+
+        $course = $this->getDataGenerator()->create_course();
+        $assign = $this->create_instance($course, [
+            'assignsubmission_onlinetext_enabled' => 1,
+        ]);
+
+        $this->getDataGenerator()->create_and_enrol($course, 'editingteacher');
+
+        // Create 3 students and have them all submit.
+        $students = [];
+        for ($i = 0; $i < 3; $i++) {
+            $student = $this->getDataGenerator()->create_and_enrol($course, 'student');
+            $this->add_submission($student, $assign);
+            $this->submit_for_grading($student, $assign);
+            $students[] = $student;
+        }
+
+        // All 3 enrolled students have submitted.
+        $this->assertEquals(3, $assign->count_submissions_with_status_and_groups(ASSIGN_SUBMISSION_STATUS_SUBMITTED));
+
+        // Unenrol one student.
+        $manualenrol = enrol_get_plugin('manual');
+        $enrolinstance = $DB->get_record('enrol', ['courseid' => $course->id, 'enrol' => 'manual'], '*', MUST_EXIST);
+        $manualenrol->unenrol_user($enrolinstance, $students[0]->id);
+
+        // Only 2 submissions should be counted now because the unenrolled user's submission must be excluded.
+        $this->assertEquals(2, $assign->count_submissions_with_status_and_groups(ASSIGN_SUBMISSION_STATUS_SUBMITTED));
+    }
+
     public function test_count_submissions_need_grading_with_groups(): void {
         $this->resetAfterTest();
 
@@ -1696,7 +1734,7 @@ final class locallib_test extends \advanced_testcase {
                 $this->submit_for_grading($student, $assign);
             }
             if ($i == 0 || $i == 5) {
-                $this->mark_submission($teacher, $assign, $student, 50.0);
+                $this->grade_submission($teacher, $assign, $student, 50.0);
             }
         }
 
@@ -1782,7 +1820,7 @@ final class locallib_test extends \advanced_testcase {
         ]));
 
         // Now grade the groupa submission.
-        $this->mark_submission($teacher, $assign, $students['s1'], 50.0);
+        $this->grade_submission($teacher, $assign, $students['s1'], 50.0);
         $this->setUser($teacher);
         $data = (object)[
             'sendstudentnotifications' => false,
@@ -1949,7 +1987,7 @@ final class locallib_test extends \advanced_testcase {
 
         $this->add_submission($student, $assign);
         $this->submit_for_grading($student, $assign);
-        $this->mark_submission($teacher, $assign, $student, 50.0);
+        $this->grade_submission($teacher, $assign, $student, 50.0);
 
         $this->expectOutputRegex('/Done processing 1 assignment submissions/');
         \core\cron::setup_user();
@@ -1991,7 +2029,7 @@ final class locallib_test extends \advanced_testcase {
 
         $this->add_submission($student, $assign);
         $this->submit_for_grading($student, $assign);
-        $this->mark_submission($teacher, $assign, $student, 50.0, [
+        $this->grade_submission($teacher, $assign, $student, 50.0, [
             'sendstudentnotifications' => 0,
         ]);
 
@@ -2022,14 +2060,14 @@ final class locallib_test extends \advanced_testcase {
 
         $this->add_submission($student, $assign);
         $this->submit_for_grading($student, $assign);
-        $this->mark_submission($teacher, $assign, $student, 50.0);
+        $this->grade_submission($teacher, $assign, $student, 50.0);
 
         $this->expectOutputRegex('/Done processing 1 assignment submissions/');
         \core\cron::setup_user();
         \assign::cron();
 
         // Regrade.
-        $this->mark_submission($teacher, $assign, $student, 50.0);
+        $this->grade_submission($teacher, $assign, $student, 50.0);
 
         $this->expectOutputRegex('/Done processing 1 assignment submissions/');
         \core\cron::setup_user();
@@ -2068,7 +2106,7 @@ final class locallib_test extends \advanced_testcase {
         // This should not trigger a notification.
         $this->add_submission($student, $assign);
         $this->submit_for_grading($student, $assign);
-        $this->mark_submission($teacher, $assign, $student, 50.0, [
+        $this->grade_submission($teacher, $assign, $student, 50.0, [
             'sendstudentnotifications' => 1,
             'workflowstate' => ASSIGN_MARKING_WORKFLOW_STATE_READYFORRELEASE,
         ]);
@@ -2156,7 +2194,7 @@ You can see it appended to your <a href="' . $assignurl .
         // This should not trigger a notification.
         $this->add_submission($student, $assign);
         $this->submit_for_grading($student, $assign);
-        $this->mark_submission($teacher, $assign, $student);
+        $this->grade_submission($teacher, $assign, $student);
         \phpunit_util::stop_message_redirection();
 
         // Now run cron and see that one message was sent.
@@ -2185,7 +2223,7 @@ You can see it appended to your <a href="' . $assignurl .
 
         $this->add_submission($student, $assign);
         $this->submit_for_grading($student, $assign);
-        $this->mark_submission($teacher, $assign, $student, 50.0);
+        $this->grade_submission($teacher, $assign, $student, 50.0);
 
         $this->setUser($teacher);
         $this->assertEquals(true, $assign->testable_is_graded($student->id));
@@ -2802,7 +2840,7 @@ You can see it appended to your <a href="' . $assignurl .
         // Simulate adding a grade.
         $this->add_submission($student, $assign);
         $this->submit_for_grading($student, $assign);
-        $this->mark_submission($teacher, $assign, $student);
+        $this->grade_submission($teacher, $assign, $student);
 
         // Now we should see the feedback.
         $this->setUser($student);
@@ -2875,7 +2913,7 @@ You can see it appended to your <a href="' . $assignurl .
         // Simulate adding a grade.
         $this->add_submission($student, $assign);
         $this->submit_for_grading($student, $assign);
-        $this->mark_submission($teacher, $assign, $student, null, [
+        $this->grade_submission($teacher, $assign, $student, null, [
             'assignfeedbackcomments_editor' => [
                 'text' => 'Tomato sauce',
                 'format' => FORMAT_MOODLE,
@@ -2891,7 +2929,7 @@ You can see it appended to your <a href="' . $assignurl .
         $this->assertDoesNotMatchRegularExpression('/Graded on/', $output, 'Do not show graded date when there is no grade.');
 
         // Add a grade now.
-        $this->mark_submission($teacher, $assign, $student, 50.0, [
+        $this->grade_submission($teacher, $assign, $student, 50.0, [
             'assignfeedbackcomments_editor' => [
                 'text' => 'Bechamel sauce',
                 'format' => FORMAT_MOODLE,
@@ -2959,7 +2997,7 @@ You can see it appended to your <a href="' . $assignurl .
         $this->assertEquals(false, strpos($output, get_string('addsubmission', 'assign')));
 
         // Mark the submission.
-        $this->mark_submission($teacher, $assign, $student);
+        $this->grade_submission($teacher, $assign, $student);
 
         // Check the student can see the grade.
         $this->setUser($student);
@@ -3008,7 +3046,7 @@ You can see it appended to your <a href="' . $assignurl .
         $assign->update_instance($formdata);
 
         // Mark the submission again.
-        $this->mark_submission($teacher, $assign, $student, 60.0, [], 1);
+        $this->grade_submission($teacher, $assign, $student, 60.0, [], 1);
 
         // Check the grade exists.
         $this->setUser($teacher);
@@ -3062,7 +3100,7 @@ You can see it appended to your <a href="' . $assignurl .
         $this->assertEquals(false, strpos($output, get_string('addnewattempt', 'assign')));
 
         // Mark the submission as non-passing.
-        $this->mark_submission($teacher, $assign, $student, 50.0);
+        $this->grade_submission($teacher, $assign, $student, 50.0);
 
         // Check the student can see the grade.
         $this->setUser($student);
@@ -3084,7 +3122,7 @@ You can see it appended to your <a href="' . $assignurl .
         $this->submit_for_grading($student, $assign);
 
         // Mark the second submission as passing.
-        $this->mark_submission($teacher, $assign, $student, 80.0, [], 1);
+        $this->grade_submission($teacher, $assign, $student, 80.0, [], 1);
 
         // Check that the student does not have a button for Add a new attempt.
         $this->setUser($student);
@@ -3092,7 +3130,7 @@ You can see it appended to your <a href="' . $assignurl .
         $this->assertEquals(false, strpos($output, get_string('addnewattempt', 'assign')));
 
         // Re-mark the second submission as not passing.
-        $this->mark_submission($teacher, $assign, $student, 40.0, [], 1);
+        $this->grade_submission($teacher, $assign, $student, 40.0, [], 1);
 
         // Check that the student now has a button for Add a new attempt.
         $this->setUser($student);
@@ -3132,7 +3170,7 @@ You can see it appended to your <a href="' . $assignurl .
         $this->submit_for_grading($student, $assign);
 
         // Mark the submission as passing.
-        $this->mark_submission($teacher, $assign, $student, 100.0);
+        $this->grade_submission($teacher, $assign, $student, 100.0);
 
         // Check the student can see the grade.
         $this->setUser($student);
@@ -3175,7 +3213,7 @@ You can see it appended to your <a href="' . $assignurl .
         $this->submit_for_grading($student, $assign);
 
         // Mark the submission with any grade.
-        $this->mark_submission($teacher, $assign, $student, 0.0);
+        $this->grade_submission($teacher, $assign, $student, 0.0);
 
         // Check the student can see the grade.
         $this->setUser($student);
@@ -3227,7 +3265,7 @@ You can see it appended to your <a href="' . $assignurl .
         $this->assertEquals(false, strpos($output, get_string('addnewattempt', 'assign')));
 
         // Mark the submission as non-passing.
-        $this->mark_submission($teacher, $assign, $student, 50.0);
+        $this->grade_submission($teacher, $assign, $student, 50.0);
 
         // Check the student now has a button for Add a new attempt.
         $this->setUser($student);
@@ -3239,7 +3277,7 @@ You can see it appended to your <a href="' . $assignurl .
         $this->submit_for_grading($student, $assign);
 
         // Mark the submission as passing.
-        $this->mark_submission($teacher, $assign, $student, 80.0, [], 1);
+        $this->grade_submission($teacher, $assign, $student, 80.0, [], 1);
 
         // Check the student now has a button for Add a new attempt.
         $this->setUser($student);
@@ -3265,7 +3303,7 @@ You can see it appended to your <a href="' . $assignurl .
         $PAGE->set_url(new \moodle_url('/mod/assign/view.php', ['id' => $assign->get_course_module()->id]));
 
         // Mark the submission and set to notmarked.
-        $this->mark_submission($teacher, $assign, $student, 50.0, [
+        $this->grade_submission($teacher, $assign, $student, 50.0, [
             'workflowstate' => ASSIGN_MARKING_WORKFLOW_STATE_NOTMARKED,
         ]);
 
@@ -3279,7 +3317,7 @@ You can see it appended to your <a href="' . $assignurl .
         $this->assertEmpty($grades);
 
         // Mark the submission and set to inmarking.
-        $this->mark_submission($teacher, $assign, $student, 50.0, [
+        $this->grade_submission($teacher, $assign, $student, 50.0, [
             'workflowstate' => ASSIGN_MARKING_WORKFLOW_STATE_INMARKING,
         ]);
 
@@ -3293,7 +3331,7 @@ You can see it appended to your <a href="' . $assignurl .
         $this->assertEmpty($grades);
 
         // Mark the submission and set to readyforreview.
-        $this->mark_submission($teacher, $assign, $student, 50.0, [
+        $this->grade_submission($teacher, $assign, $student, 50.0, [
             'workflowstate' => ASSIGN_MARKING_WORKFLOW_STATE_READYFORREVIEW,
         ]);
 
@@ -3307,7 +3345,7 @@ You can see it appended to your <a href="' . $assignurl .
         $this->assertEmpty($grades);
 
         // Mark the submission and set to inreview.
-        $this->mark_submission($teacher, $assign, $student, 50.0, [
+        $this->grade_submission($teacher, $assign, $student, 50.0, [
             'workflowstate' => ASSIGN_MARKING_WORKFLOW_STATE_INREVIEW,
         ]);
 
@@ -3321,7 +3359,7 @@ You can see it appended to your <a href="' . $assignurl .
         $this->assertEmpty($grades);
 
         // Mark the submission and set to readyforrelease.
-        $this->mark_submission($teacher, $assign, $student, 50.0, [
+        $this->grade_submission($teacher, $assign, $student, 50.0, [
             'workflowstate' => ASSIGN_MARKING_WORKFLOW_STATE_READYFORRELEASE,
         ]);
 
@@ -3335,7 +3373,7 @@ You can see it appended to your <a href="' . $assignurl .
         $this->assertEmpty($grades);
 
         // Mark the submission and set to released.
-        $this->mark_submission($teacher, $assign, $student, 50.0, [
+        $this->grade_submission($teacher, $assign, $student, 50.0, [
             'workflowstate' => ASSIGN_MARKING_WORKFLOW_STATE_RELEASED,
         ]);
 
@@ -3347,46 +3385,6 @@ You can see it appended to your <a href="' . $assignurl .
         // Make sure the grade is pushed to the gradebook.
         $grades = $assign->get_user_grades_for_gradebook($student->id);
         $this->assertEquals(50, (int)$grades[$student->id]->rawgrade);
-    }
-
-    /**
-     * Test that a student allocated a specific marker is only shown to that marker.
-     */
-    public function test_markerallocation(): void {
-        global $PAGE;
-
-        $this->resetAfterTest();
-        $course = $this->getDataGenerator()->create_course();
-        $student = $this->getDataGenerator()->create_and_enrol($course, 'student');
-        $teacher = $this->getDataGenerator()->create_and_enrol($course, 'teacher');
-        $otherteacher = $this->getDataGenerator()->create_and_enrol($course, 'teacher');
-
-        $assign = $this->create_instance($course, [
-            'markingworkflow' => 1,
-            'markingallocation' => 1,
-        ]);
-
-        $PAGE->set_url(new \moodle_url('/mod/assign/view.php', ['id' => $assign->get_course_module()->id]));
-
-        // Allocate marker to submission.
-        $this->mark_submission($teacher, $assign, $student, null, [
-            'allocatedmarker' => $teacher->id,
-        ]);
-
-        // Check the allocated marker can view the submission.
-        $this->setUser($teacher);
-        $users = $assign->list_participants(0, true);
-        $this->assertEquals(1, count($users));
-        $this->assertTrue(isset($users[$student->id]));
-
-        $cm = get_coursemodule_from_instance('assign', $assign->get_instance()->id);
-        $context = \context_module::instance($cm->id);
-        $assign = new mod_assign_testable_assign($context, $cm, $course);
-
-        // Check that other teachers can't view this submission.
-        $this->setUser($otherteacher);
-        $users = $assign->list_participants(0, true);
-        $this->assertEquals(0, count($users));
     }
 
     /**
@@ -4175,11 +4173,18 @@ Anchor link 2:<a title=\"bananas\" href=\"../logo-240x60.gif\">Link text</a>
                     'stamps' => 'Annotate PDF',
                     'tmp_jpg_to_pdf' => 'Annotate PDF',
                     'tmp_rotated_jpg' => 'Annotate PDF',
+                    'download_marker' => 'Annotate PDF',
+                    'combined_marker' => 'Annotate PDF',
+                    'partial_marker' => 'Annotate PDF',
+                    'importhtml_marker' => 'Annotate PDF',
                 ];
                 $this->assertEquals($checkareas, $fileareas);
                 $usingfilearea++;
             } else if ($type == 'file') {
-                $this->assertEquals(['feedback_files' => 'Feedback files'], $fileareas);
+                $this->assertEquals([
+                    'feedback_files' => 'Feedback files',
+                    'feedback_marker' => 'Feedback files',
+                ], $fileareas);
                 $usingfilearea++;
             } else if ($type == 'comments') {
                 $this->assertEquals(['feedback' => 'Feedback comments'], $fileareas);
@@ -4245,6 +4250,8 @@ Anchor link 2:<a title=\"bananas\" href=\"../logo-240x60.gif\">Link text</a>
                 'duedate' => 2,
                 'cutoffdate' => 3,
                 'timelimit' => null,
+                'reason' => null,
+                'reasonformat' => 0,
             ],
             (object) [
                 // Override for group 2, lower priority (numerically higher sortorder).
@@ -4256,6 +4263,8 @@ Anchor link 2:<a title=\"bananas\" href=\"../logo-240x60.gif\">Link text</a>
                 'duedate' => 6,
                 'cutoffdate' => 6,
                 'timelimit' => null,
+                'reason' => null,
+                'reasonformat' => 0,
             ],
             (object) [
                 // User override.
@@ -4267,6 +4276,8 @@ Anchor link 2:<a title=\"bananas\" href=\"../logo-240x60.gif\">Link text</a>
                 'duedate' => 8,
                 'cutoffdate' => 9,
                 'timelimit' => null,
+                'reason' => null,
+                'reasonformat' => 0,
             ],
         ];
 
@@ -5185,7 +5196,7 @@ Anchor link 2:<a title=\"bananas\" href=\"../logo-240x60.gif\">Link text</a>
         ]);
 
         // Add a grade and change the workflow status to "Released".
-        $this->mark_submission($teacher, $assign, $student, 50.0,  [
+        $this->grade_submission($teacher, $assign, $student, 50.0, [
             'workflowstate' => ASSIGN_MARKING_WORKFLOW_STATE_RELEASED,
         ]);
 

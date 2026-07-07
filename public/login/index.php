@@ -85,9 +85,10 @@ if (!empty($SESSION->has_timed_out)) {
 $frm  = false;
 $user = false;
 
-$authsequence = get_enabled_auth_plugins(); // Auths, in sequence.
+$authentication = \core\di::get(\core\authentication::class);
+$authsequence = $authentication->get_enabled_plugins(); // Auths, in sequence.
 foreach($authsequence as $authname) {
-    $authplugin = get_auth_plugin($authname);
+    $authplugin = $authentication->get_plugin($authname);
     // The auth plugin's loginpage_hook() can eventually set $frm and/or $user.
     $authplugin->loginpage_hook();
 }
@@ -134,11 +135,11 @@ if ($anchor && isset($SESSION->wantsurl) && strpos($SESSION->wantsurl, '#') === 
 
 /// Check if the user has actually submitted login data to us
 
-if ($frm and isset($frm->username)) {                             // Login WITH cookies
-
+if ($frm && isset($frm->username)) {
+    // Login WITH cookies.
     $frm->username = trim(core_text::strtolower($frm->username));
 
-    if (is_enabled_auth('none') ) {
+    if ($authentication->is_enabled('none')) {
         if ($frm->username !== core_user::clean_field($frm->username, 'username')) {
             $errormsg = get_string('username').': '.get_string("invalidusername");
             $errorcode = 2;
@@ -148,8 +149,9 @@ if ($frm and isset($frm->username)) {                             // Login WITH 
 
     if ($user) {
         // The auth plugin has already provided the user via the loginpage_hook() called above.
-    } else if (($frm->username == 'guest') and empty($CFG->guestloginbutton)) {
-        $user = false;    /// Can't log in as guest if guest button is disabled
+    } else if (($frm->username == 'guest') && empty($CFG->guestloginbutton)) {
+        // Can't log in as guest if guest button is disabled.
+        $user = false;
         $frm = false;
     } else {
         if (empty($errormsg)) {
@@ -159,8 +161,9 @@ if ($frm and isset($frm->username)) {                             // Login WITH 
         }
     }
 
-    // Intercept 'restored' users to provide them with info & reset password
-    if (!$user and $frm and is_restored_user($frm->username)) {
+    // Intercept 'restored' users to provide them with info & reset password.
+    $authhelper = \core\di::get(\core\authentication::class);
+    if (!$user && $frm && $authhelper->is_restored_user($frm->username)) {
         $PAGE->set_title(get_string('restoredaccount'));
         $PAGE->set_heading($site->fullname);
         echo $OUTPUT->header();
@@ -174,10 +177,9 @@ if ($frm and isset($frm->username)) {                             // Login WITH 
     }
 
     if ($user) {
-
-        // language setup
+        // Language setup.
         if (isguestuser($user)) {
-            // no predefined language for guests - use existing session or default site lang
+            // No predefined language for guests - use existing session or default site lang.
             unset($user->lang);
 
         } else if (!empty($user->lang)) {
@@ -234,7 +236,7 @@ if ($frm and isset($frm->username)) {                             // Login WITH 
 
     /// check if user password has expired
     /// Currently supported only for ldap-authentication module
-        $userauth = get_auth_plugin($USER->auth);
+        $userauth = $authentication->get_plugin($USER->auth);
         if (!isguestuser() and !empty($userauth->config->expiration) and $userauth->config->expiration == 1) {
             $externalchangepassword = false;
             if ($userauth->can_change_password()) {
@@ -364,8 +366,10 @@ if (!empty($SESSION->loginerrormsg) || !empty($SESSION->logininfomsg)) {
     // We had some messages before redirect, show them now.
     $errormsg = $SESSION->loginerrormsg ?? '';
     $infomsg = $SESSION->logininfomsg ?? '';
+    $errorcode = (int) ($SESSION->loginerrorcode ?? 0);
     unset($SESSION->loginerrormsg);
     unset($SESSION->logininfomsg);
+    unset($SESSION->loginerrorcode);
 
 } else if ($testsession) {
     // No need to redirect here.
@@ -376,6 +380,7 @@ if (!empty($SESSION->loginerrormsg) || !empty($SESSION->logininfomsg)) {
     // We must redirect after every password submission.
     if ($errormsg) {
         $SESSION->loginerrormsg = $errormsg;
+        $SESSION->loginerrorcode = $errorcode;
     }
 
     // Add redirect param to url.
@@ -394,12 +399,17 @@ if (isloggedin() and !isguestuser()) {
     // prevent logging when already logged in, we do not want them to relogin by accident because sesskey would be changed
     echo $OUTPUT->box_start();
     $logout = new single_button(new moodle_url('/login/logout.php', array('sesskey'=>sesskey(),'loginpage'=>1)), get_string('logout'), 'post');
-    $continue = new single_button(new moodle_url('/'), get_string('cancel'), 'get');
-    echo $OUTPUT->confirm(get_string('alreadyloggedin', 'error', fullname($USER)), $logout, $continue);
+    $continue = new single_button(new moodle_url('/'), get_string('gobacktosite'), 'get');
+    echo $OUTPUT->confirm(
+        message: get_string('alreadyloggedin', 'error', fullname($USER)),
+        continue: $logout,
+        cancel: $continue,
+        displayoptions: ['confirmtitle' => get_string('logoutconfirmtitle')],
+    );
     echo $OUTPUT->box_end();
 } else {
     $loginform = new \core_auth\output\login($authsequence, $frm->username);
-    $loginform->set_error($errormsg);
+    $loginform->set_error($errormsg, $errorcode);
     $loginform->set_info($infomsg);
     echo $OUTPUT->render($loginform);
 }

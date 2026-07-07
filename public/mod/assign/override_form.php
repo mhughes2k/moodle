@@ -166,8 +166,14 @@ class assign_override_form extends moodleform {
                     $groups = groups_get_activity_allowed_groups($cm);
                     $groupids = array_keys($groups);
                 }
-                $users = get_enrolled_users($this->context, '',
-                        $groupids, $userfields, $sort);
+                $users = get_enrolled_users(
+                    context: $this->context,
+                    withcapability: 'mod/assign:submit',
+                    groupids: $groupids,
+                    userfields: $userfields,
+                    orderby: $sort,
+                    onlyactive: true
+                );
 
                 // Filter users based on any fixed restrictions (groups, profile).
                 $info = new \core_availability\info_module($cm);
@@ -285,6 +291,16 @@ class assign_override_form extends moodleform {
                 get_string('timelimit', 'assign'), array('optional' => true));
             $mform->setDefault('timelimit', $assigninstance->timelimit);
         }
+
+        // Reason for override.
+        $editoroptions = [
+            'maxfiles' => 0,
+            'noclean' => false,
+            'context' => $this->context,
+        ];
+        $mform->addElement('editor', 'reason_editor', get_string('overridereason', 'assign'), null, $editoroptions);
+        $mform->setType('reason_editor', PARAM_RAW);
+        $mform->addHelpButton('reason_editor', 'overridereason', 'assign');
 
         // Submit buttons.
         $mform->addElement('submit', 'resetbutton',

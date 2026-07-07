@@ -55,6 +55,9 @@ class manager {
     /** @var array Stores the the SESSION after write_close is called, used to check if it was mutated after the session is closed */
     private static $sessionatclose = [];
 
+    /** @var null|bool Whether Cookies are supported for this request */
+    private static ?bool $cookiessupported = null;
+
     /**
      * @var bool Used to trigger the SESSION mutation warning without actually preventing SESSION mutation.
      * This variable is used to "copy" what the $requireslock parameter  does in start_session().
@@ -100,20 +103,24 @@ class manager {
     public static function start() {
         global $CFG, $DB, $PERF;
 
-        if (isset(self::$sessionactive)) {
+        if (self::is_session_active()) {
             debugging('Session was already started!', DEBUG_DEVELOPER);
             return;
         }
 
         // Grab the time before session lock starts.
-        $PERF->sessionlock['start'] = microtime(true);
+        if ($PERF) {
+            $PERF->sessionlock['start'] = microtime(true);
+        }
         self::load_handler();
 
         // Init the session handler only if everything initialised properly in lib/setup.php file
         // and the session is actually required.
-        if (empty($DB) or empty($CFG->version) or !defined('NO_MOODLE_COOKIES') or NO_MOODLE_COOKIES or CLI_SCRIPT) {
+        if (!self::request_supports_sessions()) {
             self::$sessionactive = false;
-            self::init_empty_session();
+            if (!self::is_session_initialised()) {
+                self::init_empty_session();
+            }
             return;
         }
 
@@ -134,6 +141,101 @@ class manager {
         }
 
         self::start_session($requireslock);
+    }
+
+    /**
+     * Whether the session is currently active.
+     *
+     * @return bool
+     */
+    public static function is_session_active(): bool {
+        return self::$sessionactive ?? false;
+    }
+
+    /**
+     * Check whether this request supports the use of sessions.
+     *
+     * This takes into consideration things like:
+     * - whether the database is available
+     * - whether a Moodle version was detected
+     * - whether the session has been marked as supporting cookies
+     * - whether this is a CLI script
+     *
+     * @return bool
+     */
+    private static function request_supports_sessions(): bool {
+        global $CFG, $DB;
+
+        if (empty($DB)) {
+            return false;
+        }
+
+        if (empty($CFG->version)) {
+            return false;
+        }
+
+        if (static::$cookiessupported === null) {
+            static::set_initial_cookie_support();
+        }
+
+        if (!static::$cookiessupported) {
+            return false;
+        }
+
+        if (static::is_cli_script()) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Determine the initial cookie support status.
+     */
+    public static function set_initial_cookie_support(): void {
+        if (static::$cookiessupported === null) {
+            if (defined('NO_MOODLE_COOKIES')) {
+                static::set_cookies_supported(!NO_MOODLE_COOKIES);
+            } else {
+                static::set_cookies_supported(true);
+            }
+        }
+    }
+
+    /**
+     * Set whether the current request supports the use of cookies.
+     *
+     * @param bool $supported
+     */
+    public static function set_cookies_supported(bool $supported): void {
+        static::$cookiessupported = $supported;
+    }
+
+    /**
+     * Helper to check whether this is run from a CLI Script.
+     *
+     * @return bool
+     */
+    protected static function is_cli_script(): bool {
+        return CLI_SCRIPT;
+    }
+
+    /**
+     * Whether the current session supports cookies.
+     *
+     * @return bool
+     */
+    public static function supports_cookies(): bool {
+        if (isset(static::$cookiessupported)) {
+            return static::$cookiessupported;
+        }
+
+        if (defined('NO_MOODLE_COOKIES')) {
+            return !NO_MOODLE_COOKIES;
+        }
+
+        // Support cookies by default.
+        return true;
     }
 
     /**
@@ -271,6 +373,27 @@ class manager {
     }
 
     /**
+     * Check whether the session has been initialised.
+     *
+     * @return bool
+     */
+    protected static function is_session_initialised(): bool {
+        if (self::$sessionactive) {
+            return true;
+        }
+
+        if (!is_object($GLOBALS['SESSION'])) {
+            return false;
+        }
+
+        if (!is_object($GLOBALS['USER'])) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
      * Empty current session, fill it with not-logged-in user info.
      *
      * This is intended for installation scripts, unit tests and other
@@ -387,9 +510,11 @@ class manager {
             'httponly' => $CFG->cookiehttponly,
         ];
 
-        if (self::should_use_samesite_none()) {
-            // If $samesite is empty, we don't want there to be any SameSite attribute.
+        if (\core_useragent::is_moodle_app()) {
+            // Moodle Mobile app for Android requires SameSite=None to allow embedding content such as H5P and SCORM.
             $sessionoptions['samesite'] = 'None';
+        } else {
+            $sessionoptions['samesite'] = 'Lax';
         }
 
         session_set_cookie_params($sessionoptions);
@@ -453,9 +578,10 @@ class manager {
 
             } else if ($record->timemodified < di::get(clock::class)->time() - $maxlifetime) {
                 $timeout = true;
-                $authsequence = get_enabled_auth_plugins(); // Auths, in sequence.
+                $authentication = di::get(\core\authentication::class);
+                $authsequence = $authentication->get_enabled_plugins(); // Auths, in sequence.
                 foreach ($authsequence as $authname) {
-                    $authplugin = get_auth_plugin($authname);
+                    $authplugin = $authentication->get_plugin($authname);
                     if ($authplugin->ignore_timeout_hook($_SESSION['USER'], $record->sid, $record->timecreated, $record->timemodified)) {
                         $timeout = false;
                         break;
@@ -641,27 +767,6 @@ class manager {
 
         // Setup $USER object.
         self::set_user($user);
-    }
-
-    /**
-     * Returns a valid setting for the SameSite cookie attribute.
-     *
-     * @return string The desired setting for the SameSite attribute on the cookie. Empty string indicates the SameSite attribute
-     * should not be set at all.
-     */
-    private static function should_use_samesite_none(): bool {
-        // We only want None or no attribute at this point. When we have cookie handling compatible with Lax,
-        // we can look at checking a setting.
-
-        // Browser support for none is not consistent yet. There are known issues with Safari, and IE11.
-        // Things are stablising, however as they're not stable yet we will deal specifically with the version of chrome
-        // that introduces a default of lax, setting it to none for the current version of chrome (2 releases before the change).
-        // We also check you are using secure cookies and HTTPS because if you are not running over HTTPS
-        // then setting SameSite=None will cause your session cookie to be rejected.
-        if (\core_useragent::is_chrome() && \core_useragent::check_chrome_version('78') && is_moodle_cookie_secure()) {
-            return true;
-        }
-        return false;
     }
 
     /**
@@ -1209,9 +1314,16 @@ class manager {
      * @param string $component The string component for the message to show on failure.
      * @param int $frequency The update frequency in seconds.
      * @param int $timeout The timeout of each request in seconds.
-     * @throws \coding_exception IF the frequency is longer than the session lifetime.
+     * @param \moodle_url|string|null $redirect A URL to redirect to if connection is lost.
+     * @throws \coding_exception If the frequency is longer than the session lifetime.
      */
-    public static function keepalive($identifier = 'sessionerroruser', $component = 'error', $frequency = null, $timeout = 0) {
+    public static function keepalive(
+        $identifier = 'sessionerroruser',
+        $component = 'error',
+        $frequency = null,
+        $timeout = 0,
+        $redirect = null
+    ) {
         global $CFG, $PAGE;
 
         if ($frequency) {
@@ -1224,11 +1336,16 @@ class manager {
             $frequency = $CFG->sessiontimeout / 10;
         }
 
+        if ($redirect instanceof \moodle_url) {
+            $redirect = $redirect->out();
+        }
+
         $PAGE->requires->js_call_amd('core/network', 'keepalive', array(
                 $frequency,
                 $timeout,
                 $identifier,
-                $component
+                $component,
+                $redirect,
             ));
     }
 
@@ -1536,5 +1653,27 @@ class manager {
         // Apply the comparison functions to the two given session arrays,
         // making sure to use the largest array first, so that all keys are considered.
         return array_udiff_uassoc($largest, $smallest, $valcompare, $keycompare);
+    }
+
+    /**
+     * Reset everything if necessary.
+     *
+     * @private
+     * @throws \core\exception\coding_exception if used outside of unit tests.
+     */
+    public static function phpunit_reset(): void {
+        if (!PHPUNIT_TEST) {
+            throw new \core\exception\coding_exception('Cannot reset manager outside of phpunit tests!');
+        }
+
+        self::$handler = null;
+        self::$sessionactive = null;
+        self::$logintokenkey = 'core_auth_login';
+        self::$priorsession = [];
+        self::$sessionatclose = [];
+        self::$cookiessupported = true;
+        self::$requireslockdebug = null;
+
+        self::load_handler();
     }
 }

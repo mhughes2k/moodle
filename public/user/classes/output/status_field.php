@@ -62,6 +62,9 @@ class status_field implements renderable, templatable {
     /** @var string $status The user enrolment status. */
     protected $status;
 
+    /** @var string|null $statusinfo Optional extra status details. */
+    protected $statusinfo;
+
     /** @var int $timestart The timestamp when the user's enrolment starts. */
     protected $timestart;
 
@@ -94,13 +97,24 @@ class status_field implements renderable, templatable {
      * @param int|null $timeend The timestamp when the user's enrolment ends.
      * @param user_enrolment_action[] $enrolactions Array of enrol action objects for the given enrolment method.
      * @param int|null $timeenrolled The timestamp when the user was enrolled.
+     * @param string|null $statusinfo Optional extra status details.
      */
-    public function __construct($enrolinstancename, $coursename, $fullname, $status, $timestart = null, $timeend = null,
-                                $enrolactions = [], $timeenrolled = null) {
+    public function __construct(
+        $enrolinstancename,
+        $coursename,
+        $fullname,
+        $status,
+        $timestart = null,
+        $timeend = null,
+        $enrolactions = [],
+        $timeenrolled = null,
+        $statusinfo = null
+    ) {
         $this->enrolinstancename = $enrolinstancename;
         $this->coursename = $coursename;
         $this->fullname = $fullname;
         $this->status = $status;
+        $this->statusinfo = $statusinfo ?: null;
         $this->timestart = $timestart;
         $this->timeend = $timeend;
         $this->enrolactions = $enrolactions;
@@ -122,6 +136,7 @@ class status_field implements renderable, templatable {
         $data->coursename = $this->coursename;
         $data->fullname = $this->fullname;
         $data->status = $this->status;
+        $data->statusinfo = $this->statusinfo;
         $data->active = $this->statusactive;
         $data->suspended = $this->statussuspended;
         $data->notcurrent = $this->statusnotcurrent;

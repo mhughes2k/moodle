@@ -200,7 +200,6 @@ $divider-hover-color: $primary !default;
     list-style: none;
     padding-top: map-get($spacers, 1);
     margin-top: map-get($spacers, 1);
-    border-top: $border-width solid $border-color;
     &.indented {
         .activity-item {
             margin-left: map-get($spacers, 3);
@@ -218,7 +217,14 @@ $divider-hover-color: $primary !default;
 
 .activity-item {
     padding: $activity-item-padding;
-    @include border-radius($activity-border-radius);
+    // In not editing mode we add a grayed line as a separator between activities.
+    body:not(.editing) & {
+        border-bottom: $border-width solid $border-color;
+    }
+    // Remove last activity bottom border in sections outside course content (like single section page).
+    .section-list .section .section-item .activity:last-child > & {
+        border-bottom: none;
+    }
     &.activityinline {
         padding: $activity-item-padding 0;
     }
@@ -324,6 +330,10 @@ $divider-hover-color: $primary !default;
         column-gap: 0.75rem;
         @include media-breakpoint-down(sm) {
             margin-top: map-get($spacers, 2);
+        }
+        .date-item-label {
+            font-weight: 600;
+            margin-right: map-get($spacers, 1);
         }
     }
     .activity-name-area {
@@ -663,6 +673,13 @@ $divider-hover-color: $primary !default;
         .section-item {
             padding: 0;
             border: none;
+            // No rounded borders
+            border-radius: 0;
+            // Add bottom border back to last activity in section in non editing mode.
+            body:not(.editing) & .activity:last-child {
+                border-bottom: $border-width solid $border-color;
+            }
+
         }
     }
 }
@@ -764,11 +781,12 @@ $divider-hover-color: $primary !default;
 /* Subsections */
 
 .activity.subsection {
-    border-top: none;
     > .activity-item {
-        border: $border-width solid $border-color;
+        // Remove bottom border from subsection container.
+        border-bottom: none;
         padding: 0;
         margin: map-get($spacers, 2) 0;
+
         > .activity-grid > .activity-altcontent {
             margin-top: 0;
         }
@@ -777,7 +795,7 @@ $divider-hover-color: $primary !default;
         margin-top: 0;
         .section-item {
             border: none;
-            padding: $activity-item-padding;
+            padding: $activity-item-padding $activity-item-padding 0;
         }
         .icons-collapse-expand:has(+ h4) {
             height: map-get($iconsizes, 4);
@@ -791,9 +809,6 @@ $divider-hover-color: $primary !default;
             font-size: inherit;
         }
     }
-    + .activity {
-        border-top: none;
-    }
     // Allow v-parent-focus only for closest acvitity (avoiding subsection).
     .focus-control:not(:has(.focus-control)) {
         &:focus-within .v-parent-focus,
@@ -806,6 +821,47 @@ $divider-hover-color: $primary !default;
     .focus-control:hover .focus-control .v-parent-focus {
         opacity: 0;
         visibility: hidden;
+    }
+    .activity {
+        margin-left: map-get($spacers, 4);
+    }
+    body:not(.editing) & {
+        .section-item {
+            .course-content-item-content {
+                border-bottom: $border-width solid $border-color;
+            }
+            .course-section-header {
+                padding-bottom: map-get($spacers, 3);
+            }
+            .course-section-header:has(.icons-collapse-expand.collapsed) {
+                border-bottom: $border-width solid $border-color;
+            }
+
+            &:has(.course-content-item-content.collapsing) .course-section-header {
+                border-bottom: none;
+            }
+            .section .activity:last-child {
+                border-bottom: none;
+            }
+
+        }
+        .course-content-item-content > [data-for="sectioninfo"] {
+            margin: map-get($spacers, 1) 0;
+        }
+        .course-content-item-content > [data-for="sectioninfo"]:not(.description) {
+            margin: 0;
+            min-height: 0;
+        }
+        // No bottom line for the last subsection.
+        &:last-child .section-item {
+            .course-content-item-content {
+                border-bottom: none;
+            }
+
+            .course-section-header:has(.icons-collapse-expand.collapsed) {
+                border-bottom: none;
+            }
+        }
     }
 }
 
@@ -865,6 +921,10 @@ $divider-hover-color: $primary !default;
     }
 }
 
+[data-for="sectioninfo"] {
+    margin: map-get($spacers, 3) 0;
+}
+
 /* Drag and drop */
 
 // Compensate for the border widths when dropzones are displayed.
@@ -897,6 +957,22 @@ $divider-hover-color: $primary !default;
 
     [data-for="sectioninfo"].drop-down {
         margin-top: -1px;
+    }
+}
+
+/* Course linear navigation footer. */
+
+.course-linear-navigation-footer-content {
+    .course-linear-navigation-link {
+        font-size: $font-size-base;
+        padding: $spacer * .25 0;
+
+        &:hover,
+        &:focus {
+            span {
+                text-decoration: underline;
+            }
+        }
     }
 }
 

@@ -3707,11 +3707,14 @@ class admin_setting_configmultiselect extends admin_setting_configselect {
         if (!is_array($data)) {
             return ''; //ignore it
         }
-        if (!$this->load_choices() or empty($this->choices)) {
-            return '';
-        }
 
         unset($data['xxxxx']);
+
+        // Only reject when the caller actually supplied a value
+        // and there is no valid choices to validate against.
+        if (!empty($data) && (!$this->load_choices() || empty($this->choices))) {
+            return '';
+        }
 
         $save = array();
         foreach ($data as $value) {
@@ -4301,8 +4304,9 @@ class admin_setting_configmixedhostiplist extends admin_setting_configtextarea {
             $badentries[] = $entry;
         }
 
-        if ($badentries) {
-            return get_string('validateerrorlist', 'admin', join(', ', $badentries));
+        if (count($badentries) > 0) {
+            $badentries = implode(get_string('listsep', 'core_langconfig') . ' ', $badentries);
+            return get_string('validateerrorlist', 'admin', $badentries);
         }
         return true;
     }
@@ -4419,7 +4423,8 @@ class admin_setting_configportlist extends admin_setting_configtextarea {
                 $badentries[] = $port;
             }
         }
-        if ($badentries) {
+        if (count($badentries) > 0) {
+            $badentries = implode(get_string('listsep', 'core_langconfig') . ' ', $badentries);
             return get_string('validateerrorlist', 'admin', $badentries);
         }
         return true;
@@ -5298,9 +5303,10 @@ class admin_setting_emoticons extends admin_setting {
 class admin_setting_langlist extends admin_setting_configtext {
     /**
      * Calls parent::__construct with specific arguments
+     * @param string $name Name of the admin setting
      */
-    public function __construct() {
-        parent::__construct('langlist', get_string('langlist', 'admin'), get_string('configlanglist', 'admin'), '', PARAM_NOTAGS);
+    public function __construct($name = 'langlist') {
+        parent::__construct($name, get_string($name, 'admin'), get_string('config' . $name, 'admin'), '', PARAM_NOTAGS);
     }
 
     /**
@@ -6620,10 +6626,11 @@ class admin_setting_special_registerauth extends admin_setting_configselect {
         $this->choices = array();
         $this->choices[''] = get_string('disable');
 
-        $authsenabled = get_enabled_auth_plugins();
+        $authentication = \core\di::get(\core\authentication::class);
+        $authsenabled = $authentication->get_enabled_plugins();
 
         foreach ($authsenabled as $auth) {
-            $authplugin = get_auth_plugin($auth);
+            $authplugin = $authentication->get_plugin($auth);
             if (!$authplugin->can_signup()) {
                 continue;
             }
@@ -7321,7 +7328,7 @@ class admin_setting_manageauths extends admin_setting {
                 $this->searchmatchtype = admin_search::SEARCH_MATCH_SETTING_SHORT_NAME;
                 return true;
             }
-            $authplugin = get_auth_plugin($auth);
+            $authplugin = \core\di::get(\core\authentication::class)->get_plugin($auth);
             $authtitle = $authplugin->get_title();
             if (strpos(core_text::strtolower($authtitle), $query) !== false) {
                 $this->searchmatchtype = admin_search::SEARCH_MATCH_SETTING_DISPLAY_NAME;
@@ -7350,7 +7357,8 @@ class admin_setting_manageauths extends admin_setting {
         $txt->testsettings = get_string('testsettings', 'core_auth');
 
         $authsavailable = core_component::get_plugin_list('auth');
-        get_enabled_auth_plugins(true); // fix the list of enabled auths
+        // Fix the list of enabled auths.
+        \core\di::get(\core\authentication::class)->get_enabled_plugins(true);
         if (empty($CFG->auth)) {
             $authsenabled = array();
         } else {
@@ -7362,8 +7370,9 @@ class admin_setting_manageauths extends admin_setting {
         $registrationauths = array();
         $registrationauths[''] = $txt->disable;
         $authplugins = array();
+        $authentication = \core\di::get(\core\authentication::class);
         foreach ($authsenabled as $auth) {
-            $authplugin = get_auth_plugin($auth);
+            $authplugin = $authentication->get_plugin($auth);
             $authplugins[$auth] = $authplugin;
             /// Get the auth title (from core or own auth lang files)
             $authtitle = $authplugin->get_title();
@@ -7378,7 +7387,7 @@ class admin_setting_manageauths extends admin_setting {
             if (array_key_exists($auth, $displayauths)) {
                 continue; //already in the list
             }
-            $authplugin = get_auth_plugin($auth);
+            $authplugin = $authentication->get_plugin($auth);
             $authplugins[$auth] = $authplugin;
             /// Get the auth title (from core or own auth lang files)
             $authtitle = $authplugin->get_title();
@@ -10612,13 +10621,13 @@ class admin_setting_configcolourpicker extends admin_setting {
             return $data;
         } else if (in_array(strtolower($data), $colornames)) {
             return $data;
-        } else if (preg_match('/rgb\(\d{0,3}%?\, ?\d{0,3}%?, ?\d{0,3}%?\)/i', $data)) {
+        } else if (preg_match('/^rgb\(\d{0,3}%?\, ?\d{0,3}%?, ?\d{0,3}%?\)$/i', $data)) {
             return $data;
-        } else if (preg_match('/rgba\(\d{0,3}%?\, ?\d{0,3}%?, ?\d{0,3}%?\, ?\d(\.\d)?\)/i', $data)) {
+        } else if (preg_match('/^rgba\(\d{0,3}%?\, ?\d{0,3}%?, ?\d{0,3}%?\, ?\d(\.\d)?\)$/i', $data)) {
             return $data;
-        } else if (preg_match('/hsl\(\d{0,3}\, ?\d{0,3}%, ?\d{0,3}%\)/i', $data)) {
+        } else if (preg_match('/^hsl\(\d{0,3}\, ?\d{0,3}%, ?\d{0,3}%\)$/i', $data)) {
             return $data;
-        } else if (preg_match('/hsla\(\d{0,3}\, ?\d{0,3}%,\d{0,3}%\, ?\d(\.\d)?\)/i', $data)) {
+        } else if (preg_match('/^hsla\(\d{0,3}\, ?\d{0,3}%, ?\d{0,3}%\, ?\d(\.\d)?\)$/i', $data)) {
             return $data;
         } else if (($data == 'transparent') || ($data == 'currentColor') || ($data == 'inherit')) {
             return $data;

@@ -329,6 +329,7 @@ class api {
                 // Otherwise it means that the $USER was not allowed to search the returned user.
                 if (!empty($userdetails) and !empty($userdetails['fullname'])) {
                     // We know we've matched, but only save the record if it's within the offset area we need.
+                    $user->initials = \core_user::get_initials($user);
                     if ($limitfrom == 0) {
                         // No offset specified, so just save.
                         $returnedusers[$id] = $user;
@@ -407,8 +408,8 @@ class api {
                 if (array_key_exists($groupid, $courseinfo)) {
                     $group = $courseinfo[$groupid];
                     // Subname.
-                    $extrafields[$convid]['subname'] = format_string($courseinfo[$groupid]->courseshortname);
-
+                    $subname = format_string($courseinfo[$groupid]->courseshortname, true, ['escape' => false]);
+                    $extrafields[$convid]['subname'] = $subname;
                     // Imageurl.
                     $extrafields[$convid]['imageurl'] = $renderer->image_url('g/g1')->out(false); // default image.
                     if ($url = get_group_picture_url($group, $group->courseid, true)) {
@@ -740,7 +741,7 @@ class api {
                 $convcontext = \context::instance_by_id($conversation->contextid);
                 $contexttodeletemessageforall = $convcontext;
             }
-            $conv->name = format_string($conversation->conversationname, true, ['context' => $convcontext]);
+            $conv->name = format_string($conversation->conversationname, true, ['context' => $convcontext, 'escape' => false]);
 
             $conv->subname = $convextrafields[$conv->id]['subname'] ?? null;
             $conv->imageurl = $convextrafields[$conv->id]['imageurl'] ?? null;
@@ -1513,7 +1514,10 @@ class api {
                 return $member->id != $userid;
             });
             $otheruser = reset($otheruser);
-
+            // Check if the user still exists in the system.
+            if (!$otheruser || !\core\user::is_real_user($otheruser->id, true)) {
+                return false;
+            }
             return self::can_contact_user($otheruser->id, $userid);
         } else {
             throw new \moodle_exception("Invalid conversation type '$conversation->type'.");

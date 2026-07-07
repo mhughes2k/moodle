@@ -105,6 +105,7 @@ class user_edit_form extends moodleform {
         profile_definition($mform, $userid);
 
         $this->add_action_buttons(true, get_string('updatemyprofile'));
+        $mform->set_sticky_footer('buttonar');
 
         $this->set_data($user);
     }
@@ -148,7 +149,7 @@ class user_edit_form extends moodleform {
 
             // Disable fields that are locked by auth plugins.
             $fields = get_user_fieldnames();
-            $authplugin = get_auth_plugin($user->auth);
+            $authplugin = \core\di::get(\core\authentication::class)->get_plugin($user->auth);
             $customfields = $authplugin->get_custom_user_profile_fields();
             $customfieldsdata = profile_user_record($userid, false);
             $fields = array_merge($fields, $customfields);
@@ -235,11 +236,11 @@ class user_edit_form extends moodleform {
             }
         }
 
+        $errors += useredit_validate_description_length((array)$usernew);
+
         // Next the customisable profile fields.
         $errors += profile_validation($usernew, $files);
 
         return $errors;
     }
 }
-
-

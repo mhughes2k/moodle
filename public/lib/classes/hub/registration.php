@@ -70,6 +70,8 @@ class registration {
         2023081200 => ['aiusage'],
         // Disk usage added in Moodle 5.2.
         2025100900 => ['diskusage'],
+        // Default homepage added in Moodle 5.2.
+        2026012200 => ['defaulthomepage'],
     ];
 
     /** @var string Site privacy: not displayed */
@@ -212,7 +214,10 @@ class registration {
         $siteinfo['aiusage'] = !empty($aiusagedata) ? json_encode($aiusagedata) : '';
 
         // Disk usage size.
-        $siteinfo['diskusage'] = self::get_dataroot_size() ?? 0;
+        $siteinfo['diskusage'] = self::get_filepool_usage();
+
+        // Default homepage.
+        $siteinfo['defaulthomepage'] = get_config('moodle', 'defaulthomepage');
 
         // Primary auth type.
         $primaryauthsql = 'SELECT auth, count(auth) as tc FROM {user} GROUP BY auth ORDER BY tc DESC';
@@ -305,6 +310,7 @@ class registration {
             'pluginusage' => get_string('pluginusagedata', 'hub', $pluginusagelinks),
             'aiusage' => $OUTPUT->render_from_template('core/ai_usage_data', ['aiusagedata' => self::show_ai_usage()]),
             'diskusage' => get_string('diskusagesize', 'hub', $siteinfo['diskusage']),
+            'defaulthomepage' => get_string('defaulthomepage', 'hub', self::get_defaulthomepage_name($siteinfo['defaulthomepage'])),
         ];
 
         foreach ($senddata as $key => $str) {
@@ -511,7 +517,7 @@ class registration {
 
         // The most conservative limit for the redirect URL length is 2000 characters. Only pass parameters before
         // we reach this limit. The next registration update will update all fields.
-        // We will also update registration after we receive confirmation from moodle.net.
+        // We will also update registration after we receive confirmation from stats.moodle.org.
         $url = new moodle_url(HUB_MOODLEORGHUBURL . '/local/hub/siteregistration.php',
             ['token' => $hub->token, 'url' => $params['url']]);
         foreach ($params as $key => $value) {
@@ -612,8 +618,12 @@ class registration {
      * }
      *
      * @return array|null
+     * @deprecated since Moodle 5.2 - please do not use this function any more
      */
+    #[\core\attribute\deprecated(reason: 'It is no longer used', since: '5.2', mdl: 'MDL-87350')]
     public static function get_moodlenet_info() {
+        \core\deprecation::emit_deprecation([self::class, __FUNCTION__]);
+
         try {
             return api::get_hub_info();
         } catch (moodle_exception $e) {
@@ -953,13 +963,53 @@ class registration {
      * Measure the size of the dataroot directory.
      *
      * @return float MB to 3 decimal places.
+     * @deprecated since Moodle 5.3.
+     * @todo Final deprecation in Moodle 7.0. See MDL-88818.
      */
+    #[\core\attribute\deprecated(
+        replacement: 'get_filepool_usage',
+        since: '5.3',
+        mdl: 'MDL-88805',
+    )]
     public static function get_dataroot_size(): float {
-        global $CFG;
-        $size = get_directory_size($CFG->dataroot);
-        // Convert bytes to megabytes.
-        $size = $size / (1024 * 1024);
-        return round($size, 3);
+        \core\deprecation::emit_deprecation([self::class, __FUNCTION__]);
+        return self::get_filepool_usage();
+    }
+
+    /**
+     * Measure file pool usage by summing unique file sizes from the database.
+     *
+     * Files are deduplicated by contenthash, as Moodle's content-addressable file store only
+     * keeps one physical copy per unique file. The result is approximate and preferred over
+     * scanning the dataroot directory for performance reasons. This excludes caches, sessions,
+     * temporary files, and other non-filepool storage.
+     *
+     * @return float MB to 3 decimal places.
+     */
+    public static function get_filepool_usage(): float {
+        global $DB;
+
+        // Check cache first.
+        $cache = \cache::make('core', 'hub_filepoolusage');
+        $cached = $cache->get('filepoolusage');
+        if ($cached !== false) {
+            return $cached;
+        }
+
+        $sql = "SELECT SUM(filesize) AS sizebytes
+                  FROM (SELECT contenthash, MAX(filesize) AS filesize
+                          FROM {files}
+                      GROUP BY contenthash
+                  ) f";
+        $result = $DB->get_record_sql($sql);
+        $size = 0;
+        if ($result && isset($result->sizebytes)) {
+            // Convert bytes to megabytes.
+            $size = $result->sizebytes / (1024 * 1024);
+        }
+        $size = round($size, 3);
+        $cache->set('filepoolusage', $size);
+        return $size;
     }
 
     /**
@@ -967,5 +1017,37 @@ class registration {
      */
     public static function reset_caches(): void {
         self::$registration = null;
+        \cache::make('core', 'hub_filepoolusage')->purge();
+    }
+
+    /**
+     * Returns the title for the defaulthomepage setting value.
+     *
+     * @param int|string $value The defaulthomepage value (constant or URL)
+     * @return string The title
+     */
+    public static function get_defaulthomepage_name($value): string {
+        // Check for standard homepages.
+        $options = [
+            HOMEPAGE_SITE => get_string('home'),
+            HOMEPAGE_MY => get_string('mymoodle', 'admin'),
+            HOMEPAGE_USER => get_string('userpreference', 'admin'),
+            HOMEPAGE_MYCOURSES => get_string('mycourses', 'admin'),
+        ];
+
+        if (isset($options[$value])) {
+            return $options[$value];
+        }
+
+        // Check for custom homepage.
+        $hook = new \core_user\hook\extend_default_homepage();
+        \core\di::get(\core\hook\manager::class)->dispatch($hook);
+        $customoptions = $hook->get_options();
+
+        if (isset($customoptions[$value])) {
+            return (string)$customoptions[$value];
+        }
+
+        return $value;
     }
 }

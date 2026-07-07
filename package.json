@@ -3,13 +3,31 @@
   "private": true,
   "description": "Moodle",
   "scripts": {
-    "upgradenote": "node .grunt/upgradenotes.mjs create"
+    "postinstall": "npm run update-packages",
+    "update-packages": "node scripts/update-packages.mjs",
+    "upgradenote": "node .grunt/upgradenotes.mjs create",
+    "pretest": "grunt jsconfig",
+    "test": "jest"
+  },
+  "dependencies": {
+    "@moodlehq/design-system": "^5.0.0",
+    "react": "^19.1",
+    "react-dom": "^19.1"
   },
   "devDependencies": {
     "@babel/core": "7.17.5",
     "@babel/eslint-parser": "^7.21.3",
     "@babel/eslint-plugin": "7.19.1",
     "@babel/preset-env": "7.16.11",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@types/jest": "^30.0.0",
+    "@types/jquery": "^4.0.0",
+    "@types/node": "^25.9.1",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@types/requirejs": "^2.1.37",
+    "@typescript-eslint/parser": "^8.53.1",
     "@xmldom/xmldom": "^0.8.7",
     "ajv": "^8.12.0",
     "async": "^3.2.5",
@@ -19,11 +37,14 @@
     "chalk": "^5.3.0",
     "commander": "^12.0.0",
     "cross-env": "^7.0.3",
+    "current-git-branch": "^2.0.2",
     "docdash": "^2.0.2",
+    "esbuild": "^0.25.0",
     "eslint": "^8.56.0",
     "eslint-plugin-jsdoc": "^48.0.4",
     "eslint-plugin-promise": "6.0.0",
     "fb-watchman": "^2.0.2",
+    "fs-extra": "^11.3.4",
     "gherkin-lint": "^4.2.2",
     "git-tags-remote": "^1.0.5",
     "glob": "^10.3.10",
@@ -37,6 +58,8 @@
     "hugo-lunr-indexer": "^1.1.3",
     "inquirer": "^9.2.15",
     "inquirer-search-list": "^1.2.6",
+    "jest": "^30.4.2",
+    "jest-environment-jsdom": "^30.0.0",
     "jsdoc": "^4.0.2",
     "jsdoc-to-markdown": "^8.0.0",
     "jshint": "^2.13.4",
@@ -49,18 +72,27 @@
     "shifter": "https://github.com/andrewnicols/shifter/archive/v1.2.0_moodle-0.tar.gz",
     "stylelint": "^15.11.0",
     "stylelint-csstree-validator": "^3.0.0",
+    "ts-jest": "^29.4.9",
+    "typescript": "^5.7.3",
     "winston": "^3.13.0",
     "xpath": "0.0.32"
+  },
+  "overrides": {
+    "@babel/generator": "7.17.9",
+    "@babel/helper-compilation-targets": "7.16.7",
+    "@babel/helper-module-transforms": "7.22.20",
+    "@babel/helpers": "7.20.1",
+    "@babel/traverse": "7.21.3"
   },
   "engines": {
     "node": ">=22.11.0 <23"
   },
   "browserslist": [
-    ">0.3%",
-    "last 2 versions",
-    "not ie >= 0",
-    "not op_mini all",
-    "not Opera > 0",
-    "not dead"
+    "chrome >= 93",
+    "edge >= 96",
+    "firefox >= 95",
+    "safari >= 13.1",
+    "ios_saf >= 12.2",
+    "samsung >= 15"
   ]
 }

@@ -255,6 +255,52 @@ final class override_manager_test extends \advanced_testcase {
                 'expectedrecordscreated' => 1,
                 'expectedeventclass' => user_override_created::class,
             ],
+            'update user override - unlimited timelimit' => [
+                'existingdata' => [
+                    'userid' => ':userid',
+                    'groupid' => null,
+                    'timeopen' => null,
+                    'timeclose' => null,
+                    'timelimit' => 2,
+                    'attempts' => null,
+                    'password' => null,
+                ],
+                'formdata' => [
+                    'id' => ':existingid',
+                    'userid' => ':userid',
+                    'groupid' => null,
+                    'timeopen' => null,
+                    'timeclose' => null,
+                    'timelimit' => 0,
+                    'attempts' => null,
+                    'password' => null,
+                ],
+                'expectedrecordscreated' => 0,
+                'expectedeventclass' => user_override_updated::class,
+            ],
+            'update user override - disabled open and close dates' => [
+                'existingdata' => [
+                    'userid' => ':userid',
+                    'groupid' => null,
+                    'timeopen' => 50,
+                    'timeclose' => 51,
+                    'timelimit' => null,
+                    'attempts' => null,
+                    'password' => null,
+                ],
+                'formdata' => [
+                    'id' => ':existingid',
+                    'userid' => ':userid',
+                    'groupid' => null,
+                    'timeopen' => 0,
+                    'timeclose' => 0,
+                    'timelimit' => null,
+                    'attempts' => null,
+                    'password' => null,
+                ],
+                'expectedrecordscreated' => 0,
+                'expectedeventclass' => user_override_updated::class,
+            ],
             'create group override - no existing data' => [
                 'existingdata' => [],
                 'formdata' => [
@@ -296,6 +342,52 @@ final class override_manager_test extends \advanced_testcase {
                 ],
                 'expectedrecordscreated' => 1,
                 'expectedeventclass' => group_override_created::class,
+            ],
+            'update group override - unlimited timelimit' => [
+                'existingdata' => [
+                    'userid' => null,
+                    'groupid' => ':groupid',
+                    'timeopen' => null,
+                    'timeclose' => null,
+                    'timelimit' => 2,
+                    'attempts' => null,
+                    'password' => null,
+                ],
+                'formdata' => [
+                    'id' => ':existingid',
+                    'userid' => null,
+                    'groupid' => ':groupid',
+                    'timeopen' => null,
+                    'timeclose' => null,
+                    'timelimit' => 0,
+                    'attempts' => null,
+                    'password' => null,
+                ],
+                'expectedrecordscreated' => 0,
+                'expectedeventclass' => group_override_updated::class,
+            ],
+            'update group override - disabled open and close dates' => [
+                'existingdata' => [
+                    'userid' => null,
+                    'groupid' => ':groupid',
+                    'timeopen' => 50,
+                    'timeclose' => 51,
+                    'timelimit' => null,
+                    'attempts' => null,
+                    'password' => null,
+                ],
+                'formdata' => [
+                    'id' => ':existingid',
+                    'userid' => null,
+                    'groupid' => ':groupid',
+                    'timeopen' => 0,
+                    'timeclose' => 0,
+                    'timelimit' => null,
+                    'attempts' => null,
+                    'password' => null,
+                ],
+                'expectedrecordscreated' => 0,
+                'expectedeventclass' => group_override_updated::class,
             ],
             'update user override - updating existing data' => [
                 'existingdata' => [
@@ -641,6 +733,22 @@ final class override_manager_test extends \advanced_testcase {
                     'general' => get_string('nooverridedata', 'quiz'),
                 ],
             ],
+            'empty password results in no override' => [
+                'existingdata' => [],
+                'formdata' => [
+                    'userid' => ':userid',
+                    'groupid' => null,
+                    'timeopen' => null,
+                    'timeclose' => null,
+                    'timelimit' => null,
+                    'attempts' => null,
+                    // Empty string is normalised to null.
+                    'password' => '',
+                ],
+                'expectedreturn' => [
+                    'general' => get_string('nooverridedata', 'quiz'),
+                ],
+            ],
             'all submitted data was the same as the existing quiz' => [
                 'existingdata' => [],
                 'formdata' => [
@@ -955,14 +1063,14 @@ final class override_manager_test extends \advanced_testcase {
         $this->assertCount(1, calendar_get_events(0, 999, [$user->id], false, false));
 
         // Check that the cache was made.
-        $overridecache = new override_cache($quizobj->get_quizid());
-        $this->assertNotEmpty($overridecache->get_cached_user_override($user->id));
+        $this->assertNotEmpty(quiz_overrides_cache_manager::get_overrides($quizobj->get_quizid(), $user->id));
 
         // Capture events.
         $sink = $this->redirectEvents();
 
         $override = (object) [
             'id' => $id,
+            'quiz' => $quizobj->get_quizid(),
             'userid' => $user->id,
         ];
 
@@ -973,7 +1081,7 @@ final class override_manager_test extends \advanced_testcase {
         $this->assertCount(0, calendar_get_events(0, 999, [$user->id], false, false));
 
         // Check that the cache was cleared.
-        $this->assertEmpty($overridecache->get_cached_user_override($user->id));
+        $this->assertEmpty(quiz_overrides_cache_manager::get_overrides($quizobj->get_quizid(), $user->id));
 
         // Check the event was logged.
         if ($checkeventslogged) {

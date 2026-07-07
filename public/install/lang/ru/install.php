@@ -36,7 +36,7 @@ $string['chooselanguagesub'] = 'Сейчас необходимо выбрать
 $string['clialreadyconfigured'] = 'Файл config.php уже существует. Если Вы хотите установить Moodle на этот сайт, используйте admin/cli/install_database.php.';
 $string['clialreadyinstalled'] = 'Файл config.php уже существует. Если Вы хотите обновить сайт Moodle, то используйте скрипт admin/cli/upgrade.php.';
 $string['cliinstallheader'] = 'Программа установки Moodle {$a} в режиме командной строки';
-$string['clitablesexist'] = 'Таблицы базы данных уже существуют, невозможно продолжить установку в режиме командной строки.';
+$string['clitablesexist'] = 'Таблицы базы данных уже присутствуют; установка через интерфейс командной строки невозможна.';
 $string['databasehost'] = 'Сервер баз данных';
 $string['databasename'] = 'Название базы данных';
 $string['databasetypehead'] = 'Выберите драйвер базы данных';
@@ -67,7 +67,7 @@ $string['pathsunsecuredataroot'] = 'Расположение каталога д
 $string['pathswrongadmindir'] = 'Каталог admin не существует';
 $string['phpextension'] = 'Расширение PHP «{$a}»';
 $string['phpversion'] = 'Версия PHP';
-$string['webserverconfigproblemdescription'] = 'Ваш веб-сервер не настроен на предотвращение доступа к файлам вне каталога /public. Подробнее о настройке веб-сервера см. на странице <a href="https://moodledev.io/docs/5.1/guides/restructure">https://moodledev.io/docs/5.1/guides/restructure</a>. После повторной настройки <a href="{$a}">снова перейдите в корневой каталог веб-сервера</a>.';
+$string['webserverconfigproblemdescription'] = 'Ваш веб-сервер не настроен на предотвращение доступа к файлам вне каталога /public. Подробнее о настройке веб-сервера см. на странице <a href="https://docs.moodle.org/en/Upgrading#Code_directories_restructure">Обновление - Код реструктуризации каталогов</a>. После повторной настройки <a href="{$a}">снова перейдите в корневой каталог веб-сервера</a>.';
 $string['webservernotconfigured'] = 'Веб-сервер не настроен';
 $string['welcomep10'] = '{$a->installername} ({$a->installerversion})';
 $string['welcomep20'] = 'Вы видите эту страницу, потому что успешно установили и запустили на своем компьютере набор программ <strong>{$a->packname} {$a->packversion}</strong>. Поздравляем!';

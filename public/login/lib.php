@@ -129,9 +129,12 @@ function core_login_process_password_reset($username, $email) {
     if ($user and !empty($user->confirmed)) {
         $systemcontext = context_system::instance();
 
-        $userauth = get_auth_plugin($user->auth);
-        if (!$userauth->can_reset_password() or !is_enabled_auth($user->auth)
-          or !has_capability('moodle/user:changeownpassword', $systemcontext, $user->id)) {
+        $userauth = \core\di::get(\core\authentication::class)->get_plugin($user->auth);
+        if (
+            !$userauth->can_reset_password()
+            || !\core\di::get(\core\authentication::class)->is_enabled($user->auth)
+            || !has_capability('moodle/user:changeownpassword', $systemcontext, $user->id)
+        ) {
             if (send_password_change_info($user)) {
                 $pwresetstatus = PWRESET_STATUS_OTHEREMAILSENT;
             } else {
@@ -250,7 +253,10 @@ function core_login_process_password_set($token) {
         die; // Never reached.
     }
 
-    if ($user->auth === 'nologin' or !is_enabled_auth($user->auth)) {
+    if (
+        $user->auth === 'nologin'
+        || !\core\di::get(\core\authentication::class)->is_enabled($user->auth)
+    ) {
         // Bad luck - user is not able to login, do not let them set password.
         echo $OUTPUT->header();
         throw new \moodle_exception('forgotteninvalidurl');
@@ -282,7 +288,7 @@ function core_login_process_password_set($token) {
         // User has submitted form.
         // Delete this token so it can't be used again.
         $DB->delete_records('user_password_resets', array('id' => $user->tokenid));
-        $userauth = get_auth_plugin($user->auth);
+        $userauth = \core\di::get(\core\authentication::class)->get_plugin($user->auth);
         if (!$userauth->user_update_password($user, $data->password)) {
             throw new \moodle_exception('errorpasswordupdate', 'auth');
         }
@@ -348,22 +354,26 @@ function core_login_get_return_url() {
         unset($SESSION->wantsurl);
     }
 
-    // If the url to go to is the same as the site page, check for default homepage.
-    if ($urltogo == ($CFG->wwwroot . '/')) {
+    // If the url to go to is a homepage URL (site root, /my/, or /my/courses.php), check for default homepage.
+    $ishomepageurl = ($urltogo == ($CFG->wwwroot . '/') ||
+                      $urltogo == ($CFG->wwwroot . '/my/') ||
+                      $urltogo == ($CFG->wwwroot . '/my/courses.php'));
+
+    if ($ishomepageurl) {
         $homepage = get_home_page();
-        // Go to my-moodle page instead of site homepage if defaulthomepage set to homepage_my.
-        if ($homepage === HOMEPAGE_MY && !isguestuser()) {
-            if ($urltogo == $CFG->wwwroot or $urltogo == $CFG->wwwroot.'/' or $urltogo == $CFG->wwwroot.'/index.php') {
-                $urltogo = $CFG->wwwroot.'/my/';
-            }
-        }
-        if ($homepage === HOMEPAGE_MYCOURSES && !isguestuser()) {
-            if ($urltogo == $CFG->wwwroot or $urltogo == $CFG->wwwroot.'/' or $urltogo == $CFG->wwwroot.'/index.php') {
-                $urltogo = $CFG->wwwroot.'/my/courses.php';
-            }
-        }
-        if ($homepage === HOMEPAGE_URL) {
+
+        // Set urltogo based on the default homepage setting.
+        if ($homepage === HOMEPAGE_SITE) {
+            $urltogo = $CFG->wwwroot . '/';
+        } else if ($homepage === HOMEPAGE_MY && !isguestuser()) {
+            $urltogo = $CFG->wwwroot . '/my/';
+        } else if ($homepage === HOMEPAGE_MYCOURSES && !isguestuser()) {
+            $urltogo = $CFG->wwwroot . '/my/courses.php';
+        } else if ($homepage === HOMEPAGE_URL) {
             $urltogo = (string) get_default_home_page_url();
+        } else if ($homepage === HOMEPAGE_USER) {
+            // All homepage options disabled - redirect to user preferences page.
+            $urltogo = $CFG->wwwroot . '/user/preferences.php';
         }
     }
     return $urltogo;
@@ -617,4 +627,3 @@ function core_login_post_signup_requests($data) {
         }
     }
 }
-

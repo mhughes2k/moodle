@@ -80,7 +80,7 @@ function core_myprofile_navigation(core_user\output\myprofile\tree $tree, $user,
                    || ($iscurrentuser && has_capability('moodle/user:editownprofile', $systemcontext))) {
             $userauthplugin = false;
             if (!empty($user->auth)) {
-                $userauthplugin = get_auth_plugin($user->auth);
+                $userauthplugin = \core\di::get(\core\authentication::class)->get_plugin($user->auth);
             }
             if ($userauthplugin && $userauthplugin->can_edit_profile()) {
                 $url = $userauthplugin->edit_profile_url();
@@ -162,12 +162,6 @@ function core_myprofile_navigation(core_user\output\myprofile\tree $tree, $user,
         }
         $node = new core_user\output\myprofile\node('contact', 'email', get_string('email'),
             null, null, $maildisplay);
-        $tree->add_node($node);
-    }
-
-    if (!isset($hiddenfields['moodlenetprofile']) && $user->moodlenetprofile) {
-        $node = new core_user\output\myprofile\node('contact', 'moodlenetprofile', get_string('moodlenetprofile', 'user'), null,
-                null, $user->moodlenetprofile);
         $tree->add_node($node);
     }
 

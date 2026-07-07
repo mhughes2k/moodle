@@ -38,6 +38,10 @@ Feature: Edit user enrolment
     And I click on "Save changes" "button"
     Then I should see "Suspended" in the "student1" "table_row"
     And I should see "Not current" in the "student2" "table_row"
+    And I click on "Manual enrolments" "icon" in the "student2" "table_row"
+    And I should see "Enrolment details"
+    And I should see "Not current" in the "Enrolment details" "dialogue"
+    And I should see "Enrolment expired" in the "Enrolment details" "dialogue"
 
   @javascript
   Scenario: Unenrol a student
@@ -109,6 +113,17 @@ Feature: Edit user enrolment
     And I set the field "Status" to "Active"
     And I click on "Save changes" "button"
     Then I should see "Active" in the "student2" "table_row"
+
+  @javascript
+  Scenario: View plugin disabled status in enrolment details popup
+    Given I log in as "admin"
+    And I am on the "Course 1" "enrolment methods" page
+    And I click on "Disable" "link" in the "Manual enrolments" "table_row"
+    And I navigate to course participants
+    When I click on "Manual enrolments" "icon" in the "student1" "table_row"
+    And I should see "Enrolment details"
+    And I should see "Not current" in the "Enrolment details" "dialogue"
+    Then I should see "Manual enrolments enrol plugin is disabled" in the "Enrolment details" "dialogue"
 
   # Without JS, the user should be redirected to the original edit enrolment form.
   Scenario: Edit a user's enrolment without JavaScript

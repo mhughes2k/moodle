@@ -24,6 +24,7 @@ use core_external\external_single_structure;
 use core_external\external_value;
 use core_external\external_warnings;
 use core_external\restricted_context_exception;
+use core_user;
 use core_user_external;
 use invalid_parameter_exception;
 use moodle_exception;
@@ -89,11 +90,17 @@ class get_gradable_users extends external_api {
         require_capability('moodle/course:viewparticipants', $coursecontext);
 
         $course = $DB->get_record('course', ['id' => $params['courseid']]);
+
+        if ($params['groupid'] && !groups_group_visible($params['groupid'], $course)) {
+            throw new \moodle_exception('cannotaccessgroup', 'core_grades');
+        }
+
         $onlyactive = $onlyactive || !has_capability('moodle/course:viewsuspendedusers', $coursecontext);
 
         $users = get_gradable_users($course->id, $params['groupid'], $onlyactive);
         $users = array_map(function ($user) use ($PAGE) {
             $user->fullname = fullname($user);
+            $user->initials = core_user::get_initials($user);
             $userpicture = new user_picture($user);
             $userpicture->size = 1;
             $user->profileimageurlsmall = $userpicture->get_url($PAGE)->out(false);

@@ -40,9 +40,28 @@ $renamedclasses = [
     'core_reportbuilder\\report_access_exception' => 'core_reportbuilder\\exception\\report_access_exception',
     'core_reportbuilder\\source_invalid_exception' => 'core_reportbuilder\\exception\\source_invalid_exception',
     'core_reportbuilder\\source_unavailable_exception' => 'core_reportbuilder\\exception\\source_unavailable_exception',
+
     // Since Moodle 5.0.
     'PNG_MetaDataHandler' => 'core_badges\\png_metadata_handler',
+
     // Since Moodle 5.1.
     'core_xml_parser' => 'core\\xml_parser',
     'xml_format_exception' => 'core\\exception\\xml_format_exception',
+
+    // Since Moodle 5.2.
+    \core_sms\description::class => \core\attribute\description::class,
+
+    // Since Moodle 5.3.
+    \external_api::class => \core_external\external_api::class,
+    \restricted_context_exception::class => \core_external\restricted_context_exception::class,
+    \external_description::class => \core_external\external_description::class,
+    \external_value::class => \core_external\external_value::class,
+    \external_format_value::class => \core_external\external_format_value::class,
+    \external_single_structure::class => \core_external\external_single_structure::class,
+    \external_multiple_structure::class => \core_external\external_multiple_structure::class,
+    \external_function_parameters::class => \core_external\external_function_parameters::class,
+    \external_util::class => \core_external\util::class,
+    \external_files::class => \core_external\external_files::class,
+    \external_warnings::class => \core_external\external_warnings::class,
+    \external_settings::class => \core_external\external_settings::class,
 ];

@@ -1,6 +1,30 @@
 # core_reportbuilder (subsystem) Upgrade notes
 
-## 5.2dev
+## 5.3dev
+
+### Added
+
+- The report `join` trait contains new `prepend_join[s]` methods, which are called from the base entity to ensure entity joins are automatically prepended to all entity columns, filters and conditions
+
+  Entity implementations no longer have to manually add boilerplace to add the same joins to their own columns, filters and conditions
+
+  For more information see [MDL-87405](https://tracker.moodle.org/browse/MDL-87405)
+
+### Changed
+
+- New method of the base report class for setting complex SQL as the main report table, `set_main_table_sql()`
+
+  The `$tablealias` parameter of the existing `set_main_table()` method in the same class is now mandatory
+
+  For more information see [MDL-88397](https://tracker.moodle.org/browse/MDL-88397)
+
+### Deprecated
+
+- The base report `get_main_table()` method has been deprecated, calling code should instead call `get_main_table_sql()`
+
+  For more information see [MDL-88397](https://tracker.moodle.org/browse/MDL-88397)
+
+## 5.2
 
 ### Added
 
@@ -27,6 +51,12 @@
 - The order in which `$entitynames` are passed to the datasource `add_all_from_entities()` method is now observed, taking precedence over the order in which they were already added to the report
 
   For more information see [MDL-87263](https://tracker.moodle.org/browse/MDL-87263)
+- The following methods now support both string or entity instance types for parameters referring to entities by name, which prevents lookups of instances which most report sources will already have:
+
+  * `add_all_from_[entity|entities]()`
+  * `add_[columns|filters|conditions]_from_entity()`
+
+  For more information see [MDL-87451](https://tracker.moodle.org/browse/MDL-87451)
 
 ### Deprecated
 
@@ -46,7 +76,11 @@
 
 ### Removed
 
-- - The `\core_reportbuilder\local\helpers\audience::get_all_audiences_menu_types()` has been removed from `public/reportbuilder/classes/local/helpers/audience.php`. - The `\core_reportbuilder\local\entities\base::get_default_table_aliases()` has been removed from `public/reportbuilder/classes/local/entities/base.php`. - The `\core_reportbuilder\local\helpers\report::get_available_columns()` has been removed from `public/reportbuilder/classes/local/helpers/report.php`.
+- The following deprecated report helper methods have been removed:
+  - `audience::get_all_audiences_menu_types()`
+  - `report::get_available_columns()`
+
+  The stub `get_default_table_aliases()` method of the base entity class has also been removed as it hasn't been supported for some time
 
   For more information see [MDL-87425](https://tracker.moodle.org/browse/MDL-87425)
 

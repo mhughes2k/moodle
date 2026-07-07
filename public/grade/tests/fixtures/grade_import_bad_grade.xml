@@ -1,0 +1,17 @@
+<results batch="xml_export_1731515757">
+    <result>
+        <assignment>item1</assignment>
+        <student>1000</student>
+        <score>50.00</score>
+    </result>
+    <result>
+        <assignment>item1</assignment>
+        <student>2000</student>
+        <score>A</score>
+    </result>
+    <result>
+        <assignment>item1</assignment>
+        <student>3000</student>
+        <score>50.00</score>
+    </result>
+</results>

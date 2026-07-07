@@ -22,6 +22,7 @@ use core_course_category;
  * Tests for class core_course_category
  *
  * @package    core_course
+ * @covers     \core_course_category
  * @category   test
  * @copyright  2013 Marina Glancy
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -316,6 +317,8 @@ final class category_test extends \advanced_testcase {
         $this->assertEquals($category4->id, $DB->get_field('course', 'category', array('id' => $course3->id)));
         $this->assertEquals($category3->id, $DB->get_field('course', 'category', array('id' => $course1->id)));
 
+        $DB->insert_record('event_subscriptions', ['url' => 'invalid', 'categoryid' => $category3->id]);
+
         // Delete category 3 completely.
         $this->assertFalse($category3->can_delete_full()); // No luck!
         // Add necessary capabilities.
@@ -334,6 +337,8 @@ final class category_test extends \advanced_testcase {
         $this->assertEquals(1, $DB->get_field_sql('SELECT count(*) FROM {course} WHERE id <> ?', array(SITEID)));
         $this->assertEquals(array('id' => $course4->id, 'category' => $category1->id),
                 (array)$DB->get_record_sql('SELECT id, category from {course} where id <> ?', array(SITEID)));
+
+        $this->assertEquals(0, $DB->count_records('event_subscriptions', ['categoryid' => $category3->id]));
     }
 
     public function test_get_children(): void {
@@ -369,6 +374,14 @@ final class category_test extends \advanced_testcase {
         $children = $category1->get_children(array('sort' => array('idnumber' => 1, 'name' => -1)));
         // Must be 2, 7, 6, 4.
         $this->assertEquals(array($category2->id, $category7->id, $category6->id, $category4->id), array_keys($children));
+
+        // Use huge paging values.
+        $children = $category1->get_children([
+            'sort' => ['name' => -1],
+            'offset' => 1233311233311233311233311,
+            'limit' => 1233311233311233311233311,
+        ]);
+        $this->assertEmpty($children);
 
         // Check that everything is all right after purging the caches.
         \cache_helper::purge_by_event('changesincoursecat');
@@ -556,6 +569,13 @@ final class category_test extends \advanced_testcase {
         // Calling get_courses_count without prior call to get_courses().
         $this->assertEquals(3, $cat2->get_courses_count(array('recursive' => 1, 'sort' => array('idnumber' => 1))));
 
+        // Use huge paging values.
+        $result = $cat1->get_courses([
+            'offset' => 1233311233311233311233311,
+            'limit' => 1233311233311233311233311,
+        ]);
+        $this->assertEmpty($result);
+
         // Search courses.
 
         // Search by text.
@@ -620,6 +640,13 @@ final class category_test extends \advanced_testcase {
             'search' => '',
             'limittoenrolled' => 1,
         ]));
+
+        // Use huge paging values.
+        $result = core_course_category::search_courses(
+            ['search' => ''],
+            ['offset' => 1233311233311233311233311, 'limit' => 1233311233311233311233311],
+        );
+        $this->assertEmpty($result);
     }
 
     public function test_course_contacts(): void {
@@ -1136,8 +1163,6 @@ final class category_test extends \advanced_testcase {
 
     /**
      * Test get_nearest_editable_subcategory() method.
-     *
-     * @covers \core_course_category::get_nearest_editable_subcategory
      */
     public function test_get_nearest_editable_subcategory(): void {
         global $DB;
@@ -1249,7 +1274,6 @@ final class category_test extends \advanced_testcase {
      * @param bool $result Whether the result should be the category or null.
      *
      * @dataProvider get_nearest_editable_subcategory_provider
-     * @covers \core_course_category::get_nearest_editable_subcategory
      */
     public function test_get_nearest_editable_subcategory_with_hidden_categories(
         int $visible = 0,

@@ -96,3 +96,8 @@ sitename,core_hub
 sitename_help,core_hub
 defaultissuerpassword_help,core_badges
 invalidfiletype,core_repository
+modhidden,core
+modhidden_help,core
+moodlenetprofile,core_user
+moodlenetprofile_help,core_user
+privacy:metadata:moodlenetprofile,core_user

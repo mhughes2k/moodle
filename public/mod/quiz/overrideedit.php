@@ -62,6 +62,7 @@ $PAGE->set_url($url);
 
 // Activate the secondary nav tab.
 $PAGE->set_secondary_active_tab("mod_quiz_useroverrides");
+$PAGE->set_show_navigation_footer(false);
 
 require_login($course, false, $cm);
 
@@ -86,6 +87,14 @@ foreach ($keys as $key) {
     if (!isset($data->{$key}) || $reset) {
         $data->{$key} = $quiz->{$key};
     }
+}
+
+// Prepare reason editor data.
+if (isset($override->reason)) {
+    $data->reason_editor = [
+        'text' => $override->reason,
+        'format' => $override->reasonformat ?? FORMAT_MOODLE,
+    ];
 }
 
 // If we are duplicating an override, then clear the user/group and override id
@@ -119,6 +128,13 @@ if ($mform->is_cancelled()) {
     // Only include id when editing (i.e. action is empty).
     if (empty($action) && !empty($overrideid)) {
         $fromform->id = $overrideid;
+    }
+
+    // Extract reason and reasonformat from editor field.
+    if (isset($fromform->reason_editor)) {
+        $fromform->reason = $fromform->reason_editor['text'] ?? '';
+        $fromform->reasonformat = $fromform->reason_editor['format'] ?? FORMAT_MOODLE;
+        unset($fromform->reason_editor);
     }
 
     // Process the data.

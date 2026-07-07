@@ -59,6 +59,9 @@ class mod_assign_generator extends testing_module_generator {
             'maxattempts'                       => 1,
             'markingworkflow'                   => 0,
             'markingallocation'                 => 0,
+            'markercount'                       => 0,
+            'multimarkmethod'                   => null,
+            'multimarkrounding'                 => null,
             'markinganonymous'                  => 0,
             'activityformat'                    => 0,
             'timelimit'                         => 0,
@@ -202,5 +205,42 @@ class mod_assign_generator extends testing_module_generator {
         }
 
         $DB->insert_record('assign_overrides', (object) $data);
+
+        $cm = get_coursemodule_from_instance('assign', $data['assignid'], 0, false, MUST_EXIST);
+        $assign = new \assign(context_module::instance($cm->id), $cm, null);
+
+        assign_update_events($assign);
     }
+
+    /**
+     * Create a marker allocation record.
+     *
+     * @param array $data Array containing: ['assignid', 'userid', 'markerid']
+     */
+    public function create_marker_allocation(array $data): void {
+        global $DB;
+
+        if (!isset($data['cmid'])) {
+            throw new coding_exception('Must specify assign when creating a marker allocation.');
+        }
+
+        if (!isset($data['userid'])) {
+            throw new coding_exception('Must specify user when creating a marker allocation.');
+        }
+
+        if (!isset($data['markerid'])) {
+            throw new coding_exception('Must specify marker when creating a marker allocation.');
+        }
+
+        [$course, $cm] = get_course_and_cm_from_cmid($data['cmid'], 'assign');
+        $context = context_module::instance($cm->id);
+        $assign = new assign($context, $cm, $course);
+
+        $DB->insert_record('assign_allocated_marker', [
+            'student' => $data['userid'],
+            'assignment' => $assign->get_instance()->id,
+            'marker' => $data['markerid'],
+        ]);
+    }
+
 }

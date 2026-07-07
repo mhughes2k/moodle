@@ -69,6 +69,8 @@ $string['pathsunsecuredataroot'] = 'Dataroot joylashuvi xavfsiz emas.';
 $string['pathswrongadmindir'] = 'Administrator papkasi mavjud emas.';
 $string['phpextension'] = '{$a} PHP kengaytmasi';
 $string['phpversion'] = 'PHP versiyasi';
+$string['webserverconfigproblemdescription'] = 'Veb-serveringiz /public katalogidan tashqaridagi fayllarga kirishni oldini olish uchun sozlanmagan. Veb-serveringizni qanday qilib to\'g\'ri sozlash haqida batafsil ma\'lumot olish uchun <a href="https://docs.moodle.org/en/Upgrading#Code_directorys_restructure">Yangilash - Kod kataloglarini qayta tuzish</a> hujjatlariga qarang. Qayta sozlangandan so\'ng, <a href="{$a}">veb-ildizga qayta tashrif buyuring</a>.';
+$string['webservernotconfigured'] = 'Veb-server sozlanmagan';
 $string['welcomep10'] = '{$a->installername} ({$a->installerversion})';
 $string['welcomep20'] = 'Siz bu sahifani ko‘rayotganingizning sababi, siz kompyuteringizda <strong>{$a->packname} {$a->packversion}</strong> paketini muvaffaqiyatli o‘rnatdingiz va ishga tushirdingiz. Tabriklaymiz!';
 $string['welcomep30'] = '<strong>{$a->installername}</strong> ning ushbu relizi <strong>Moodle</strong> ishlaydigan muhitni yaratish uchun ilovalarni o‘z ichiga oladi, ya’ni:';

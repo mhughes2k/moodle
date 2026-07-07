@@ -66,28 +66,29 @@ if (empty($component) or $component === 'moodle' or $component === 'core') {
     $component = 'core';
 }
 
-if (preg_match('/^[a-z0-9_-]+\.woff2$/i', $font, $matches)) {
+// Font names may include a subdirectory.
+if (preg_match('/^[a-z0-9_-]+(?:\/[a-z0-9_-]+)*\.woff2$/i', $font, $matches)) {
     $font = $matches[0];
     $mimetype = 'font/woff2';
 
-} else if (preg_match('/^[a-z0-9_-]+\.woff$/i', $font, $matches)) {
+} else if (preg_match('/^[a-z0-9_-]+(?:\/[a-z0-9_-]+)*\.woff$/i', $font, $matches)) {
     // This is the real standard!
     $font = $matches[0];
     $mimetype = 'font/woff';
 
-} else if (preg_match('/^[a-z0-9_-]+\.ttf$/i', $font, $matches)) {
+} else if (preg_match('/^[a-z0-9_-]+(?:\/[a-z0-9_-]+)*\.ttf$/i', $font, $matches)) {
     $font = $matches[0];
     $mimetype = 'font/ttf';
 
-} else if (preg_match('/^[a-z0-9_-]+\.otf$/i', $font, $matches)) {
+} else if (preg_match('/^[a-z0-9_-]+(?:\/[a-z0-9_-]+)*\.otf$/i', $font, $matches)) {
     $font = $matches[0];
     $mimetype = 'font/otf';
 
-} else if (preg_match('/^[a-z0-9_-]+\.eot$/i', $font, $matches)) {
+} else if (preg_match('/^[a-z0-9_-]+(?:\/[a-z0-9_-]+)*\.eot$/i', $font, $matches)) {
     // IE8 must die!!!
     $font = $matches[0];
     $mimetype = 'application/vnd.ms-fontobject';
-} else if (preg_match('/^[a-z0-9_-]+\.svg$/i', $font, $matches)) {
+} else if (preg_match('/^[a-z0-9_-]+(?:\/[a-z0-9_-]+)*\.svg$/i', $font, $matches)) {
     $font = $matches[0];
     $mimetype = 'image/svg+xml';
 
@@ -153,8 +154,10 @@ if ($themerev <= 0 or $rev != $themerev) {
 make_localcache_directory('theme', false);
 
 if (empty($fontfile) or !is_readable($fontfile)) {
-    if (!file_exists($candidatelocation)) {
-        @mkdir($candidatelocation, $CFG->directorypermissions, true);
+    // Font names may include a subdirectory, ensure it exists in cache before writing the error marker.
+    $cachefontdir = dirname("$candidatelocation/$font");
+    if (!file_exists($cachefontdir)) {
+        @mkdir($cachefontdir, $CFG->directorypermissions, true);
     }
     // Make note we can not find this file.
     $cachefont = "$candidatelocation/$font.error";
@@ -202,7 +205,9 @@ function send_cached_font($fontpath, $etag, $font, $mimetype) {
 
     // No need to gzip already compressed fonts.
 
-    readfile($fontpath);
+    if (readfile($fontpath) === false) {
+        font_not_found();
+    }
     die;
 }
 
@@ -215,11 +220,14 @@ function send_uncached_font($fontpath, $font, $mimetype) {
     header('Content-Type: '.$mimetype);
     header('Content-Length: '.filesize($fontpath));
 
-    readfile($fontpath);
+    if (readfile($fontpath) === false) {
+        font_not_found();
+    }
     die;
 }
 
 function font_not_found() {
+    header_remove();
     header('HTTP/1.0 404 not found');
     die('font was not found, sorry.');
 }
@@ -237,8 +245,10 @@ function cache_font($font, $fontfile, $candidatelocation) {
     $cachefont = "$candidatelocation/$font";
 
     clearstatcache();
-    if (!file_exists($candidatelocation)) {
-        @mkdir($candidatelocation, $CFG->directorypermissions, true);
+    // Font names may include a subdirectory, ensure it exists in cache before copying.
+    $cachefontdir = dirname($cachefont);
+    if (!file_exists($cachefontdir)) {
+        @mkdir($cachefontdir, $CFG->directorypermissions, true);
     }
 
     // Prevent serving of incomplete file from concurrent request,

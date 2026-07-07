@@ -68,7 +68,7 @@ function user_create_user($user, $updatepassword = true, $triggerevent = true) {
     if ($updatepassword && isset($user->password)) {
 
         // Check password toward the password policy.
-        if (!check_password_policy($user->password, $errmsg, $user)) {
+        if (!\core\di::get(\core\authentication\password::class)->check_policy($user->password, $errmsg, $user)) {
             throw new moodle_exception($errmsg);
         }
 
@@ -128,7 +128,7 @@ function user_create_user($user, $updatepassword = true, $triggerevent = true) {
     if (isset($userpassword)) {
         // Get full database user row, in case auth is default.
         $newuser = $DB->get_record('user', array('id' => $newuserid));
-        $authplugin = get_auth_plugin($newuser->auth);
+        $authplugin = \core\di::get(\core\authentication::class)->get_plugin($newuser->auth);
         $authplugin->user_update_password($newuser, $userpassword);
     }
 
@@ -185,7 +185,7 @@ function user_update_user($user, $updatepassword = true, $triggerevent = true) {
     if ($updatepassword && isset($user->password)) {
 
         // Check password toward the password policy.
-        if (!check_password_policy($user->password, $errmsg, $user)) {
+        if (!\core\di::get(\core\authentication\password::class)->check_policy($user->password, $errmsg, $user)) {
             throw new moodle_exception($errmsg);
         }
 
@@ -242,7 +242,7 @@ function user_update_user($user, $updatepassword = true, $triggerevent = true) {
 
         // If password was set, then update its hash.
         if (isset($passwd)) {
-            $authplugin = get_auth_plugin($currentrecord->auth);
+            $authplugin = \core\di::get(\core\authentication::class)->get_plugin($currentrecord->auth);
             if ($authplugin->can_change_password()) {
                 $authplugin->user_update_password($currentrecord, $passwd);
             }
@@ -747,17 +747,19 @@ function user_count_login_failures($user, $reset = true) {
  *
  * @param string $text the menu items definition
  * @param moodle_page $page the current page
- * @return array
+ * @return \core_user\output\user_action_menu\base[]
  */
-function user_convert_text_to_menu_items($text, $page) {
+function user_convert_text_to_menu_items(string $text, moodle_page $page): array {
     $lines = explode("\n", $text);
     $children = array();
     foreach ($lines as $line) {
         $line = trim($line);
         $bits = explode('|', $line, 2);
-        $itemtype = 'link';
+
         if (preg_match("/^#+$/", $line)) {
-            $itemtype = 'divider';
+            // Add the divider to the list of children and skip link processing.
+            $children[] = new \core_user\output\user_action_menu\divider();
+            continue;
         } else if (!array_key_exists(0, $bits) or empty($bits[0])) {
             // Every item must have a name to be valid.
             continue;
@@ -767,13 +769,6 @@ function user_convert_text_to_menu_items($text, $page) {
 
         // Create the child.
         $child = new stdClass();
-        $child->itemtype = $itemtype;
-        if ($itemtype === 'divider') {
-            // Add the divider to the list of children and skip link
-            // processing.
-            $children[] = $child;
-            continue;
-        }
 
         // Name processing.
         $namebits = explode(',', $bits[0], 2);
@@ -794,9 +789,8 @@ function user_convert_text_to_menu_items($text, $page) {
 
         // URL processing.
         if (!array_key_exists(1, $bits) or empty($bits[1])) {
-            // Set the url to null, and set the itemtype to invalid.
-            $bits[1] = null;
-            $child->itemtype = "invalid";
+            // Invalid item.
+            continue;
         } else {
             // Nasty hack to replace the grades with the direct url.
             if (strpos($bits[1], '/grade/report/mygrades.php') !== false) {
@@ -804,29 +798,58 @@ function user_convert_text_to_menu_items($text, $page) {
             }
 
             // Make sure the url is a moodle url.
-            $bits[1] = new moodle_url(trim($bits[1]));
+            $child->url = new \core\url(trim($bits[1]));
         }
-        $child->url = $bits[1];
 
         // Add this child to the list of children.
-        $children[] = $child;
+        $children[] = new \core_user\output\user_action_menu\link(
+            $child->url,
+            $child->title,
+            $child->titleidentifier,
+        );
     }
     return $children;
 }
 
 /**
+ * Returns available default homepage options for user preferences.
+ *
+ * @return array
+ */
+function user_get_default_homepage_options(): array {
+    global $CFG;
+
+    $options = [];
+    if (!isset($CFG->enablemyhome) || $CFG->enablemyhome) {
+        $options[HOMEPAGE_SITE] = new lang_string('home');
+    }
+    if (!isset($CFG->enabledashboard) || $CFG->enabledashboard) {
+        $options[HOMEPAGE_MY] = new lang_string('mymoodle', 'admin');
+    }
+    if (!isset($CFG->enablemycourses) || $CFG->enablemycourses) {
+        $options[HOMEPAGE_MYCOURSES] = new lang_string('mycourses', 'admin');
+    }
+
+    // Allow hook callbacks to extend options.
+    $hook = new \core_user\hook\extend_default_homepage(true);
+    \core\di::get(\core\hook\manager::class)->dispatch($hook);
+    $options += $hook->get_options();
+
+    return $options;
+}
+
+/**
  * Get a list of essential user navigation items.
  *
- * @param stdclass $user user object.
+ * @param stdClass $user user object.
  * @param moodle_page $page page object.
  * @param array $options associative array.
  *     options are:
  *     - avatarsize=35 (size of avatar image)
  * @return stdClass $returnobj navigation information object, where:
  *
- *      $returnobj->navitems    array    array of links where each link is a
- *                                       stdClass with fields url, title, and
- *                                       pix
+ *      $returnobj->navitems    array    array of stdClass representation of
+ *                                       each user menu item
  *      $returnobj->metadata    array    array of useful user metadata to be
  *                                       used when constructing navigation;
  *                                       fields include:
@@ -841,6 +864,7 @@ function user_convert_text_to_menu_items($text, $page) {
  *
  *          userid         int        the id of the user in question
  *          userfullname   string     the user's full name
+ *          userfirstname  string     the user's first name
  *          userprofileurl moodle_url the url of the user's profile
  *          useravatar     string     a HTML fragment - the rendered
  *                                    user_picture for this user
@@ -854,6 +878,7 @@ function user_convert_text_to_menu_items($text, $page) {
  *          asotheruser        bool    whether viewing as another user
  *          realuserid         int        the id of the user in question
  *          realuserfullname   string     the user's full name
+ *          realuserfirstname  string     the real user's first name
  *          realuserprofileurl moodle_url the url of the user's profile
  *          realuseravatar     string     a HTML fragment - the rendered
  *                                        user_picture for this user
@@ -889,6 +914,7 @@ function user_get_user_navigation_info($user, $page, $options = array()) {
     // Get basic user metadata.
     $returnobject->metadata['userid'] = $user->id;
     $returnobject->metadata['userfullname'] = fullname($user);
+    $returnobject->metadata['userfirstname'] = !empty($CFG->forcefirstname) ? $CFG->forcefirstname : $user->firstname;
     $returnobject->metadata['userprofileurl'] = new moodle_url('/user/profile.php', array(
         'id' => $user->id
     ));
@@ -934,7 +960,7 @@ function user_get_user_navigation_info($user, $page, $options = array()) {
     $custommenucount = 0;
     foreach ($customitems as $item) {
         $returnobject->navitems[] = $item;
-        if ($item->itemtype !== 'divider' && $item->itemtype !== 'invalid') {
+        if ($item->get_action_menu_type() !== 'divider') {
             $custommenucount++;
         }
     }
@@ -942,41 +968,36 @@ function user_get_user_navigation_info($user, $page, $options = array()) {
     // Call to hook to add menu items.
     $hook = new extend_user_menu();
     di::get(core\hook\manager::class)->dispatch($hook);
-    $hookitems = $hook->get_navitems();
+    $hookitems = $hook->get_menu_items();
     foreach ($hookitems as $menuitem) {
         $returnobject->navitems[] = $menuitem;
     }
 
     if ($custommenucount > 0) {
         // Only add a divider if we have customusermenuitems.
-        $divider = new stdClass();
-        $divider->itemtype = 'divider';
-        $returnobject->navitems[] = $divider;
+        $returnobject->navitems[] = new \core_user\output\user_action_menu\divider();
     }
 
     // Links: Preferences.
-    $preferences = new stdClass();
-    $preferences->itemtype = 'link';
-    $preferences->url = new moodle_url('/user/preferences.php');
-    $preferences->title = get_string('preferences');
-    $preferences->titleidentifier = 'preferences,moodle';
-    $returnobject->navitems[] = $preferences;
-
+    $returnobject->navitems[] = new \core_user\output\user_action_menu\link(
+        new moodle_url('/user/preferences.php'),
+        get_string('preferences'),
+        'preferences,moodle',
+    );
 
     if (is_role_switched($course->id)) {
         if ($role = $DB->get_record('role', array('id' => $user->access['rsw'][$context->path]))) {
             // Build role-return link instead of logout link.
-            $rolereturn = new stdClass();
-            $rolereturn->itemtype = 'link';
-            $rolereturn->url = new moodle_url('/course/switchrole.php', array(
-                'id' => $course->id,
-                'sesskey' => sesskey(),
-                'switchrole' => 0,
-                'returnurl' => $page->url->out_as_local_url(false)
-            ));
-            $rolereturn->title = get_string('switchrolereturn');
-            $rolereturn->titleidentifier = 'switchrolereturn,moodle';
-            $returnobject->navitems[] = $rolereturn;
+            $returnobject->navitems[] = new \core_user\output\user_action_menu\link(
+                new moodle_url('/course/switchrole.php', [
+                    'id' => $course->id,
+                    'sesskey' => sesskey(),
+                    'switchrole' => 0,
+                    'returnurl' => $page->url->out_as_local_url(false),
+                ]),
+                get_string('switchrolereturn'),
+                'switchrolereturn,moodle',
+            );
 
             $returnobject->metadata['asotherrole'] = true;
             $returnobject->metadata['rolename'] = role_get_name($role, $context);
@@ -986,16 +1007,15 @@ function user_get_user_navigation_info($user, $page, $options = array()) {
         // Build switch role link.
         $roles = get_switchable_roles($context);
         if (is_array($roles) && (count($roles) > 0)) {
-            $switchrole = new stdClass();
-            $switchrole->itemtype = 'link';
-            $switchrole->url = new moodle_url('/course/switchrole.php', array(
-                'id' => $course->id,
-                'switchrole' => -1,
-                'returnurl' => $page->url->out_as_local_url(false)
-            ));
-            $switchrole->title = get_string('switchroleto');
-            $switchrole->titleidentifier = 'switchroleto,moodle';
-            $returnobject->navitems[] = $switchrole;
+            $returnobject->navitems[] = new \core_user\output\user_action_menu\link(
+                new moodle_url('/course/switchrole.php', [
+                    'id' => $course->id,
+                    'switchrole' => -1,
+                    'returnurl' => $page->url->out_as_local_url(false),
+                ]),
+                get_string('switchroleto'),
+                'switchroleto,moodle',
+            );
         }
     }
 
@@ -1006,30 +1026,34 @@ function user_get_user_navigation_info($user, $page, $options = array()) {
         // user is disguised as.
         $returnobject->metadata['realuserid'] = $realuser->id;
         $returnobject->metadata['realuserfullname'] = fullname($realuser);
+        $returnobject->metadata['realuserfirstname'] = !empty($CFG->forcefirstname) ? $CFG->forcefirstname : $realuser->firstname;
         $returnobject->metadata['realuserprofileurl'] = new moodle_url('/user/profile.php', [
             'id' => $realuser->id
         ]);
         $returnobject->metadata['realuseravatar'] = $OUTPUT->user_picture($realuser, $avataroptions);
 
         // Build a user-revert link.
-        $userrevert = new stdClass();
-        $userrevert->itemtype = 'link';
-        $userrevert->url = new moodle_url('/course/loginas.php', [
-            'id' => $course->id,
-            'sesskey' => sesskey()
-        ]);
-        $userrevert->title = get_string('logout');
-        $userrevert->titleidentifier = 'logout,moodle';
-        $returnobject->navitems[] = $userrevert;
+        $returnobject->navitems[] = new \core_user\output\user_action_menu\link(
+            new moodle_url('/course/loginas.php', [
+                'id' => $course->id,
+                'sesskey' => sesskey(),
+            ]),
+            get_string('logout'),
+            'logout,moodle',
+        );
     } else {
         // Build a logout link.
-        $logout = new stdClass();
-        $logout->itemtype = 'link';
-        $logout->url = new moodle_url('/login/logout.php', ['sesskey' => sesskey()]);
-        $logout->title = get_string('logout');
-        $logout->titleidentifier = 'logout,moodle';
-        $returnobject->navitems[] = $logout;
+        $returnobject->navitems[] = new \core_user\output\user_action_menu\link(
+            new moodle_url('/login/logout.php', ['sesskey' => sesskey()]),
+            get_string('logout'),
+            'logout,moodle',
+        );
     }
+
+    $returnobject->navitems = array_map(
+        fn(\core_user\output\user_action_menu\base $item) => (object) $item->export_for_template($OUTPUT),
+        $returnobject->navitems,
+    );
 
     return $returnobject;
 }
@@ -1121,13 +1145,16 @@ function user_is_previously_used_password($userid, $password) {
  *
  * @param string $uuid The device UUID.
  * @param string $appid The app id. If empty all the devices matching the UUID for the user will be removed.
+ * @param int|null $userid The user id. If null, the current user will be used.
  * @return bool true if removed, false if the device didn't exists in the database
  * @since Moodle 2.9
  */
-function user_remove_user_device($uuid, $appid = "") {
+function user_remove_user_device($uuid, $appid = "", $userid = null) {
     global $DB, $USER;
 
-    $conditions = array('uuid' => $uuid, 'userid' => $USER->id);
+    $userid ??= $USER->id;
+
+    $conditions = ['uuid' => $uuid, 'userid' => $userid];
     if (!empty($appid)) {
         $conditions['appid'] = $appid;
     }

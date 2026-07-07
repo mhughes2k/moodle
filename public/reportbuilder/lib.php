@@ -25,24 +25,32 @@
 declare(strict_types=1);
 
 use core\output\inplace_editable;
-use core_reportbuilder\form\audience;
-use core_reportbuilder\form\filter;
+use core_reportbuilder\form\{audience, filter};
+use core_reportbuilder\local\audiences\base as audience_base;
 use core_reportbuilder\local\helpers\audience as audience_helper;
 use core_reportbuilder\local\models\report;
+use core_reportbuilder\local\report\base as report_base;
+use core_reportbuilder\{manager, permission};
 use core_tag\output\{tagfeed, tagindex};
 
 /**
  * Return the filters form fragment
  *
- * @param array $params
+ * @param array $params Containing keys 'reportid' and 'parameters'
  * @return string
  */
 function core_reportbuilder_output_fragment_filters_form(array $params): string {
-    $filtersform = new filter(null, null, 'post', '', [], true, [
-        'reportid' => $params['reportid'],
-        'parameters' => $params['parameters'],
-    ]);
+    $report = new report($params['reportid']);
 
+    // Verify current user can access the report data.
+    if ($report->get('type') === report_base::TYPE_CUSTOM_REPORT) {
+        permission::require_can_view_report($report);
+    } else {
+        $reportinstance = manager::get_report_from_persistent($report, (array) json_decode($params['parameters']));
+        $reportinstance->require_can_view();
+    }
+
+    $filtersform = new filter(ajaxformdata: $params);
     $filtersform->set_data_for_dynamic_submission();
 
     return $filtersform->render();
@@ -51,30 +59,20 @@ function core_reportbuilder_output_fragment_filters_form(array $params): string 
 /**
  * Return the audience form fragment
  *
- * @param array $params
+ * @param array $params Containing keys 'reportid' and 'classname'
  * @return string
  */
 function core_reportbuilder_output_fragment_audience_form(array $params): string {
-    global $PAGE;
+    $report = new report($params['reportid']);
+    permission::require_can_edit_report($report);
 
-    $audienceform = new audience(null, null, 'post', '', [], true, [
-        'reportid' => $params['reportid'],
-        'classname' => $params['classname'],
-    ]);
+    // Verify current user can add the requested audience type.
+    audience_base::instance(0, (object) $params)->require_user_can_add();
+
+    $audienceform = new audience(ajaxformdata: $params);
     $audienceform->set_data_for_dynamic_submission();
 
-    $context = [
-        'instanceid' => 0,
-        'heading' => $params['title'],
-        'headingeditable' => $params['title'],
-        'form' => $audienceform->render(),
-        'canedit' => true,
-        'candelete' => true,
-        'showormessage' => $params['showormessage'],
-    ];
-
-    $renderer = $PAGE->get_renderer('core_reportbuilder');
-    return $renderer->render_from_template('core_reportbuilder/local/audience/form', $context);
+    return $audienceform->render();
 }
 
 /**

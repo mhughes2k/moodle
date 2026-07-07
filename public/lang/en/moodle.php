@@ -34,7 +34,7 @@ $string['activities'] = 'Activities';
 $string['activity'] = 'Activity';
 $string['activityclipboard'] = 'Moving this activity: {$a}';
 $string['activityicon'] = '{$a} icon';
-$string['activityiscurrentlyhidden'] = 'Sorry, this activity is currently hidden';
+$string['activityiscurrentlyhidden'] = 'Activity not available. You don\'t have access to this activity. If you think this is a mistake, contact your teacher or instructor.';
 $string['activityheader'] = 'Activity menu';
 $string['activitymodule'] = 'Activity module';
 $string['activitymodules'] = 'Activity modules';
@@ -540,7 +540,10 @@ $string['deletecoursecheck'] = 'Are you absolutely sure you want to completely d
 $string['deleted'] = 'Deleted';
 $string['deletedactivity'] = 'Deleted {$a}';
 $string['deletedcourse'] = '{$a} has been completely deleted';
-$string['deletednot'] = 'Could not delete {$a}.';
+$string['deletednot'] = 'Could not delete {$a}!';
+$string['deletingcourseasynchronously'] = 'The course {$a} will be deleted asynchronously';
+$string['deletingcourseasynchronously_error'] = 'This course cannot be deleted at the moment. There is an existing backup or restore process for this course that needs to complete.';
+$string['deletingcourseasynchronously_exception'] = 'This course will be deleted in a few moments. You can no longer access the course.';
 $string['deletecheck'] = 'Delete {$a} ?';
 $string['deletechecktype'] = 'Are you sure that you want to delete this {$a->type}?';
 $string['deletechecktypename'] = 'Are you sure that you want to delete the {$a->type} "{$a->name}"?';
@@ -653,17 +656,12 @@ $string['emailagain'] = 'Email (again)';
 $string['emailconfirm'] = 'Confirm your account';
 $string['emailconfirmation'] = 'Hi {$a->firstname},
 
-A new account has been requested at \'{$a->sitename}\'
-using your email address.
+A new account has been requested at \'{$a->sitename}\' using your email address.
 
-To confirm your new account, please go to this web address:
+To confirm your new account, please click the link below:
 
-{$a->link}
+<a href="{$a->link}">Confirm your account</a>
 
-In most mail programs, this should appear as a blue link
-which you can just click on.  If that doesn\'t work,
-then cut and paste the address into the address
-line at the top of your web browser window.
 
 If you need help, please contact the site administrator,
 {$a->admin}';
@@ -710,20 +708,14 @@ $string['emailnotfound'] = 'The email address was not found in the database';
 $string['emailonlyallowed'] = 'This email cannot be used. Allowed email domains are: {$a}.';
 $string['emailpasswordconfirmation'] = 'Hi {$a->firstname},
 
-Someone (probably you) has requested a new password for your
-account on \'{$a->sitename}\'.
+Someone (probably you) has requested a new password for your account on \'{$a->sitename}\'.
 
-To confirm this and have a new password sent to you via email,
-go to the following web address:
+To confirm this and have a new password sent to you via email, please click the link below:
 
-{$a->link}
+<a href="{$a->link}">Get a new password</a>
 
-In most mail programs, this should appear as a blue link
-which you can just click on.  If that doesn\'t work,
-then cut and paste the address into the address
-line at the top of your web browser window.
 
-If you need help, please contact the site administrator,
+If you need help, please contact the site administrator.
 {$a->admin}';
 $string['emailpasswordconfirmationsubject'] = '{$a}: Change password confirmation';
 $string['emailpasswordconfirmmaybesent'] = '<p>If you supplied a correct username or unique email address then an email should have been sent to you.</p>
@@ -739,19 +731,14 @@ $string['emailpasswordconfirmsent'] = 'An email should have been sent to your ad
 If you continue to have difficulty, contact the site administrator.';
 $string['emailpasswordchangeinfo'] = 'Hi {$a->firstname},
 
-Someone (probably you) has requested a new password for your
-account \'{$a->username}\' on \'{$a->sitename}\'.
+Someone (probably you) has requested a new password for your account \'{$a->username}\' on \'{$a->sitename}\'.
 
-To change your password, please go to the following web address:
+To change your password, please click the link below:
 
-{$a->link}
+<a href="{$a->link}">Change password</a>
 
-In most mail programs, this should appear as a blue link
-which you can just click on.  If that doesn\'t work,
-then cut and paste the address into the address
-line at the top of your web browser window.
 
-If you need help, please contact the site administrator,
+If you need help, please contact the site administrator.
 {$a->admin}';
 $string['emailpasswordchangeinfodisabled'] = 'Hi {$a->firstname},
 
@@ -768,14 +755,17 @@ $string['emailresetconfirmation'] = 'Hi {$a->firstname},
 
 A password reset was requested for your account \'{$a->username}\' at {$a->sitename}.
 
-To confirm this request, and set a new password for your account, please go to the following web address:
-<a href="{$a->link}">{$a->link}</a>
+To confirm this request, and set a new password for your account, please click the link below:
+
+<a href="{$a->link}">Reset password</a>
+
 
 (This link is valid for {$a->resetminutes} minutes from the time this reset was first requested.)
 
 If this password reset was not requested by you, no action is needed.
 
-If you need help, please contact the site administrator, {$a->admin}';
+If you need help, please contact the site administrator.
+{$a->admin}';
 $string['emailresetconfirmationsubject'] = '{$a}: Password reset request';
 $string['emailresetconfirmsent'] = 'An email has been sent to your address at <b>{$a}</b>.
 <br />It contains easy instructions to confirm and complete this password change.
@@ -839,6 +829,7 @@ $string['eventcoursessearched'] = 'Courses searched';
 $string['eventcourseresetended'] = 'Course reset ended';
 $string['eventcourseresetstarted'] = 'Course reset started';
 $string['eventcourserestored'] = 'Course restored';
+$string['eventcourserestrictedmoduleviewed'] = 'Restricted module viewed';
 $string['eventcoursestarted'] = 'Course started';
 $string['eventcourseupdated'] = 'Course updated';
 $string['eventcoursesectioncreated'] = 'Course section created';
@@ -855,6 +846,7 @@ $string['eventemailfailed'] = 'Email failed to send';
 $string['eventmycoursesviewed'] = 'My courses viewed';
 $string['eventname'] = 'Event name';
 $string['eventrecentactivityviewed'] = 'Recent activity viewed';
+$string['eventrestrictedsectionviewed'] = 'Restricted section viewed';
 $string['eventsearchindexed'] = 'Search data indexed';
 $string['eventsearchresultsviewed'] = 'Search results viewed';
 $string['eventsectionviewed'] = 'Section viewed';
@@ -1053,6 +1045,7 @@ $string['hidesection'] = 'Hide section {$a}';
 $string['hidesettings'] = 'Hide settings';
 $string['hideshowblocks'] = 'Hide or show blocks';
 $string['hidepopoverwindow'] = 'Hide popover window';
+$string['hidex'] = 'Hide {$a}';
 $string['highlight'] = 'Highlight';
 $string['highlighted'] = 'Highlighted';
 $string['highlightoff'] = 'Unhighlight';
@@ -1243,23 +1236,44 @@ $string['loggedinasguest'] = 'You are currently using guest access';
 $string['loggedinnot'] = 'You are not logged in.';
 $string['login'] = 'Log in';
 $string['loginactivity'] = 'Login activity';
+$string['loginagain'] = 'Log in again';
 $string['loginalready'] = 'You are already logged in';
 $string['loginas'] = 'Log in as';
+$string['loginasguest'] = 'Log in as guest';
 $string['loginaspasswordexplain'] = '<p>You must enter the special "loginas password" to use this feature.<br />If you do not know it, ask your server administrator.</p>';
+$string['logindonthaveaccount'] = 'Don\'t have an account?';
+$string['loginenterpassword'] = 'Enter your password';
+$string['loginenterusernameoremail'] = 'Enter your username or email';
 $string['login_failure_logs'] = 'Login failure logs';
+$string['loginforgotpassword'] = 'Forgot password?';
 $string['loginguest'] = 'Access as a guest';
+$string['logininvalidlogindetail'] = 'Your login info may be incorrect. Please try again.';
+$string['logininvalidlogintitle'] = 'Unable to log in';
+$string['loginpaneltagline'] = 'You\'re part of a global learning community';
+$string['loginrequired'] = 'Login required';
+$string['loginseparatoror'] = 'OR';
 $string['loginsite'] = 'Log in to the site';
+$string['loginstartsignup'] = 'Sign up';
+$string['loginstatcountries'] = 'countries';
+$string['loginstatcountries_value'] = '200+';
+$string['loginstatsites'] = 'sites';
+$string['loginstatsites_value'] = '150K';
+$string['loginstatusers'] = 'users';
+$string['loginstatusers_value'] = '500M';
 $string['loginsteps'] = 'For full access to this site, you first need to create an account.';
 $string['loginstepsnone'] = '<p>Hi!</p>
 <p>For full access to courses you\'ll need to create yourself an account.</p>
 <p>All you need to do is make up a username and password and use it in the form on this page!</p>
 <p>If someone else has already chosen your username then you\'ll have to try again using a different username.</p>';
 $string['loginto'] = 'Log in to {$a}';
-$string['loginagain'] = 'Log in again';
-$string['loginrequired'] = 'Login required';
+$string['loginwelcomeback'] = 'Welcome back';
+$string['loginwelcomedescription'] = 'Your learning journey starts here. Access courses, connect with peers, and achieve your goals.';
+$string['loginwelcometitle'] = 'Welcome to Moodle';
+$string['loginwith'] = 'Log in with {$a}';
 $string['logoof'] = 'Logo of {$a}';
 $string['logout'] = 'Log out';
 $string['logoutconfirm'] = 'Do you really want to log out?';
+$string['logoutconfirmtitle'] = 'Log out?';
 $string['logs'] = 'Logs';
 $string['logtoomanycourses'] = '[ <a href="{$a->url}">more</a> ]';
 $string['logtoomanyusers'] = '[ <a href="{$a->url}">more</a> ]';
@@ -1370,8 +1384,6 @@ $string['missingteacher'] = 'Must choose something';
 $string['missingurl'] = 'Missing URL';
 $string['missingusername'] = 'Missing username';
 $string['moddoesnotsupporttype'] = 'Module {$a->modname} does not support uploads of type {$a->type}';
-$string['modhidden'] = 'Availability';
-$string['modhidden_help'] = '* Hide on course page: Not available to students. This module cannot be shown to students.';
 $string['modhide'] = 'Hide';
 $string['modshow'] = 'Show';
 $string['modvisible'] = 'Availability';
@@ -1397,38 +1409,6 @@ $string['moodledocslink'] = 'Documentation for this page';
 $string['moodleversion'] = 'Moodle version';
 $string['moodlerelease'] = 'Moodle release';
 $string['moodleservicesandsupport'] = 'Services and support';
-$string['moodlenet:cannotconnecttoserver'] = 'Cannot connect to MoodleNet server';
-$string['moodlenet:columnname'] = 'Name';
-$string['moodlenet:columnsenddate'] = 'Send date';
-$string['moodlenet:columnsendstatus'] = 'Send status';
-$string['moodlenet:columntype'] = 'Type';
-$string['moodlenet:configoauthservice'] = 'Select a MoodleNet OAuth 2 service to enable sharing to that MoodleNet site. If the service doesn\'t exist yet, you will need to <a href="{$a}">create</a> it.';
-$string['moodlenet:deletedactivity'] = 'Deleted activity';
-$string['moodlenet:deletedcourse'] = 'Deleted course';
-$string['moodlenet:eventresourceexported'] = 'Resource exported';
-$string['moodlenet:gotomoodlenet'] = 'Go to MoodleNet drafts';
-$string['moodlenet:issuerisnotauthorized'] = 'MoodleNet issuer is not authorised';
-$string['moodlenet:issuerisnotenabled'] = 'MoodleNet issuer is not enabled';
-$string['moodlenet:issuerisnotset'] = 'MoodleNet issuer is not set at site administration';
-$string['moodlenet:nosharedresources'] = 'There are no shared resources to display at this time.';
-$string['moodlenet:outboundsettings'] = 'MoodleNet outbound settings';
-$string['moodlenet:sharenoticeactivity'] = 'This activity is being shared with MoodleNet as a resource.';
-$string['moodlenet:sharenoticecourse'] = 'This course is being shared with MoodleNet as a resource.';
-$string['moodlenet:sharenoticepartial'] = 'The selected activities are being shared with MoodleNet as a resource.';
-$string['moodlenet:sharenoticepartialactivitynumber'] = '{$a} activities will be included in the course.';
-$string['moodlenet:sharefailtitle'] = 'Something went wrong';
-$string['moodlenet:sharefailtext'] = 'There was an error sharing your content to MoodleNet.<br>Please try again later.';
-$string['moodlenet:sharefailtextwithsitesupport'] = 'There was an error sharing your content to MoodleNet.<br>Please try again later or <a href="{$a}">contact site support</a>.';
-$string['moodlenet:sharefilesizelimitexceeded'] = 'The size of the resource being shared ({$a->filesize} bytes) exceeds the limit of {$a->filesizelimit} bytes.';
-$string['moodlenet:shareprogress'] = 'MoodleNet share progress';
-$string['moodlenet:shareprogressinfo'] = 'The list shows courses and activities you have shared to MoodleNet.<br>Click the resource name to view in MoodleNet.';
-$string['moodlenet:sharesuccesstitle'] = 'Saved to MoodleNet drafts';
-$string['moodlenet:sharesuccesstext'] = "Almost done! Visit your drafts in MoodleNet to finish sharing your content.";
-$string['moodlenet:sharetomoodlenet'] = 'Share to MoodleNet';
-$string['moodlenet:sharingstatus'] = 'Sharing to MoodleNet';
-$string['moodlenet:sharinglargefile'] = "Large files can take some time.";
-$string['moodlenet:sharingto'] = 'Sharing to: ';
-$string['moodlenet:packagingandsending'] = 'Packaging your file and sending to MoodleNet...';
 $string['more'] = 'more';
 $string['morehelp'] = 'More help';
 $string['morehelpaboutmodule'] = 'More help about the {$a} activity';
@@ -1527,10 +1507,10 @@ An account has been created for you at \'{$a->sitename}\'.
 
 (You will be prompted to change your password when you log in for the first time.)
 
-To start using \'{$a->sitename}\', log in at
-   {$a->link}
 
-If you need help, contact the site administrator,
+<a href="{$a->link}">Click to log in</a> and start using \'{$a->sitename}\'.
+
+If you need help, contact the site administrator.
 {$a->signoff}';
 $string['newusers'] = 'New users';
 $string['newwindow'] = 'New window';
@@ -1750,14 +1730,6 @@ $string['privacy:metadata:log:module'] = 'module';
 $string['privacy:metadata:log:time'] = 'The time when the action took place';
 $string['privacy:metadata:log:url'] = 'The URL related to the event';
 $string['privacy:metadata:log:userid'] = 'The ID of the user who performed the action';
-$string['privacy:metadata:moodlenet_share_progress'] = 'MoodleNet share progress details';
-$string['privacy:metadata:moodlenet_share_progress:type'] = 'The type of share that was performed';
-$string['privacy:metadata:moodlenet_share_progress:courseid'] = 'The associated course ID';
-$string['privacy:metadata:moodlenet_share_progress:cmid'] = 'The associated course module ID';
-$string['privacy:metadata:moodlenet_share_progress:userid'] = 'The user that performed the share';
-$string['privacy:metadata:moodlenet_share_progress:timecreated'] = 'The time the share was performed';
-$string['privacy:metadata:moodlenet_share_progress:resourceurl'] = 'The returned URL from MoodleNet after a successful share';
-$string['privacy:metadata:moodlenet_share_progress:status'] = 'The resulting status of the share';
 $string['privacy:metadata:oauth2_refresh_token'] = 'Refresh token used in OAuth 2.0 communication';
 $string['privacy:metadata:oauth2_refresh_token:issuerid'] = 'The ID of the issuer to which the token corresponds';
 $string['privacy:metadata:oauth2_refresh_token:scopehash'] = 'The ID of the user to whom the token corresponds';
@@ -2080,6 +2052,7 @@ $string['showreports_help'] = 'Allow students to view their own activity reports
 $string['showsettings'] = 'Show settings';
 $string['showtheselogs'] = 'Show these logs';
 $string['showthishelpinlanguage'] = 'Show this help in language: {$a}';
+$string['showx'] = 'Show {$a}';
 $string['schedule'] = 'Schedule';
 $string['sidepanel'] = 'Side panel';
 $string['signoutofotherservices'] = 'Log out of all web apps';
@@ -2219,6 +2192,8 @@ $string['targetrole'] = 'Target role';
 $string['teacheronly'] = 'for the {$a} only';
 $string['teacherroles'] = '{$a} roles';
 $string['teachers'] = 'Teachers';
+$string['telemetrytraceidfooterlink'] = 'Telemetry trace';
+$string['telemetrytraceidfooterlinkcopied'] = 'The telemetry trace ID has been copied to your clipboard. You can now paste it in the support form or anywhere else you need.';
 $string['textcopiedtoclipboard'] = 'Text copied to clipboard';
 $string['textediting'] = 'Text editor';
 $string['textediting_help'] = 'If an HTML editor such as Atto or TinyMCE is selected, text input areas will have a toolbar with buttons for easily adding content.
@@ -2512,3 +2487,7 @@ $string['activities_help'] = 'Activities, such as forums, quizzes and wikis, ena
 $string['hiddensections_help'] = 'Hidden sections can be displayed to students as \'not available\' on the course page, or kept completely hidden.';
 $string['maxsectionslimit'] = 'Cannot create new section as it would exceed the maximum number of sections allowed for this course ({$a}).';
 $string['resources_help'] = 'Resource types enable almost any kind of web content to be inserted into the course.';
+
+// Deprecated since Moodle 5.3.
+$string['modhidden'] = 'Availability';
+$string['modhidden_help'] = '* Hide on course page: Not available to students. This module cannot be shown to students.';

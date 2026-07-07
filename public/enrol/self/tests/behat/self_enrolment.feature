@@ -28,7 +28,7 @@ Feature: Users can auto-enrol themself in courses where self enrolment is allowe
       | Custom instance name | Test student enrolment |
     And I log out
     When I am on "Course 1" course homepage
-    And I press "Access as a guest"
+    And I press "Log in as guest"
     Then I should see "Guests cannot access this course. Please log in."
     And I press "Continue"
     And I should see "Log in"
@@ -44,7 +44,7 @@ Feature: Users can auto-enrol themself in courses where self enrolment is allowe
     Then I should see "New section"
     And I should not see "Enrolment options"
 
-  @javascript
+  @javascript @accessibility
   Scenario: Self-enrolment enabled requiring an enrolment key
     Given I log in as "teacher1"
     When I add "Self enrolment" enrolment method in "Course 1" with:
@@ -54,6 +54,7 @@ Feature: Users can auto-enrol themself in courses where self enrolment is allowe
     And I log in as "student1"
     And I am on "Course 1" course homepage
     And I should see "An enrolment key will be required."
+    And the page should meet accessibility standards with "best-practice" extra tests
     And I press "Enrol me"
     And I set the following fields to these values:
       | Enrolment key | moodle_rules |

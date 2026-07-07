@@ -144,6 +144,11 @@ class core_course_external extends external_api {
         //retrieve the course
         $course = $DB->get_record('course', array('id' => $params['courseid']), '*', MUST_EXIST);
 
+        // Accessing the site home via the web service is not allowed when it is disabled.
+        if ($course->id == SITEID && empty($CFG->enablemyhome)) {
+            throw new moodle_exception('error:sitehomeisdisabled', 'course');
+        }
+
         // now security checks
         $context = context_course::instance($course->id, IGNORE_MISSING);
         try {
@@ -3785,8 +3790,8 @@ class core_course_external extends external_api {
                 if (!course_allowed_module($course, $cm->modname)) {
                     throw new moodle_exception('No permission to create that activity');
                 }
-                if ($newcm = duplicate_module($course, $cm)) {
-
+                $cmaction = \core_courseformat\formatactions::cm($course->id);
+                if ($newcm = $cmaction->duplicate($cm->id)) {
                     $modinfo = $format->get_modinfo();
                     $section = $modinfo->get_section_info($newcm->sectionnum);
                     $cm = $modinfo->get_cm($id);

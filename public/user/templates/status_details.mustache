@@ -28,6 +28,7 @@
     * timestart string - Optional. The enrolment time start.
     * timeend string - Optional. The enrolment time end.
     * timeenrolled string - Optional. The time when the user was enrolled.
+    * statusinfo string - Optional. Additional information about the enrolment status.
 
     Example context (json):
     {
@@ -38,7 +39,8 @@
         "statusclass": "badge bg-success text-white",
         "timestart": "1 January 2017",
         "timeend": "31 January 2018",
-        "timeenrolled": "31 December 2016"
+        "timeenrolled": "31 December 2016",
+        "statusinfo": "Manual enrolments enrol plugin is disabled"
     }
 }}
 <table class="table user-enrol-details">
@@ -74,6 +76,11 @@
             <span class="{{statusclass}}">
                 {{status}}
             </span>
+            {{#statusinfo}}
+                <div class="user-enrol-statusinfo mt-1">
+                    {{statusinfo}}
+                </div>
+            {{/statusinfo}}
         </td>
     </tr>
     {{#timestart}}

@@ -197,6 +197,10 @@ class availability implements named_templatable, renderable {
             }
         }
 
+        if ($this->format->get_show_restrictions_expanded()) {
+            $data->showrestrictionsexpanded = true;
+        }
+
         return $data;
     }
 

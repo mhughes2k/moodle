@@ -2505,7 +2505,7 @@ function debugging($message = '', $level = DEBUG_NORMAL, $backtrace = null) {
         }
         $from = format_backtrace($backtrace, CLI_SCRIPT || NO_DEBUG_DISPLAY);
         if (PHPUNIT_TEST) {
-            if (phpunit_util::debugging_triggered($message, $level, $from)) {
+            if (\core\test\phpunit\phpunit_util::debugging_triggered($message, $level, $from)) {
                 // We are inside test, the debug message was logged.
                 return true;
             }
@@ -2717,8 +2717,7 @@ function get_formatted_help_string($identifier, $component, $ajax = false, $a = 
                 $data->doclink->linktext = $linktext;
                 $data->doclink->class = ($CFG->doctonewwindow) ? 'helplinkpopup' : '';
             } else {
-                $data->completedoclink = html_writer::tag('div', $OUTPUT->doc_link($link, $linktext),
-                    array('class' => 'helpdoclink'));
+                $data->completedoclink = html_writer::div($OUTPUT->doc_link($link, $linktext, true), 'helpdoclink');
             }
         }
     } else {

@@ -1,6 +1,6 @@
 # mod_forum Upgrade notes
 
-## 5.2dev
+## 5.2
 
 ### Deprecated
 

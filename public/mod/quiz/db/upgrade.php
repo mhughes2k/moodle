@@ -51,8 +51,10 @@ function xmldb_quiz_upgrade($oldversion) {
     // Automatically generated Moodle v5.0.0 release upgrade line.
     // Put any upgrade step following this.
 
-    if ($oldversion < 2025041401) {
+    // Automatically generated Moodle v5.1.0 release upgrade line.
+    // Put any upgrade step following this.
 
+    if ($oldversion < 2026022300) {
         // Changing precision of field name on table quiz to (1333).
         $table = new xmldb_table('quiz');
         $field = new xmldb_field('name', XMLDB_TYPE_CHAR, '1333', null, XMLDB_NOTNULL, null, null, 'course');
@@ -61,10 +63,50 @@ function xmldb_quiz_upgrade($oldversion) {
         $dbman->change_field_precision($table, $field);
 
         // Quiz savepoint reached.
-        upgrade_mod_savepoint(true, 2025041401, 'quiz');
+        upgrade_mod_savepoint(true, 2026022300, 'quiz');
     }
 
-    // Automatically generated Moodle v5.1.0 release upgrade line.
+    if ($oldversion < 2026022400) {
+        // Queue tasks to process stuck quiz attempts (state = 'submitted').
+        $attemptids = $DB->get_fieldset_select(
+            'quiz_attempts',
+            'id',
+            'state = ?',
+            [\mod_quiz\quiz_attempt::SUBMITTED],
+        );
+
+        foreach ($attemptids as $attemptid) {
+            $task = \mod_quiz\task\grade_submission::instance($attemptid);
+            \core\task\manager::queue_adhoc_task($task, true);
+        }
+
+        // Quiz savepoint reached.
+        upgrade_mod_savepoint(true, 2026022400, 'quiz');
+    }
+
+    if ($oldversion < 2026030600) {
+        // Define field reason to be added to quiz_overrides.
+        $table = new xmldb_table('quiz_overrides');
+        $field = new xmldb_field('reason', XMLDB_TYPE_TEXT, null, null, null, null, null, 'password');
+
+        // Conditionally launch add field reason.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Define field reasonformat to be added to quiz_overrides.
+        $formatfield = new xmldb_field('reasonformat', XMLDB_TYPE_INTEGER, '2', null, XMLDB_NOTNULL, null, '0', 'reason');
+
+        // Conditionally launch add field reasonformat.
+        if (!$dbman->field_exists($table, $formatfield)) {
+            $dbman->add_field($table, $formatfield);
+        }
+
+        // Quiz savepoint reached.
+        upgrade_mod_savepoint(true, 2026030600, 'quiz');
+    }
+
+    // Automatically generated Moodle v5.2.0 release upgrade line.
     // Put any upgrade step following this.
 
     return true;

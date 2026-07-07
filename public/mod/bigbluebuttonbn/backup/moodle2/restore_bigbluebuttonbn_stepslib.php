@@ -58,7 +58,12 @@ class restore_bigbluebuttonbn_activity_structure_step extends restore_activity_s
         global $DB;
         $data = (object) $data;
         $data->course = $this->get_courseid();
-        $data->timemodified = $this->apply_date_offset($data->timemodified);
+
+        // Any changes to the list of dates that needs to be rolled should be same during course restore and course reset.
+        // See MDL-9367.
+        $data->openingtime = $this->apply_date_offset($data->openingtime);
+        $data->closingtime = $this->apply_date_offset($data->closingtime);
+
         // Check if we are in backup::MODE_IMPORT (we set a new meetingid) or backup::MODE_GENERAL (we keep the same meetingid).
         if ($this->get_task()->get_info()->mode == backup::MODE_IMPORT || empty($data->meetingid)) {
             // We are in backup::MODE_IMPORT, we need to renew the meetingid.
@@ -83,7 +88,6 @@ class restore_bigbluebuttonbn_activity_structure_step extends restore_activity_s
         $data->courseid = $this->get_mappingid('course', $data->courseid);
         $data->bigbluebuttonbnid = $this->get_new_parentid('bigbluebuttonbn');
         $data->userid = $this->get_mappingid('user', $data->userid);
-        $data->timecreated = $this->apply_date_offset($data->timecreated);
         // Insert the bigbluebuttonbn_logs record.
         $newitemid = $DB->insert_record('bigbluebuttonbn_logs', $data);
         // Immediately after inserting associated record, call this.
@@ -102,7 +106,6 @@ class restore_bigbluebuttonbn_activity_structure_step extends restore_activity_s
         // Apply modifications.
         $data->courseid = $this->get_mappingid('course', $data->courseid);
         $data->bigbluebuttonbnid = $this->get_new_parentid('bigbluebuttonbn');
-        $data->timecreated = $this->apply_date_offset($data->timecreated);
         // Insert the bigbluebuttonbn_recordings record.
         $newitemid = $DB->insert_record('bigbluebuttonbn_recordings', $data);
         // Immediately after inserting associated record, call this.
@@ -111,11 +114,10 @@ class restore_bigbluebuttonbn_activity_structure_step extends restore_activity_s
 
     /**
      * Actions to be executed after the restore is completed
-     *
-     * @return void
      */
     protected function after_execute() {
         // Add bigbluebuttonbn related files, no need to match by itemname (just internally handled context).
         $this->add_related_files('mod_bigbluebuttonbn', 'intro', null);
+        $this->add_related_files('mod_bigbluebuttonbn', 'presentation', null);
     }
 }

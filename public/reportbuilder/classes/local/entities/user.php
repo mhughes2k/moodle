@@ -87,8 +87,7 @@ class user extends base {
         $this->userprofilefields = (new user_profile_fields(
             "{$tablealias}.id",
             $this->get_entity_name(),
-        ))
-            ->add_joins($this->get_joins());
+        ));
 
         return parent::initialise();
     }
@@ -181,7 +180,6 @@ class user extends base {
             new lang_string('fullname'),
             $this->get_entity_name()
         ))
-            ->add_joins($this->get_joins())
             ->add_fields($fullnameselect)
             ->set_is_sortable(true, $fullnamesort)
             ->add_callback(static function($value, stdClass $row) use ($viewfullnames): string {
@@ -212,7 +210,6 @@ class user extends base {
                 $fullnamelang,
                 $this->get_entity_name()
             ))
-                ->add_joins($this->get_joins())
                 ->add_fields($fullnameselect)
                 ->add_field("{$usertablealias}.id")
                 ->set_is_sortable(true, $fullnamesort)
@@ -261,7 +258,6 @@ class user extends base {
             new lang_string('picture'),
             $this->get_entity_name()
         ))
-            ->add_joins($this->get_joins())
             ->add_fields($userpictureselect)
             ->add_callback(static function($value, stdClass $row): string {
                 global $OUTPUT;
@@ -279,7 +275,6 @@ class user extends base {
                 $userfieldlang,
                 $this->get_entity_name()
             ))
-                ->add_joins($this->get_joins())
                 ->set_type($columntype)
                 ->add_field("{$usertablealias}.{$userfield}")
                 ->set_is_sortable(true)
@@ -405,7 +400,6 @@ class user extends base {
             'confirmed' => new lang_string('confirmed', 'admin'),
             'username' => new lang_string('username'),
             'auth' => new lang_string('authentication', 'moodle'),
-            'moodlenetprofile' => new lang_string('moodlenetprofile', 'user'),
             'timecreated' => new lang_string('timecreated', 'core_reportbuilder'),
             'timemodified' => new lang_string('timemodified', 'core_reportbuilder'),
             'lastip' => new lang_string('lastip'),
@@ -459,8 +453,7 @@ class user extends base {
             $this->get_entity_name(),
             $fullnamesql,
             $fullnameparams
-        ))
-            ->add_joins($this->get_joins());
+        ));
 
         // Picture filter.
         $filters[] = (new filter(
@@ -469,8 +462,7 @@ class user extends base {
             new lang_string('picture'),
             $this->get_entity_name(),
             "CASE WHEN {$tablealias}.picture > 0 THEN 1 ELSE 0 END",
-        ))
-            ->add_joins($this->get_joins());
+        ));
 
         // User fields filters.
         $fields = $this->get_user_fields();
@@ -492,8 +484,7 @@ class user extends base {
                 $name,
                 $this->get_entity_name(),
                 "{$tablealias}.{$field}"
-            ))
-                ->add_joins($this->get_joins());
+            ));
 
             // Populate filter options by callback, if available.
             if (is_callable($optionscallback)) {
@@ -510,8 +501,7 @@ class user extends base {
             new lang_string('neveraccessed', 'core_reportbuilder'),
             $this->get_entity_name(),
             "CASE WHEN {$tablealias}.firstaccess = {$tablealias}.lastaccess OR {$tablealias}.lastaccess = 0 THEN 1 ELSE 0 END",
-        ))
-            ->add_joins($this->get_joins());
+        ));
 
         // User select filter.
         $filters[] = (new filter(
@@ -520,8 +510,7 @@ class user extends base {
             new lang_string('userselect', 'core_reportbuilder'),
             $this->get_entity_name(),
             "{$tablealias}.id"
-        ))
-            ->add_joins($this->get_joins());
+        ));
 
         // Merge with user profile field filters.
         return array_merge($filters, $this->userprofilefields->get_filters());
@@ -555,7 +544,7 @@ class user extends base {
         $authlist = array_keys(core_component::get_plugin_list('auth'));
 
         return array_map(
-            fn(string $auth) => get_auth_plugin($auth)->get_title(),
+            fn(string $auth) => \core\di::get(\core\authentication::class)->get_plugin($auth)->get_title(),
             array_combine($authlist, $authlist),
         );
     }

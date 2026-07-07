@@ -83,7 +83,7 @@ class system_report_table extends base_report_table {
 
         $fields = $this->report->get_base_fields();
         $groupby = [];
-        $maintable = $this->report->get_main_table();
+        $maintablesql = $this->report->get_main_table_sql();
         $maintablealias = $this->report->get_main_table_alias();
         $joins = $this->report->get_joins();
         [$where, $params] = $this->report->get_base_condition();
@@ -117,10 +117,7 @@ class system_report_table extends base_report_table {
             $this->no_sorting('selectall');
         }
 
-        $columnindex = 1;
-        foreach ($columns as $identifier => $column) {
-            $column->set_index($columnindex++);
-
+        foreach ($columns as $column) {
             $columnheaders[$column->get_column_alias()] = $column->get_title();
 
             // Specify whether column should behave as a user fullname column unless the column has a custom title set.
@@ -176,8 +173,7 @@ class system_report_table extends base_report_table {
         $this->set_default_per_page($this->report->get_default_per_page());
 
         // Initialise table SQL properties.
-        $fieldsql = implode(', ', $fields);
-        $this->init_sql($fieldsql, "{{$maintable}} {$maintablealias}", $joins, $where, $params, $groupby);
+        $this->init_sql(implode(', ', $fields), "{$maintablesql} {$maintablealias}", $joins, $where, $params, $groupby);
     }
 
     /**

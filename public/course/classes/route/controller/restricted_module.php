@@ -36,14 +36,13 @@ class restricted_module {
      * Restricted module.
      *
      * @param ResponseInterface $response
-     * @param modinfo $cm
+     * @param \stdClass $cmdata
      * @return ResponseInterface
      */
     #[route(
-        path: '/{course}/restricted/{cm}',
+        path: '/cms/{cm}/restricted',
         pathtypes: [
-            new \core\router\parameters\path_course(),
-            new \core\router\parameters\path_module(),
+            new \core\router\parameters\path_coursemodule(name: 'cm'),
         ],
         requirelogin: new require_login(
             requirelogin: true,
@@ -53,29 +52,54 @@ class restricted_module {
     public function restricted_module_page(
         ServerRequestInterface $request,
         ResponseInterface $response,
-        \stdClass $course,
-        \stdClass $cm,
+        \stdClass $cmdata,
     ): ResponseInterface {
         global $OUTPUT, $PAGE;
 
-        $context = \context_module::instance($cm->id);
+        $context = \context_module::instance($cmdata->id);
 
+        $course = get_course($cmdata->course);
         $modinfo = get_fast_modinfo($course);
-        $cminfo = $modinfo->get_cm($cm->id);
-        $sectioninfo = $modinfo->get_section_info_by_id($cm->section);
+        $cminfo = $modinfo->get_cm($cmdata->id);
+        $sectioninfo = $modinfo->get_section_info_by_id($cmdata->section);
 
         $format = course_get_format($course);
         $course->format = $format->get_format();
 
-        $PAGE->set_url('/restricted.php', ['id' => $cm->id]);
+        // Confirm the module has a view page. Redirect to section page otherwise.
+        if (!$cmurl = $cminfo->get_url()) {
+            $cmurl = $format->get_view_url($sectioninfo->section, ['navigation' => true]);
+            $cmurl->set_anchor('module-' . $cmdata->id);
+            return $this->redirect($response, $cmurl);
+        }
+
+        // Confirm the module is actually restricted. Redirect to module page otherwise.
+        if ($cminfo->get_user_visible()) {
+            return $this->redirect($response, $cmurl);
+        }
+
+        // Confirm the module is not stealth and restrictions are visible.
+        // Redirect to module page to require_login() otherwise.
+        if (!$cminfo->is_visible_on_course_page()) {
+            return $this->redirect($response, $cmurl);
+        }
+
+        $url = \core\router\util::get_path_for_callable(
+            [self::class, 'restricted_module_page'],
+            ['cm' => $cmdata->id],
+        );
+        $PAGE->set_url($url, ['cm' => $cmdata->id]);
         $PAGE->add_body_class('limitedwidth');
         $PAGE->set_context($context);
-        $PAGE->set_pagetype('mod-' . $cm->modname . '-restricted');
+        $PAGE->set_pagetype('mod-' . $cminfo->modname . '-restricted');
         $strtitle = get_string('restrictedtitle', 'course', $cminfo->get_name());
         $PAGE->set_title($strtitle . \moodle_page::TITLE_SEPARATOR . $course->shortname);
         $PAGE->set_heading($course->fullname);
         $PAGE->set_cm($cminfo);
+        $PAGE->set_pagelayout('incourse');
         $PAGE->set_secondary_navigation(false);
+        $PAGE->set_hide_settings(true);
+        $PAGE->set_ai_visibility_hint(false);
 
         $restrictedclass = $format->get_output_classname('content\\cm\\restricted');
         $cmoutput = new $restrictedclass(
@@ -85,9 +109,21 @@ class restricted_module {
         );
         $renderer = $format->get_renderer($PAGE);
 
-        $response->getBody()->write($OUTPUT->header());
+        if ($header = $OUTPUT->header()) {
+            $response->getBody()->write($header);
+        }
         $response->getBody()->write($renderer->render($cmoutput));
-        $response->getBody()->write($OUTPUT->footer());
+        if ($footer = $OUTPUT->footer()) {
+            $response->getBody()->write($footer);
+        }
+
+        $eventdata = [
+            'objectid' => $cmdata->id,
+            'context' => $context,
+        ];
+        $event = \core\event\course_restricted_module_viewed::create($eventdata);
+        $event->trigger();
+        user_accesstime_log($context->instanceid);
 
         return $response;
     }

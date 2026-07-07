@@ -172,13 +172,11 @@ if ($mform->is_cancelled()) {
         if (!is_null($sectionreturn)) {
             $options['sr'] = $sectionreturn;
         }
-        $url = course_get_url($course, $cw->section, $options);
+        $url = course_get_url($course, $cw, $options);
         if (!empty($cm->id)) {
             $url->set_anchor('module-' . $cm->id);
         } else if (!empty($data->beforemod)) {
             $url->set_anchor('module-' . $data->beforemod);
-        } else {
-            $url->set_anchor('section-' . $cw->section);
         }
         redirect($url);
     }
@@ -206,7 +204,7 @@ if ($mform->is_cancelled()) {
         if (!is_null($sectionreturn)) {
             $options['sr'] = $sectionreturn;
         }
-        $url = course_get_url($course, $cw->section, $options);
+        $url = course_get_url($course, $cw, $options);
         if (!empty($fromform->coursemodule)) {
             $url->set_anchor('module-' . $fromform->coursemodule);
         }

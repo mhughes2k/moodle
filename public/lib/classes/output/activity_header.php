@@ -187,17 +187,36 @@ class activity_header implements renderable, templatable {
         }
 
         $activityinfo = null;
+        $activitycompletiondata = [];
+        $activitydatesdata = [];
+        $shownavigation = \core_courseformat\local\linearnavigationsettings::show_navigation_footer($this->page);
         if (!$this->hidecompletion) {
-            $completiondetails = \core_completion\cm_completion_details::get_instance($this->page->cm, $this->user->id);
+            $activitycompletiondata = (new \core_course\output\completion_status($this->page->cm, $this->user->id))
+                ->export_for_template($output);
             $activitydates = \core\activity_dates::get_dates_for_module($this->page->cm, $this->user->id);
-
-            $activitycompletion = new \core_course\output\activity_completion($this->page->cm, $completiondetails);
-            $activitycompletiondata = (array) $activitycompletion->export_for_template($output);
             $activitydates = new \core_course\output\activity_dates($activitydates);
             $activitydatesdata = (array) $activitydates->export_for_template($output);
             $data = array_merge($activitycompletiondata, $activitydatesdata);
+            $data['description'] = $this->description;
+            if (
+                !empty($data)
+                && !empty($data['hascompletion'])
+                && !empty($data['uservisible'])
+            ) {
+                if ($shownavigation) {
+                    // With linear navigation, the interactive completion control is relocated to the
+                    // sticky footer, so only a read-only completion status indicator is shown in the
+                    // header. It is updated in place when the footer button is toggled.
+                    $this->add_completion_status_to_page_header($output, $data);
+                } else if (!empty($data['showmanualcompletion'])) {
+                    $this->add_manual_completion_to_page_header($output, $data);
+                } else if (!empty($data['isautomatic'])) {
+                    $this->add_completion_status_to_page_header($output, $data);
+                }
+            }
 
             $activityinfo = $output->render_from_template('core_course/activity_info', $data);
+            $this->add_dates_to_page_header($output, $activitydatesdata);
         }
 
         $format = course_get_format($this->page->course);
@@ -213,12 +232,84 @@ class activity_header implements renderable, templatable {
             $additionalitems = $this->additionalnavitems->export_for_template($output);
         }
 
-        return [
+        return array_merge([
             'title' => $this->title,
             'description' => $this->description,
             'completion' => $activityinfo,
+            'activitydates' => $activitydatesdata,
             'additional_items' => $additionalitems,
-        ];
+            'shownavigation' => $shownavigation,
+        ], $activitycompletiondata);
+    }
+
+    /**
+     * Adds the manual completion component to the page header actions.
+     *
+     * @param renderer_base $output
+     * @param array $data the template data for the completion component
+     * @return bool if the completion was added
+     */
+    private function add_manual_completion_to_page_header(renderer_base $output, array $data): bool {
+        // Some themes may not use completion in the header, so we check first.
+        $showinheader = $this->page?->layout_options['activityinfoinheader'] ?? true;
+        if (!$showinheader) {
+            return false;
+        }
+
+        $this->page->add_header_action(
+            $output->render_from_template('core_course/completion_manual', $data)
+        );
+        // Also init the heading component to manage feature like manual completion button display.
+        $this->page->requires->js_call_amd(
+            'core_courseformat/local/content/activity_header',
+            'init',
+            ["[data-for='page-heading']"],
+        );
+        return true;
+    }
+
+    /**
+     * Adds the completion status component to the page header actions.
+     *
+     * @param renderer_base $output
+     * @param array $data the template data for the completion component
+     * @return bool if the completion was added
+     */
+    private function add_completion_status_to_page_header(renderer_base $output, array $data): bool {
+        // Some themes may not use completion in the header, so we check first.
+        $showinheader = $this->page?->layout_options['activityinfoinheader'] ?? true;
+        if (!$showinheader) {
+            return false;
+        }
+
+        $this->page->add_header_action(
+            $output->render_from_template('core_course/completion_status', $data)
+        );
+        return true;
+    }
+
+    /**
+     * Adds the dates component to the page header.
+     *
+     * @param renderer_base $output
+     * @param array $data the template data for the dates component
+     * @return bool if the dates were added
+     */
+    private function add_dates_to_page_header(renderer_base $output, array $data): bool {
+        // Some themes may not use dates in the header, so we check first.
+        $showinheader = $this->page?->layout_options['activityinfoinheader'] ?? true;
+        if (!$showinheader) {
+            return false;
+        }
+
+        // Only add dates if there are dates to show.
+        if (!$data['hasdates']) {
+            return false;
+        }
+
+        $dates = $output->render_from_template('core_course/activity_dates', $data);
+        $this->page->add_header_extras($dates);
+        return true;
     }
 
     /**

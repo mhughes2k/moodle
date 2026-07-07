@@ -14,8 +14,6 @@ Feature: Display and choose from the available activities in course
     And the following "course enrolments" exist:
       | user    | course | role           |
       | teacher | C      | editingteacher |
-    And the following config values are set as admin:
-      | enablemoodlenet | 0 | tool_moodlenet |
     And I log in as "teacher"
     And I am on "Course" course homepage with editing mode on
 
@@ -173,7 +171,7 @@ Feature: Display and choose from the available activities in course
     And I should see "1 results found" in the "Add an activity or resource" "dialogue"
     And I should see "Database" in the "Add an activity or resource" "dialogue"
     # Test help.
-    And I set the field "search" to "Define the information each entry should include, such as text, dates, images, or links."
+    And I set the field "search" to "Define the information each entry should include, such as text, dates, images, or links"
     And I should see "1 results found" in the "Add an activity or resource" "dialogue"
     And I should see "Database" in the "Add an activity or resource" "dialogue"
     # Test tip.

@@ -18,14 +18,12 @@ namespace mod_quiz\external;
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->libdir . '/externallib.php');
 require_once($CFG->dirroot . '/question/editlib.php');
 require_once($CFG->dirroot . '/mod/quiz/locallib.php');
 
-use external_function_parameters;
-use external_single_structure;
-use external_value;
-use external_api;
+use core_external\external_function_parameters;
+use core_external\external_single_structure;
+use core_external\external_value;
 use core_question\category_manager;
 use mod_quiz\question\bank\filter\custom_category_condition;
 use mod_quiz\quiz_settings;
@@ -39,7 +37,7 @@ use mod_quiz\structure;
  * @author     Nathan Nguyen <nathannguyen@catalyst-au.net>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class add_random_questions extends external_api {
+class add_random_questions extends \core_external\external_api {
 
     /**
      * Parameters for the web service function
@@ -47,32 +45,30 @@ class add_random_questions extends external_api {
      * @return external_function_parameters
      */
     public static function execute_parameters(): external_function_parameters {
-        return new external_function_parameters (
-            [
-                'cmid' => new external_value(PARAM_INT, 'The cmid of the quiz'),
-                'addonpage' => new external_value(PARAM_INT, 'The page where random questions will be added to'),
-                'randomcount' => new external_value(PARAM_INT, 'Number of random questions'),
-                'filtercondition' => new external_value(
-                    PARAM_TEXT,
-                    '(Optional) The filter condition used when adding random questions from an existing category.
-                    Not required if adding random questions from a new category.',
-                    VALUE_DEFAULT,
-                    '',
-                ),
-                'newcategory' => new external_value(
-                    PARAM_TEXT,
-                    '(Optional) The name of a new question category to create and use for the random questions.',
-                    VALUE_DEFAULT,
-                    '',
-                ),
-                'parentcategory' => new external_value(
-                    PARAM_TEXT,
-                    '(Optional) The parent of the new question category, if creating one.',
-                    VALUE_DEFAULT,
-                    0,
-                ),
-            ]
-        );
+        return new external_function_parameters([
+            'cmid' => new external_value(PARAM_INT, 'The cmid of the quiz'),
+            'addonpage' => new external_value(PARAM_INT, 'The page where random questions will be added to'),
+            'randomcount' => new external_value(PARAM_INT, 'Number of random questions'),
+            'filtercondition' => new external_value(
+                PARAM_TEXT,
+                '(Optional) The filter condition used when adding random questions from an existing category.
+                Not required if adding random questions from a new category.',
+                VALUE_DEFAULT,
+                '',
+            ),
+            'newcategory' => new external_value(
+                PARAM_TEXT,
+                '(Optional) The name of a new question category to create and use for the random questions.',
+                VALUE_DEFAULT,
+                '',
+            ),
+            'parentcategory' => new external_value(
+                PARAM_TEXT,
+                '(Optional) The parent of the new question category, if creating one.',
+                VALUE_DEFAULT,
+                0,
+            ),
+        ]);
     }
 
     /**

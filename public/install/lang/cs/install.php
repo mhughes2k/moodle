@@ -36,7 +36,7 @@ $string['chooselanguagesub'] = 'Zvolte si jazyk tohoto průvodce instalací. Vyb
 $string['clialreadyconfigured'] = 'Konfigurační soubor config.php již existuje. Spusťte admin/cli/install_database.php, pokud chcete provést instalaci databáze.';
 $string['clialreadyinstalled'] = 'Konfigurační soubor config.php již existuje. Spusťte admin/cli/upgrade.php, pokud chcete provést upgrade vašich stránek.';
 $string['cliinstallheader'] = 'Moodle {$a} - průvodce instalací z příkazové řádky';
-$string['clitablesexist'] = 'Databázové tabulky již existují; CLI instalace nemůže pokračovat.';
+$string['clitablesexist'] = 'Databázové tabulky již existují; Instalace z rozhraní příkazového řádku (CLI) nemůže pokračovat.';
 $string['databasehost'] = 'Databázový server';
 $string['databasename'] = 'Název databáze';
 $string['databasetypehead'] = 'Vyberte databázový ovladač';
@@ -68,7 +68,7 @@ $string['pathsunsecuredataroot'] = 'Umístění datového adresáře není bezpe
 $string['pathswrongadmindir'] = 'Adresář pro správu serveru (admin) neexistuje';
 $string['phpextension'] = '{$a} PHP rozšíření';
 $string['phpversion'] = 'Verze PHP';
-$string['webserverconfigproblemdescription'] = 'Váš webový server není nakonfigurován tak, aby bránil přístupu k souborům mimo adresář /public. Podrobnosti o konfiguraci webového serveru naleznete na adrese <a href="https://moodledev.io/docs/5.1/guides/restructure">https://moodledev.io/docs/5.1/guides/restructure</a>. Po opětovné konfiguraci prosím <a href="{$a}">znovu navštivte kořenový adresář webu</a>.';
+$string['webserverconfigproblemdescription'] = 'Váš webový server není nakonfigurován tak, aby bránil přístupu k souborům mimo adresář /public. Podrobnosti o správné konfiguraci webového serveru naleznete v dokumentaci <a href="https://docs.moodle.org/en/Upgrading#Code_directories_restructure">Aktualizace - Restrukturalizace adresářů kódu</a>. Po rekonfiguraci <a href="{$a}">znovu navštivte kořenový adresář webu</a>.';
 $string['webservernotconfigured'] = 'Webový server není nakonfigurován';
 $string['welcomep10'] = '{$a->installername} ({$a->installerversion})';
 $string['welcomep20'] = 'Tuto stránku vidíte, protože jste úspěšně nainstalovali a spustili  balíček <strong>{$a->packname} {$a->packversion}</strong>. Gratulujeme!';

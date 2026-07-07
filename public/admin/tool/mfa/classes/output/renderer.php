@@ -391,7 +391,7 @@ class renderer extends \plugin_renderer_base {
         $factorsusedinfo = $DB->get_records_sql_menu($factorsusedsql, [$lookback, $lookback]);
 
         // Auth rows.
-        $authtypes = get_enabled_auth_plugins(true);
+        $authtypes = \core\di::get(\core\authentication::class)->get_enabled_plugins();
         foreach ($authtypes as $authtype) {
             $row = [];
             $row[] = \html_writer::tag('b', $authtype);
@@ -640,7 +640,6 @@ class renderer extends \plugin_renderer_base {
             if ($loginfactor->name != $factor->name) {
                 $additionalfactor = [
                         'name' => $loginfactor->name,
-                        'icon' => $loginfactor->get_icon(),
                         'loginoption' => get_string('loginoption', 'factor_' . $loginfactor->name),
                 ];
                 // We mark the factor as disabled if it is locked.
@@ -687,9 +686,8 @@ class renderer extends \plugin_renderer_base {
         }
 
         $context = [
-                'logintitle' => get_string('logintitle', 'factor_'.$factor->name),
+                'logintitle' => get_string('logintitle', 'tool_mfa'),
                 'logindesc' => $factor->get_login_desc(),
-                'factoricon' => $factor->get_icon(),
                 'form' => $form->render(),
                 'hasadditionalfactors' => $hasadditionalfactors,
                 'additionalfactors' => $alladitionalfactors,

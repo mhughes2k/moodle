@@ -1,6 +1,6 @@
 # gradereport_singleview Upgrade notes
 
-## 5.2dev
+## 5.2
 
 ### Removed
 

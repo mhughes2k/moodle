@@ -16,6 +16,10 @@
 
 namespace mod_quiz;
 
+use mod_quiz\task\queue_all_quiz_open_notification_tasks;
+use mod_quiz\task\queue_quiz_open_notification_tasks_for_users;
+use mod_quiz\task\send_quiz_open_soon_notification_to_user;
+
 /**
  * Test class for the quiz notification helper.
  *
@@ -30,22 +34,30 @@ final class notification_helper_test extends \advanced_testcase {
      * Run all the tasks related to the notifications.
      */
     protected function run_notification_helper_tasks(): void {
-        $task = \core\task\manager::get_scheduled_task(\mod_quiz\task\queue_all_quiz_open_notification_tasks::class);
+        $task = \core\task\manager::get_scheduled_task(queue_all_quiz_open_notification_tasks::class);
         $task->execute();
         $clock = \core\di::get(\core\clock::class);
 
-        $adhoctask = \core\task\manager::get_next_adhoc_task($clock->time());
+        $adhoctask = \core\task\manager::get_next_adhoc_task(
+            $clock->time(),
+            true,
+            queue_quiz_open_notification_tasks_for_users::class
+        );
         if ($adhoctask) {
-            $this->assertInstanceOf(\mod_quiz\task\queue_quiz_open_notification_tasks_for_users::class, $adhoctask);
             $adhoctask->execute();
             \core\task\manager::adhoc_task_complete($adhoctask);
+            \core\task\manager::reset_state();
         }
 
-        $adhoctask = \core\task\manager::get_next_adhoc_task($clock->time());
+        $adhoctask = \core\task\manager::get_next_adhoc_task(
+            $clock->time(),
+            true,
+            send_quiz_open_soon_notification_to_user::class
+        );
         if ($adhoctask) {
-            $this->assertInstanceOf(\mod_quiz\task\send_quiz_open_soon_notification_to_user::class, $adhoctask);
             $adhoctask->execute();
             \core\task\manager::adhoc_task_complete($adhoctask);
+            \core\task\manager::reset_state();
         }
     }
 
@@ -188,6 +200,62 @@ final class notification_helper_test extends \advanced_testcase {
     }
 
     /**
+     * Test users failing a grade condition are excluded from open-soon notifications.
+     */
+    public function test_get_users_within_quiz_with_grade_restriction(): void {
+        global $DB;
+
+        $this->resetAfterTest();
+        $generator = $this->getDataGenerator();
+        $clock = $this->mock_clock_with_frozen();
+
+        $course = $generator->create_course();
+        $user1 = $generator->create_user(); // Scores 90% — should NOT receive notification.
+        $user2 = $generator->create_user(); // Scores 50% — SHOULD receive notification.
+        $generator->enrol_user($user1->id, $course->id, 'student');
+        $generator->enrol_user($user2->id, $course->id, 'student');
+
+        $quizgenerator = $generator->get_plugin_generator('mod_quiz');
+
+        // Create a graded quiz and assign scores: user1 passes (>=60%), user2 fails (<60%).
+        $quiz = $quizgenerator->create_instance(['course' => $course->id, 'grade' => 100]);
+        grade_update('mod/quiz', $course->id, 'mod', 'quiz', $quiz->id, 0, ['userid' => $user1->id, 'rawgrade' => 90]);
+        grade_update('mod/quiz', $course->id, 'mod', 'quiz', $quiz->id, 0, ['userid' => $user2->id, 'rawgrade' => 50]);
+        $gradeitem = \grade_item::fetch(
+            [
+                'itemtype' => 'mod',
+                'itemmodule' => 'quiz',
+                'iteminstance' => $quiz->id,
+                'courseid' => $course->id,
+                'itemnumber' => 0,
+            ]
+        );
+
+        // Create a remedial quiz opening within 48 hours, restricted to students who scored <60%.
+        $remedialquiz = $quizgenerator->create_instance(['course' => $course->id, 'timeopen' => $clock->time() + DAYSECS]);
+        $cm = get_coursemodule_from_instance('quiz', $remedialquiz->id, $course->id);
+        $DB->set_field('course_modules', 'availability', json_encode([
+            'op' => '&',
+            'showc' => [true],
+            'c' => [
+                [
+                    'type' => 'grade',
+                    'id' => (int) $gradeitem->id,
+                    'max' => 60.0,
+                ],
+            ],
+        ]), ['id' => $cm->id]);
+
+        rebuild_course_cache($course->id, true);
+
+        $users = notification_helper::get_users_within_quiz($remedialquiz->id);
+
+        // Only user2 should be returned because user1 does not meet the grade condition.
+        $this->assertCount(1, $users);
+        $this->assertArrayHasKey($user2->id, $users);
+    }
+
+    /**
      * Test sending the quiz open soon notification to a user.
      */
     public function test_send_notification_to_user(): void {
@@ -214,23 +282,16 @@ final class notification_helper_test extends \advanced_testcase {
         ]);
         $clock->bump(5);
 
-        // Get the users within the date range.
-        $quizzes = $helper::get_quizzes_within_date_range();
-        foreach ($quizzes as $q) {
-            $users = $helper::get_users_within_quiz($q->id);
-        }
-        $quizzes->close();
-
         // Run the tasks.
         $this->run_notification_helper_tasks();
 
         // Get the notifications that should have been created during the adhoc task.
-        $this->assertCount(1, $sink->get_messages());
+        $messages = $sink->get_messages_by_component('mod_quiz');
+        $this->assertCount(1, $messages);
 
         // Check the subject matches.
-        $messages = $sink->get_messages_by_component('mod_quiz');
         $message = reset($messages);
-        $stringparams = ['timeopen' => userdate($users[$user1->id]->timeopen), 'quizname' => $quiz->name];
+        $stringparams = ['timeopen' => userdate($timeopen), 'quizname' => $quiz->name];
         $expectedsubject = get_string('quizopendatesoonsubject', 'mod_quiz', $stringparams);
         $this->assertEquals($expectedsubject, $message->subject);
 

@@ -50,7 +50,7 @@ $string['climustagreelicense'] = 'In non-interactive mode you must agree to the 
 $string['clinoreplyemail'] = 'Noreply address';
 $string['cliskipdatabase'] = 'Skipping database installation.';
 $string['clisupportemail'] = 'Support email address';
-$string['clitablesexist'] = 'Database tables already present; CLI installation cannot continue.';
+$string['clitablesexist'] = 'Database tables already present; Command Line Interface (CLI) installation cannot continue.';
 $string['compatibilitysettings'] = 'Checking your PHP settings ...';
 $string['compatibilitysettingshead'] = 'Checking your PHP settings ...';
 $string['compatibilitysettingssub'] = 'Your server should pass all these tests to make Moodle run properly';
@@ -216,7 +216,7 @@ $string['sessionautostarthelp'] = '<p>Moodle requires session support and will n
 
 <p>Sessions can be enabled in the php.ini file ... look for the session.auto_start parameter.</p>';
 $string['upgradingqtypeplugin'] = 'Upgrading question/type plugin';
-$string['webserverconfigproblemdescription'] = 'Your web server is not configured to prevent access to files outside the /public directory. Please refer to <a href="https://moodledev.io/docs/5.1/guides/restructure">https://moodledev.io/docs/5.1/guides/restructure</a> for details on how to configure your web server. Once reconfigured, please <a href="{$a}">revisit the web root</a>.';
+$string['webserverconfigproblemdescription'] = 'Your web server is not configured to prevent access to files outside the /public directory. For details of how to configure your web server correctly, see the documentation <a href="https://docs.moodle.org/en/Upgrading#Code_directories_restructure">Upgrading - Code directories restructure</a>. Once reconfigured, <a href="{$a}">revisit the web root</a>.';
 $string['webservernotconfigured'] = 'Web server not configured';
 $string['welcomep10'] = '{$a->installername} ({$a->installerversion})';
 $string['welcomep20'] = 'You are seeing this page because you have successfully installed and

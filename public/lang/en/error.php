@@ -22,6 +22,13 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+$string['accessdenied:authdisabledexception'] = 'Access denied. The authentication method associated with this user account ({$a}) has been disabled. Please contact your administrator.';
+$string['accessdenied:credentialsexpiredexception'] = 'Access denied. The password for this user account ({$a}) has expired. Please contact your administrator.';
+$string['accessdenied:maintenancemodeenabledexception'] = 'Access denied. The site is currently in maintenance mode and you do not have access: {$a}.';
+$string['accessdenied:userdeletedexception'] = 'Access denied. The user account you are trying to access has been deleted: {$a}.';
+$string['accessdenied:userisguestexception'] = 'Access denied. The user account you are trying to access is a guest account: {$a}.';
+$string['accessdenied:usernotconfirmedexception'] = 'Access denied. The user account you are trying to access has not been confirmed: {$a}.';
+$string['accessdenied:usersuspendedexception'] = 'Access denied. The user account you are trying to access has been suspended: {$a}.';
 $string['activityisscheduledfordeletion'] = 'Activity deletion in progress...';
 $string['agedigitalconsentmapinvalidage'] = '"{$a}" is not a valid value for age.';
 $string['agedigitalconsentmapinvalidcomma'] = '"{$a}" has more or less than one comma separator.';
@@ -402,7 +409,7 @@ $string['listcantmoveup'] = 'Failed to move item up, as it is the first of its p
 $string['listnochildren'] = 'No children of item found';
 $string['listnoitem'] = 'Item not found';
 $string['listnopeers'] = 'No peers of item found';
-$string['listupdatefail'] = 'DB operation failed when editing list hierarchy';
+$string['listupdatefail'] = 'Database operation failed when editing list hierarchy.';
 $string['logfilenotavailable'] = 'Logs not available';
 $string['loginasnoenrol'] = 'You cannot use enrol or unenrol when using \'Log in as\'.';
 $string['loginasonecourse'] = 'You cannot enter this course. You must finish the \'Log in as\' session before entering any other course.';
@@ -427,10 +434,6 @@ $string['moduledisable'] = 'This module ({$a}) has been disabled for this partic
 $string['moduledoesnotexist'] = 'This module does not exist';
 $string['moduleinstancedoesnotexist'] = 'The instance of this module does not exist';
 $string['modulemissingcode'] = 'Module {$a} is missing the code needed to perform this function';
-$string['moodlenet:invalidshareformat'] = 'Incorrect MoodleNet share format';
-$string['moodlenet:invalidsharestatus'] = 'Incorrect MoodleNet share status';
-$string['moodlenet:invalidsharetype'] = 'Invalid MoodleNet share type';
-$string['moodlenet:usernotconfigured'] = 'You do not have permission to share content to MoodleNet, or your account is incorrectly configured.';
 $string['movecatcontentstoroot'] = 'Moving the category content to root is not allowed. You must move the contents to an existing category!';
 $string['movecatcontentstoselected'] = 'Some category content cannot be moved into the selected category.';
 $string['movecategorynotpossible'] = 'You cannot move category \'{$a}\' into the selected category.';
@@ -526,7 +529,8 @@ $string['remotedownloadnotallowed'] = 'Download of components to your server isn
 $string['reportnotavailable'] = 'This type of report is only available for the site course';
 $string['requirecorrectaccess'] = 'Invalid url or port.';
 $string['requireloginerror'] = 'Course or activity not accessible.';
-$string['restorechecksumfailed'] = 'Some problem happened with the restore information stored in your session. Please check your PHP memory/DB package size limits. Restore stopped.';
+$string['restore_not_executable_course_to_be_deleted'] = 'Cannot restore into this course because it is scheduled for deletion.';
+$string['restorechecksumfailed'] = 'There was a problem with the restore information stored in your session. Please check your PHP memory/database package size limits. Restore stopped.';
 $string['restore_path_element_missingmethod'] = 'Restore method {$a} is missing. It must be defined by a developer.';
 $string['restore_path_element_noobject'] = 'Restore object {$a} is not an object.';
 $string['restrictedcontextexception'] = 'Sorry, execution of external function violates context restriction.';

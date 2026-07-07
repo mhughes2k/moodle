@@ -74,6 +74,7 @@ $PAGE->activityheader->disable();
 
 // Activate the secondary nav tab.
 $PAGE->set_secondary_active_tab("mod_quiz_useroverrides");
+$PAGE->set_show_navigation_footer(false);
 
 // Delete orphaned group overrides.
 $sql = 'SELECT o.id
@@ -227,6 +228,20 @@ foreach ($overrides as $override) {
         $fields[] = get_string('requirepassword', 'quiz');
         $values[] = $override->password !== '' ?
                 get_string('enabled', 'quiz') : get_string('none', 'quiz');
+    }
+
+    // Format reason.
+    if (isset($override->reason) && $override->reason !== '') {
+        $formattedreason = format_text(
+            $override->reason,
+            $override->reasonformat ?? FORMAT_MOODLE,
+            ['context' => $context],
+        );
+
+        if ($formattedreason !== '') {
+            $fields[] = get_string('overridereason', 'quiz');
+            $values[] = $formattedreason;
+        }
     }
 
     // Prepare the information about who this override applies to.

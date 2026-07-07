@@ -82,6 +82,7 @@ $string['clicktounflag'] = 'Remove flag';
 $string['clickunflag'] = 'Remove flag';
 $string['contexterror'] = 'You shouldn\'t have got here if you\'re not moving a category to another context.';
 $string['copy'] = 'Copy from {$a} and change links.';
+$string['coursenamebankname'] = '{$a->coursename} - {$a->bankname}';
 $string['created'] = 'Created';
 $string['createdefault'] = 'Create default question bank';
 $string['createdby'] = 'Created by';
@@ -211,6 +212,8 @@ $string['importquestions_link'] = 'question/import';
 $string['importwrongfileencoding'] = 'The file you selected does not use UTF-8 character encoding. {$a} files must use UTF-8.';
 $string['importwrongfiletype'] = 'The type of the file you selected ({$a->actualtype}) does not match the type expected by this import format ({$a->expectedtype}).';
 $string['invalidarg'] = 'No valid arguments supplied or incorrect server configuration';
+$string['invalidcategory'] = 'Invalid category provided for this question bank view.';
+$string['invalidcategoryeditq'] = 'Invalid category provided for this question bank view. Ask your administrator to try running the question/cli/fix_set_references_category_context.php script.';
 $string['invalidcategoryidforparent'] = 'Invalid category id for parent!';
 $string['invalidcategoryidtomove'] = 'Invalid category id to move!';
 $string['invalidconfirm'] = 'Confirmation string was incorrect';
@@ -233,7 +236,7 @@ $string['matchgrades_help'] = 'Imported grades must match one of the fixed list 
 
 *  Error if grade not listed - If a question contains any grades not found in the list an error is displayed and that question will not be imported
 * Nearest grade if not listed - If a grade is found that does not match a value in the list, the grade is changed to the closest matching value in the list ';
-$string['missingcapability'] = 'You must have a capability allowing usage or management of questions, for example {$a}';
+$string['missingcapability'] = 'You must have a capability allowing the use or management of questions, for example {$a}.';
 $string['missingcourseorcmid'] = 'Need to provide courseid or cmid to print_question.';
 $string['missingcourseorcmidtolink'] = 'Need to provide courseid or cmid to get_question_edit_link.';
 $string['missingimportantcode'] = 'This question type is missing important code: {$a}.';
@@ -325,6 +328,9 @@ $string['shareincontext'] = 'Share in context for {$a}';
 $string['stoponerror'] = 'Stop on error';
 $string['stoponerror_help'] = 'This setting determines whether the import process stops when an error is detected, resulting in no questions being imported, or whether any questions containing errors are ignored and any valid questions are imported.';
 $string['switchbank'] = 'Switch bank';
+$string['switchergoback'] = 'Go back';
+$string['switchersearchbyname'] = 'Search by name...';
+$string['switcherselectbank'] = 'Select question bank';
 $string['tofilecategory'] = 'Write category to file';
 $string['tofilecontext'] = 'Write context to file';
 $string['topfor'] = 'Top for {$a}';

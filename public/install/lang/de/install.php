@@ -36,7 +36,7 @@ $string['chooselanguagesub'] = 'Wählen Sie eine Sprache, die Sie während der I
 $string['clialreadyconfigured'] = 'Die Datei config.php existiert bereits. Bitte benutzen Sie admin/cli/install_database.php, wenn Sie diese Site installieren möchten.';
 $string['clialreadyinstalled'] = 'Die Datei config.php existiert bereits. Bitte benutzen Sie admin/cli/install_database.php, wenn Sie diese Site aktualisieren möchten.';
 $string['cliinstallheader'] = 'Installation von Moodle {$a} über die Befehlszeile';
-$string['clitablesexist'] = 'Die Datenbank-Tabellen existieren bereits. Die CLI Installation kann nicht fortgesetzt werden.';
+$string['clitablesexist'] = 'Die Datenbank-Tabellen existieren bereits. Die CLI-Installation (Command Line Interface) kann nicht fortgesetzt werden.';
 $string['databasehost'] = 'Datenbank-Server';
 $string['databasename'] = 'Datenbank-Name';
 $string['databasetypehead'] = 'Datenbank-Treiber wählen';
@@ -64,7 +64,7 @@ $string['pathsunsecuredataroot'] = 'Der Speicherort des Verzeichnisses \'dataroo
 $string['pathswrongadmindir'] = 'Das Admin-Verzeichnis existiert nicht';
 $string['phpextension'] = 'PHP-Extension {$a}';
 $string['phpversion'] = 'PHP-Version';
-$string['webserverconfigproblemdescription'] = 'Ihr Webserver ist nicht so konfiguriert, dass der Zugriff auf Dateien außerhalb des Verzeichnisses "/public" verhindert wird. Weitere Informationen zur Konfiguration Ihres Webservers finden Sie unter <a href="https://moodledev.io/docs/5.1/guides/restructure">https://moodledev.io/docs/5.1/guides/restructure</a>. Nach der Neukonfiguration <a href="{$a}">rufen Sie bitte das Web-Root-Verzeichnis erneut auf</a>.';
+$string['webserverconfigproblemdescription'] = 'Ihr Webserver ist nicht so konfiguriert, dass der Zugriff auf Dateien außerhalb des Verzeichnisses "/public" verhindert wird. Weitere Details zur Konfiguration Ihres Webservers finden Sie unter <a href="https://docs.moodle.org/en/Upgrading#Code_directories_restructure"> Upgrading - Code directories restructure </a>. Nach der Neukonfiguration rufen Sie bitte das <a href="{$a}"> WebRoot-Verzeichnis </a> erneut auf.';
 $string['webservernotconfigured'] = 'Webserver nicht konfiguriert';
 $string['welcomep10'] = '{$a->installername} ({$a->installerversion})';
 $string['welcomep20'] = 'Sie haben das Paket <strong>{$a->packname} {$a->packversion}</strong> erfolgreich auf Ihrem Computer installiert.';

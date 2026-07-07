@@ -250,8 +250,16 @@ class participants extends \table_sql implements dynamic_table {
      */
     public function col_fullname($data) {
         global $OUTPUT;
-        return $OUTPUT->render(\core_user::get_profile_picture($data, null,
-            ['courseid' => $this->course->id, 'includefullname' => true]));
+
+        return $OUTPUT->render(\core_user::get_profile_picture(
+            $data,
+            null,
+            [
+                'courseid' => $this->course->id,
+                'includefullname' => true,
+                'showsuspended' => true,
+            ]
+        ));
     }
 
     /**
@@ -350,17 +358,29 @@ class participants extends \table_sql implements dynamic_table {
                 // Default status field label and value.
                 $status = get_string('participationactive', 'enrol');
                 $statusval = status_field::STATUS_ACTIVE;
+                $statusinfo = '';
                 switch ($ue->status) {
                     case ENROL_USER_ACTIVE:
                         $currentdate = new DateTime();
                         $now = $currentdate->getTimestamp();
-                        $isexpired = $timestart > $now || ($timeend > 0 && $timeend < $now);
+                        $notyetstarted = $timestart > $now;
+                        $isexpired = ($timeend > 0 && $timeend < $now);
                         $enrolmentdisabled = $ue->enrolmentinstance->status == ENROL_INSTANCE_DISABLED;
+
                         // If user enrolment status has not yet started/already ended or the enrolment instance is disabled.
-                        if ($isexpired || $enrolmentdisabled) {
+                        if ($notyetstarted || $isexpired || $enrolmentdisabled) {
                             $status = get_string('participationnotcurrent', 'enrol');
                             $statusval = status_field::STATUS_NOT_CURRENT;
+
+                            if ($enrolmentdisabled) {
+                                $statusinfo = get_string('plugindisabled', 'enrol', $instancename);
+                            } else if ($notyetstarted) {
+                                $statusinfo = get_string('futureenrolment', 'enrol', $instancename);
+                            } else if ($isexpired) {
+                                $statusinfo = get_string('enrolmentexpired', 'enrol', $instancename);
+                            }
                         }
+
                         break;
                     case ENROL_USER_SUSPENDED:
                         $status = get_string('participationsuspended', 'enrol');
@@ -368,8 +388,17 @@ class participants extends \table_sql implements dynamic_table {
                         break;
                 }
 
-                $statusfield = new status_field($instancename, $coursename, $fullname, $status, $timestart, $timeend,
-                    $actions, $timeenrolled);
+                $statusfield = new status_field(
+                    $instancename,
+                    $coursename,
+                    $fullname,
+                    $status,
+                    $timestart,
+                    $timeend,
+                    $actions,
+                    $timeenrolled,
+                    $statusinfo
+                );
                 $statusfielddata = $statusfield->set_status($statusval)->export_for_template($OUTPUT);
                 $enrolstatusoutput .= $OUTPUT->render_from_template('core_user/status_field', $statusfielddata);
             }

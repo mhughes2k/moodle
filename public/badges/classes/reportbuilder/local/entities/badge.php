@@ -18,10 +18,11 @@ declare(strict_types=1);
 
 namespace core_badges\reportbuilder\local\entities;
 
+use core_badges\reportbuilder\local\filters\criteria;
 use core\{context, context_helper};
 use core\context\system;
+use core\lang_string;
 use html_writer;
-use lang_string;
 use moodle_url;
 use stdClass;
 use core_reportbuilder\local\entities\base;
@@ -81,7 +82,6 @@ class badge extends base {
             new lang_string('name'),
             $this->get_entity_name()
         ))
-            ->add_joins($this->get_joins())
             ->set_type(column::TYPE_TEXT)
             ->add_field("{$badgealias}.name")
             ->set_is_sortable(true);
@@ -92,7 +92,6 @@ class badge extends base {
             new lang_string('namewithlink', 'core_badges'),
             $this->get_entity_name()
         ))
-            ->add_joins($this->get_joins())
             ->set_type(column::TYPE_TEXT)
             ->add_fields("{$badgealias}.name, {$badgealias}.id")
             ->set_is_sortable(true)
@@ -111,7 +110,6 @@ class badge extends base {
             new lang_string('namewithimagelink', 'core_badges'),
             $this->get_entity_name()
         ))
-            ->add_joins($this->get_joins())
             ->add_join("LEFT JOIN {context} {$contextalias}
                     ON {$contextalias}.contextlevel = " . CONTEXT_COURSE . "
                    AND {$contextalias}.instanceid = {$badgealias}.courseid")
@@ -142,7 +140,6 @@ class badge extends base {
             new lang_string('description', 'core_badges'),
             $this->get_entity_name()
         ))
-            ->add_joins($this->get_joins())
             ->set_type(column::TYPE_LONGTEXT)
             ->add_field("{$badgealias}.description")
             ->set_is_sortable(true);
@@ -153,7 +150,6 @@ class badge extends base {
             new lang_string('bcriteria', 'core_badges'),
             $this->get_entity_name()
         ))
-            ->add_joins($this->get_joins())
             ->set_type(column::TYPE_TEXT)
             ->add_field("{$badgealias}.id")
             ->set_disabled_aggregation_all()
@@ -178,7 +174,6 @@ class badge extends base {
             new lang_string('badgeimage', 'core_badges'),
             $this->get_entity_name()
         ))
-            ->add_joins($this->get_joins())
             ->add_join("LEFT JOIN {context} {$contextalias}
                     ON {$contextalias}.contextlevel = " . CONTEXT_COURSE . "
                    AND {$contextalias}.instanceid = {$badgealias}.courseid")
@@ -205,7 +200,6 @@ class badge extends base {
             new lang_string('language'),
             $this->get_entity_name()
         ))
-            ->add_joins($this->get_joins())
             ->set_type(column::TYPE_TEXT)
             ->add_field("{$badgealias}.language")
             ->set_is_sortable(true)
@@ -220,7 +214,6 @@ class badge extends base {
             new lang_string('version', 'core_badges'),
             $this->get_entity_name()
         ))
-            ->add_joins($this->get_joins())
             ->set_type(column::TYPE_TEXT)
             ->add_field("{$badgealias}.version")
             ->set_is_sortable(true);
@@ -231,7 +224,6 @@ class badge extends base {
             new lang_string('status', 'core_badges'),
             $this->get_entity_name()
         ))
-            ->add_joins($this->get_joins())
             ->set_type(column::TYPE_TEXT)
             ->add_field("{$badgealias}.status")
             ->set_is_sortable(true)
@@ -249,7 +241,6 @@ class badge extends base {
             new lang_string('expirydate', 'core_badges'),
             $this->get_entity_name()
         ))
-            ->add_joins($this->get_joins())
             ->set_type(column::TYPE_TIMESTAMP)
             ->add_fields("{$badgealias}.expiredate, {$badgealias}.expireperiod, {$badgealias}.id")
             ->set_is_sortable(true, ["{$badgealias}.expiredate", "{$badgealias}.expireperiod"])
@@ -284,8 +275,16 @@ class badge extends base {
             new lang_string('name'),
             $this->get_entity_name(),
             "{$badgealias}.name"
-        ))
-            ->add_joins($this->get_joins());
+        ));
+
+        // Criteria.
+        $filters[] = (new filter(
+            criteria::class,
+            'criteria',
+            new lang_string('bcriteria', 'core_badges'),
+            $this->get_entity_name(),
+            "{$badgealias}.id",
+        ));
 
         // Language.
         $filters[] = (new filter(
@@ -295,7 +294,6 @@ class badge extends base {
             $this->get_entity_name(),
             "{$badgealias}.language",
         ))
-            ->add_joins($this->get_joins())
             ->set_options_callback(
                 fn() => get_string_manager()->get_list_of_translations(),
             );
@@ -307,8 +305,7 @@ class badge extends base {
             new lang_string('version', 'core_badges'),
             $this->get_entity_name(),
             "{$badgealias}.version"
-        ))
-            ->add_joins($this->get_joins());
+        ));
 
         // Status.
         $filters[] = (new filter(
@@ -318,7 +315,6 @@ class badge extends base {
             $this->get_entity_name(),
             "{$badgealias}.status"
         ))
-            ->add_joins($this->get_joins())
             ->set_options([
                 BADGE_STATUS_INACTIVE => new lang_string('badgestatus_0', 'core_badges'),
                 BADGE_STATUS_ACTIVE => new lang_string('badgestatus_1', 'core_badges'),
@@ -340,7 +336,6 @@ class badge extends base {
              END",
             [$paramtime => time()]
         ))
-            ->add_joins($this->get_joins())
             ->set_limited_operators([
                 date::DATE_ANY,
                 date::DATE_RANGE,
@@ -359,7 +354,6 @@ class badge extends base {
             $this->get_entity_name(),
             "{$badgealias}.type"
         ))
-            ->add_joins($this->get_joins())
             ->set_options([
                 BADGE_TYPE_SITE => new lang_string('site'),
                 BADGE_TYPE_COURSE => new lang_string('course'),

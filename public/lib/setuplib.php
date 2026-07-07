@@ -136,7 +136,10 @@ function get_whoops(): ?\Whoops\Run {
 function default_exception_handler(Throwable $ex): void {
     global $CFG, $DB, $OUTPUT, $USER, $FULLME, $SESSION, $PAGE;
 
-    // detect active db transactions, rollback and log as error
+    // Record the throwable in OpenTelemetry if it's available.
+    \core\telemetry::record_throwable($ex);
+
+    // Detect active db transactions, rollback and log as error.
     abort_all_db_transactions();
 
     if (($ex instanceof required_capability_exception) && !CLI_SCRIPT && !AJAX_SCRIPT && !empty($CFG->autologinguests) && !empty($USER->autologinguest)) {
@@ -472,7 +475,7 @@ function get_docs_url($path = null) {
  */
 function format_backtrace($callers, $plaintext = false) {
     // Do not use $CFG->dirroot because it might not be available in destructors.
-    $dirroot = dirname(__DIR__, 2);
+    $dirroot = realpath(dirname(__DIR__, 2));
 
     if (empty($callers)) {
         return '';
@@ -490,7 +493,7 @@ function format_backtrace($callers, $plaintext = false) {
         $line .= sprintf(
             'line %d of %s',
             $caller['line'],
-            str_replace($dirroot, '', $caller['file']),
+            str_replace($dirroot, '', realpath($caller['file'])),
         );
         if (isset($caller['function'])) {
             $line .= ': call to ';
@@ -589,7 +592,11 @@ function initialise_local_config_cache() {
         copy($bootstrapsharedfile, $bootstraplocalfile);
     }
 
-    if (!empty($CFG->siteidentifier) && !file_exists($bootstrapsharedfile) && defined('SYSCONTEXTID')) {
+    if (
+        !empty($CFG->siteidentifier) &&
+        defined('SYSCONTEXTID') &&
+        !file_exists($bootstraplocalfile)
+    ) {
         $contents = "<?php
 // ********** This file is generated DO NOT EDIT **********
 \$CFG->siteidentifier = " . var_export($CFG->siteidentifier, true) . ";
@@ -600,15 +607,20 @@ if (\$CFG->bootstraphash === hash_local_config_cache() && !defined('SYSCONTEXTID
 }
 ";
 
-        // Create the central bootstrap first.
+        // Create the local cache first, in case the shared cache is not
+        // working then each local cache still works independently.
+        make_localcache_directory('', true);
+        $temp = $bootstraplocalfile . '.tmp' . uniqid();
+        file_put_contents($temp, $contents);
+        @chmod($temp, $CFG->filepermissions);
+        rename($temp, $bootstraplocalfile);
+
+        // Create the central bootstrap backup file.
         $temp = $bootstrapsharedfile . '.tmp' . uniqid();
         file_put_contents($temp, $contents);
         @chmod($temp, $CFG->filepermissions);
         rename($temp, $bootstrapsharedfile);
 
-        // Then prewarm the local cache as well.
-        make_localcache_directory('', true);
-        copy($bootstrapsharedfile, $bootstraplocalfile);
     }
 }
 
@@ -764,14 +776,24 @@ function initialise_fullme_cli() {
     $topfile = realpath($topfile['file']);
     $dirroot = realpath($CFG->dirroot);
 
-    if (strpos($topfile, $dirroot) !== 0) {
-        // Probably some weird external script
-        $SCRIPT = $FULLSCRIPT = $FULLME = $ME = null;
-    } else {
+    if (strpos($topfile, $dirroot) === 0) {
+        // Normal case: Script is under dirroot (e.g., public/course/view.php).
         $relativefile = substr($topfile, strlen($dirroot));
-        $relativefile = str_replace('\\', '/', $relativefile); // Win fix
+        $relativefile = str_replace('\\', '/', $relativefile); // Win fix.
         $SCRIPT = $FULLSCRIPT = $relativefile;
         $FULLME = $ME = null;
+    } else {
+        // Moodle 5.1+ structure: Admin CLI scripts are in parent directory of dirroot.
+        $root = dirname($dirroot);
+        if (strpos($topfile, $root) === 0) {
+            $relativefile = substr($topfile, strlen($root));
+            $relativefile = str_replace('\\', '/', $relativefile); // Win fix.
+            $SCRIPT = $FULLSCRIPT = $relativefile;
+            $FULLME = $ME = null;
+        } else {
+            // Probably some weird external script.
+            $SCRIPT = $FULLSCRIPT = $FULLME = $ME = null;
+        }
     }
 }
 
@@ -1682,4 +1704,46 @@ function require_phpunit_isolation(): void {
         'When including this file for a unit test, the test must be run in an isolated process. ' .
             'See the PHPUnit @runInSeparateProcess and @runTestsInSeparateProcesses annotations.'
     );
+}
+
+/**
+ * Returns true if a Vary: Accept-Language header should be sent for this request.
+ *
+ * This is true when more than one language pack is installed, meaning the
+ * response content may differ based on the browser's Accept-Language header.
+ * File-serving endpoints are excluded as they serve binary content that does
+ * not vary by language.
+ *
+ * @return bool
+ */
+function should_vary_by_accept_language(): bool {
+    if (count(get_string_manager()->get_list_of_translations()) <= 1) {
+        return false;
+    }
+
+    // File-serving scripts return binary content that does not vary by language.
+    $fileservingscripts = [
+        'pluginfile.php',
+        'draftfile.php',
+        'tokenpluginfile.php',
+        'file.php',
+    ];
+    $script = basename($_SERVER['SCRIPT_NAME'] ?? '');
+    if (in_array($script, $fileservingscripts)) {
+        return false;
+    }
+
+    return true;
+}
+
+/**
+ * Sends Vary response headers based on the current site configuration.
+ *
+ * Note: If additional Vary headers are needed in future they should be added
+ * here and combined into a single header call.
+ */
+function setup_vary_headers(): void {
+    if (should_vary_by_accept_language()) {
+        header('Vary: Accept-Language');
+    }
 }

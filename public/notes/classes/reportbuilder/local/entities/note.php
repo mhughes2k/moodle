@@ -18,7 +18,8 @@ declare(strict_types=1);
 
 namespace core_notes\reportbuilder\local\entities;
 
-use lang_string;
+use core\{context, context_helper};
+use core\lang_string;
 use stdClass;
 use core_reportbuilder\local\entities\base;
 use core_reportbuilder\local\filters\{date, select, text};
@@ -46,6 +47,7 @@ class note extends base {
      */
     protected function get_default_tables(): array {
         return [
+            'context',
             'post',
         ];
     }
@@ -65,7 +67,10 @@ class note extends base {
      * @return column[]
      */
     protected function get_available_columns(): array {
-        $postalias = $this->get_table_alias('post');
+        [
+            'context' => $contextalias,
+            'post' => $postalias,
+        ] = $this->get_table_aliases();
 
         // Content.
         $columns[] = (new column(
@@ -73,15 +78,27 @@ class note extends base {
             new lang_string('content', 'core_notes'),
             $this->get_entity_name()
         ))
-            ->add_joins($this->get_joins())
+            ->add_join("LEFT JOIN {context} {$contextalias}
+                    ON {$contextalias}.contextlevel = " . CONTEXT_COURSE . "
+                   AND {$contextalias}.instanceid = {$postalias}.courseid")
             ->set_type(column::TYPE_LONGTEXT)
-            ->add_fields("{$postalias}.content, {$postalias}.format")
+            ->add_fields("{$postalias}.content, {$postalias}.format, {$postalias}.id")
+            ->add_fields(context_helper::get_preload_record_columns_sql($contextalias))
             ->set_is_sortable(true)
             ->add_callback(static function(?string $content, stdClass $note): string {
-                if ($content === null) {
+                global $CFG;
+                require_once("{$CFG->libdir}/filelib.php");
+
+                if ($content === null || $note->ctxid === null) {
                     return '';
                 }
-                return format_text($content, $note->format);
+
+                context_helper::preload_from_record(clone $note);
+                $context = context::instance_by_id($note->ctxid);
+
+                $content = file_rewrite_pluginfile_urls($content, 'pluginfile.php', $context->id, 'notes', 'content', $note->id);
+
+                return format_text($content, $note->format, ['context' => $context]);
             });
 
         // Publish state.
@@ -90,7 +107,6 @@ class note extends base {
             new lang_string('publishstate', 'core_notes'),
             $this->get_entity_name()
         ))
-            ->add_joins($this->get_joins())
             ->set_type(column::TYPE_TEXT)
             ->add_fields("{$postalias}.publishstate")
             ->set_is_sortable(true)
@@ -110,7 +126,6 @@ class note extends base {
             new lang_string('timecreated', 'core_reportbuilder'),
             $this->get_entity_name()
         ))
-            ->add_joins($this->get_joins())
             ->set_type(column::TYPE_TIMESTAMP)
             ->add_fields("{$postalias}.created")
             ->set_is_sortable(true)
@@ -122,7 +137,6 @@ class note extends base {
             new lang_string('timemodified', 'core_reportbuilder'),
             $this->get_entity_name()
         ))
-            ->add_joins($this->get_joins())
             ->set_type(column::TYPE_TIMESTAMP)
             ->add_fields("{$postalias}.lastmodified")
             ->set_is_sortable(true)
@@ -146,8 +160,7 @@ class note extends base {
             new lang_string('content', 'core_notes'),
             $this->get_entity_name(),
             "{$postalias}.content"
-        ))
-            ->add_joins($this->get_joins());
+        ));
 
         // Publish state.
         $filters[] = (new filter(
@@ -157,7 +170,6 @@ class note extends base {
             $this->get_entity_name(),
             "{$postalias}.publishstate"
         ))
-            ->add_joins($this->get_joins())
             ->set_options([
                 NOTES_STATE_SITE => new lang_string('sitenotes', 'core_notes'),
                 NOTES_STATE_PUBLIC => new lang_string('coursenotes', 'core_notes'),
@@ -172,7 +184,6 @@ class note extends base {
             $this->get_entity_name(),
             "{$postalias}.created"
         ))
-            ->add_joins($this->get_joins())
             ->set_limited_operators([
                 date::DATE_ANY,
                 date::DATE_CURRENT,
@@ -188,7 +199,6 @@ class note extends base {
             $this->get_entity_name(),
             "{$postalias}.lastmodified"
         ))
-            ->add_joins($this->get_joins())
             ->set_limited_operators([
                 date::DATE_ANY,
                 date::DATE_CURRENT,

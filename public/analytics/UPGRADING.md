@@ -1,6 +1,6 @@
 # core_analytics (subsystem) Upgrade notes
 
-## 5.2dev
+## 5.2
 
 ### Removed
 

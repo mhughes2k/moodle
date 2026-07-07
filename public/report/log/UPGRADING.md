@@ -1,6 +1,6 @@
 # report_log Upgrade notes
 
-## 5.2dev
+## 5.2
 
 ### Removed
 

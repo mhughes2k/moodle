@@ -57,6 +57,7 @@ $string['attachment_help'] = 'You can optionally attach one or more files to a g
 $string['author'] = 'author';
 $string['authorview'] = 'Browse by Author';
 $string['back'] = 'Back';
+$string['bynameondate'] = 'by {$a->name} - {$a->date}';
 $string['cachedef_concepts'] = 'Concept linking';
 $string['cantinsertcat'] = 'Can\'t insert category';
 $string['cantinsertrec'] = 'Can\'t insert record';
@@ -233,6 +234,7 @@ $string['indicator:socialbreadthdef_help'] = 'The participant has reached this p
 $string['indicator:socialbreadthdef_link'] = 'Learning_analytics_indicators#Social_breadth';
 $string['isglobal'] = 'Is this glossary global?';
 $string['isglobal_help'] = 'A global glossary has entries which are linked to from throughout the site, rather than only in the course that the glossary is in. Only administrators can set a glossary as global.';
+$string['lastedited'] = '(Last edited: {$a})';
 $string['letter'] = 'letter';
 $string['linkcategory'] = 'Automatically link this category';
 $string['linkcategory_help'] = 'If glossary auto-linking has been enabled and this setting is enabled, the category name will be automatically linked wherever it appears throughout the rest of the course. When a participant follows a category name link, they will be taken to the "Browse by category" page of the glossary.';
@@ -242,14 +244,14 @@ $string['maxtimehaspassed'] = 'Sorry, but the maximum time for editing this comm
 $string['myentries'] = 'My entries';
 $string['modulename'] = 'Glossary';
 $string['modulename_help'] = '###### Key features
-- Create entries with text, images, video, and other embedded media
-- Browse entries alphabetically, by category, or by author
-- Allow students to create, comment on, and rate entries
+* Create entries with text, images, video, and other embedded media
+* Browse entries alphabetically, by category, or by author
+* Allow students to create, comment on, and rate entries
 
 ###### Ways to use it
-- Build a collection of key concepts for a course
-- Collect vocabulary words and definitions in a language class
-- Develop a collaborative glossary of technical terms';
+* Build a collection of key concepts for a course
+* Collect vocabulary words and definitions in a language class
+* Develop a collaborative glossary of technical terms';
 $string['modulename_link'] = 'mod/glossary/view';
 $string['modulename_summary'] = 'Create a list of terms and definitions, like a dictionary, for students to browse or contribute to.';
 $string['modulenameplural'] = 'Glossaries';

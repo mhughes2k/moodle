@@ -455,6 +455,12 @@ function upgrade_stale_php_files_present(): bool {
     global $CFG;
 
     $someexamplesofremovedfiles = [
+        // Removed in 5.2.
+        '/availability/renderer.php',
+        '/course/tests/behat/course_controls.feature',
+        '/lib/amd/src/addblockmodal.js',
+        '/question/qengine.js',
+        '/tag/classes/manage_table.php',
         // Removed in 5.1.
         '/badges/classes/observer.php',
         '/course/request_form.php',
@@ -866,6 +872,22 @@ function upgrade_plugins_modules($startcallback, $endcallback, $verbose) {
         $module->name = $mod;   // The name MUST match the directory
 
         $installedversion = $DB->get_field('config_plugins', 'value', array('name'=>'version', 'plugin'=>$component)); // No caching!
+
+        // Check if the plugin has a lib.php file and check for deprecated plugin supports.
+        $libfile = "{$fullmod}/lib.php";
+        if (file_exists($libfile)) {
+            require_once($libfile);
+            $supportsfunction = "{$mod}_supports";
+            if (function_exists($supportsfunction)) {
+                if ($supportsfunction('groupmembersonly') === true) {
+                    throw new plugin_defective_exception(
+                        $component,
+                        "The FEATURE_GROUPMEMBERSONLY feature has been deprecated and is no longer supported. "
+                        . "It should no longer be declared in the plugin.",
+                    );
+                }
+            }
+        }
 
         if (file_exists($fullmod.'/db/install.php')) {
             if (get_config($module->name, 'installrunning')) {
@@ -2518,7 +2540,11 @@ function check_upgrade_key($upgradekeyhash) {
 
                 /** @var core_admin_renderer $output */
                 $output = $PAGE->get_renderer('core', 'admin');
-                echo $output->upgradekey_form_page(new moodle_url('/admin/index.php', array('cache' => 0)));
+
+                echo $output->upgradekey_form_page_with_validation(
+                    new moodle_url('/admin/index.php', ['cache' => 0]),
+                    $upgradekeyhash !== null,
+                );
                 die();
             } else {
                 // This should not happen.

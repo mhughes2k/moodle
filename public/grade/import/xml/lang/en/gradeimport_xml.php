@@ -23,6 +23,7 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+$string['errbadgrade'] = 'Error - supplied grade \'{$a->badgrade}\' is invalid for user with ID number \'{$a->useridnumber}\'.';
 $string['errbadxmlformat'] = 'Error - bad XML format';
 $string['errduplicategradeidnumber'] = 'Error - there are two grade items with idnumber \'{$a}\' in this course. This should be impossible.';
 $string['errduplicateidnumber'] = 'Error - duplicate idnumber';

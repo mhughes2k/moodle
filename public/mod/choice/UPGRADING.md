@@ -1,9 +1,12 @@
 # mod_choice Upgrade notes
 
-## 5.2dev
+## 5.2
 
 ### Changed
 
+- mod_choice_get_choice_results web service: new userresponse structure. The mod_choice_get_choice_results web service now includes a new userresponse field that returns the current user selections in a structured format with optionid and text properties. This enhancement provides better access to user choice data for API consumers.
+
+  For more information see [MDL-86932](https://tracker.moodle.org/browse/MDL-86932)
 - Undo the deletion of public/mod/choice/classes/event/answer_updated.php file.
 
   For more information see [MDL-87426](https://tracker.moodle.org/browse/MDL-87426)

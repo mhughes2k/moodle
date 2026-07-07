@@ -14,20 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-/**
- * Data generator class for mod_data.
- *
- * @package    mod_data
- * @category   test
- * @copyright  2012 Petr Skoda {@link http://skodak.org}
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
-
 use mod_data\manager;
 use mod_data\preset;
-
-defined('MOODLE_INTERNAL') || die();
-
+use mod_data\local\importer\preset_importer;
 
 /**
  * Data generator class for mod_data.
@@ -79,7 +68,39 @@ class mod_data_generator extends testing_module_generator {
             $record->scale = 0;
         }
 
-        return parent::create_instance((array) $record, $options);
+        $presetname = null;
+        if (isset($record->preset)) {
+            $presetname = trim($record->preset);
+            unset($record->preset);
+            // If a simple name was provided (no owner slash), assume system preset owner 0.
+            if (strpos($presetname, '/') === false) {
+                $presetname = '0/' . strtolower($presetname);
+            }
+        }
+
+        $instance = parent::create_instance((array) $record, $options);
+
+        // If a preset was specified, apply it.
+        if ($presetname) {
+            $this->apply_preset($instance, $presetname);
+        }
+
+        return $instance;
+    }
+
+    /**
+     * Apply a preset to a mod_data instance.
+     *
+     * @param stdClass $instance The data instance.
+     * @param string $presetname The preset name (e.g., "0/imagegallery" for plugin presets).
+     * @return void
+     */
+    protected function apply_preset(stdClass $instance, string $presetname): void {
+        $manager = manager::create_from_instance($instance);
+        $importer = preset_importer::create_from_plugin_or_directory($manager, $presetname);
+
+        // Import the preset without requiring mapping.
+        $importer->import(false);
     }
 
     /**

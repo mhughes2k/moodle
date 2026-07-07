@@ -23,6 +23,7 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+use core\context\system;
 use core_user\fields;
 
 defined('MOODLE_INTERNAL') || die();
@@ -410,7 +411,12 @@ class course_enrolment_manager {
                     $conditions[] = $fieldsql;
                 }
             }
-            $conditions[] = $DB->sql_fullname('u.firstname', 'u.lastname');
+
+            // Search on users fullname according to site display configuration.
+            $canviewfullnames = has_capability('moodle/site:viewfullnames', system::instance());
+            [$conditions[], $fullnameparams] = fields::get_sql_fullname('u', $canviewfullnames);
+            $params = array_merge($params, $fullnameparams);
+
             if ($searchanywhere) {
                 $searchparam = '%' . $search . '%';
             } else {

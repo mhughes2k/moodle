@@ -149,26 +149,26 @@ class table implements \core\output\renderable {
         }
         $html .= \html_writer::table($table);
 
-        $details = array_filter(array_map(
-            fn ($result) => $result->get_details(),
-            $fails,
-        ));
-        if (count($details) > 0) {
-            $html .= $output->heading(get_string('details'), 3);
-
-            if (count($details) === 1) {
-                $result = reset($fails);
-                $html .= $output->box($result->get_details(), 'generalbox boxwidthnormal boxaligncenter');
-            } else {
-                $html .= html_writer::start_tag('ul');
-                foreach ($details as $detail) {
-                    $html .= html_writer::tag('li', $detail);
-                }
-                $html .= html_writer::end_tag('ul');
-            }
-        }
-
         if ($this->detail) {
+            $details = array_filter(array_map(
+                fn ($result) => $result->get_details(),
+                $fails,
+            ));
+            if (count($details) > 0) {
+                $html .= $output->heading(get_string('details'), 3);
+
+                if (count($details) === 1) {
+                    $result = reset($fails);
+                    $html .= $output->box($result->get_details(), 'generalbox boxwidthnormal boxaligncenter');
+                } else {
+                    $html .= html_writer::start_tag('ul');
+                    foreach ($details as $detail) {
+                        $html .= html_writer::tag('li', $detail);
+                    }
+                    $html .= html_writer::end_tag('ul');
+                }
+            }
+
             $html .= $output->continue_button($this->url);
         }
 

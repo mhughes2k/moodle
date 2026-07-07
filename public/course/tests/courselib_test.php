@@ -29,9 +29,9 @@ use context_course;
 use context_module;
 use context_system;
 use context_coursecat;
-use core\event\section_viewed;
 use core_completion_external;
 use core_courseformat\formatactions;
+use core_course\exception\reset_timeout;
 use core_external;
 use core_tag_index_builder;
 use core_tag_tag;
@@ -43,7 +43,6 @@ use grade_item;
 use grading_manager;
 use moodle_exception;
 use moodle_url;
-use phpunit_util;
 use rating_manager;
 use restore_controller;
 use stdClass;
@@ -1219,6 +1218,12 @@ final class courselib_test extends advanced_testcase {
         $this->assertFalse(course_can_delete_section($courseweeks, 1));
         $this->assertFalse(course_can_delete_section($coursetopics, 1));
         $this->assertFalse(course_can_delete_section($coursesingleactivity, 1));
+
+        // An error is thrown if the section doesn't exist.
+        $this->setUser($teacher);
+        $this->expectException(moodle_exception::class);
+        $this->expectExceptionMessage(get_string('sectionnotexist', 'error'));
+        course_can_delete_section($coursetopics, 6);
     }
 
     public function test_course_delete_section(): void {
@@ -2065,6 +2070,236 @@ final class courselib_test extends advanced_testcase {
     }
 
     /**
+     * Test deleting a course asynchronously
+     * @covers ::delete_course
+     */
+    public function test_delete_course_asynchronously(): void {
+        global $DB;
+
+        $this->resetAfterTest();
+
+        // Enable asynchronous course deletion.
+        set_config('enablecourseasyncdeletion', true, 'moodlecourse');
+
+        // Create a course to be deleted.
+        $dg = $this->getDataGenerator();
+        $c1 = $dg->create_course();
+
+        // Build the course cache before deletion.
+        $modinfobeforedelete = get_fast_modinfo($c1->id);
+        $cacherevbefore = $modinfobeforedelete->get_course()->cacherev;
+
+        delete_course($c1->id);
+
+        // Check that the course is still present, but the course has been marked for deletion.
+        $course = $DB->get_record('course', ['id' => $c1->id]);
+        $this->assertEquals(\core_course\management\helper::COURSE_DELETION_IN_PROGRESS, $course->deletioninprogress);
+
+        // Verify that the cache was purged by checking that cacherev was incremented.
+        $modinfoafterdelete = get_fast_modinfo($c1->id);
+        $this->assertGreaterThan($cacherevbefore, $modinfoafterdelete->get_course()->cacherev);
+
+        // Run adhoc tasks.
+        ob_start();
+        $this->runAdhocTasks();
+        ob_end_clean();
+
+        // Checks if course is deleted.
+        $this->assertFalse($DB->get_record('course', ['id' => $c1->id]));
+    }
+
+    /**
+     * Test deleting a course synchronously
+     * @covers ::delete_course
+     */
+    public function test_delete_course_synchronously(): void {
+        global $DB;
+        $this->resetAfterTest();
+
+        // Create a course to be deleted.
+        $dg = $this->getDataGenerator();
+        $c1 = $dg->create_course();
+
+        // Delete course synchronously.
+        delete_course($c1->id, false, false);
+
+        $course = $DB->get_record('course', ['id' => $c1->id]);
+        $this->assertFalse($course);
+    }
+
+    /**
+     * Test that a course is not deleted if there is a backup/restore process pending.
+     *
+     * @covers ::delete_course
+     */
+    public function test_course_not_deleted_if_backup_process_pending(): void {
+        global $DB;
+        $this->resetAfterTest();
+
+        $dg = $this->getDataGenerator();
+        // Create a course to be deleted.
+        $c1 = $dg->create_course();
+        $user = get_admin();
+
+        // Backup c2.
+        // Create a course to be backed up.
+        $c2 = $dg->create_course();
+        $backupid = 'test-restore-course-special-cases';
+        $tempdir = make_backup_temp_directory($backupid);
+        require_once(__DIR__ . '/../../backup/util/includes/backup_includes.php');
+        $bc = new \backup_controller(
+            \backup::TYPE_1COURSE,
+            $c2->id,
+            \backup::FORMAT_MOODLE,
+            \backup::INTERACTIVE_NO,
+            \backup::MODE_GENERAL,
+            $user->id
+        );
+        $bc->execute_plan();
+        $results = $bc->get_results();
+        $file = $results['backup_destination'];
+        $fp = get_file_packer('application/vnd.moodle.backup');
+        $file->extract_to_pathname($fp, $tempdir);
+        $bc->destroy();
+
+        // Restore backup into c1, but do not run adhoc tasks yet.
+        require_once(__DIR__ . '/../../backup/util/includes/restore_includes.php');
+        $rc = new \restore_controller(
+            $backupid,
+            $c1->id,
+            \backup::INTERACTIVE_NO,
+            \backup::MODE_GENERAL,
+            $user->id,
+            \backup::TARGET_EXISTING_ADDING
+        );
+        $rc->execute_precheck(true);
+        $rc->destroy();
+
+        // Try to synchronously delete c1 (should fail because of pending backup/restore).
+        set_config('enablecourseasyncdeletion', false, 'moodlecourse');
+        $this->assertFalse(delete_course($c1->id, false, false));
+        $this->assertTrue($DB->record_exists('course', ['id' => $c1->id]));
+
+        // Try to asynchronously delete c1 (should fail because of pending backup/restore).
+        set_config('enablecourseasyncdeletion', true, 'moodlecourse');
+        $this->assertFalse(delete_course($c1->id, false, true));
+        $course1 = $DB->get_record('course', ['id' => $c1->id]);
+        $this->assertEmpty($course1->deletioninprogress);
+        $this->assertFalse($DB->record_exists(
+            'task_adhoc',
+            ['classname' => '\core_course\task\course_async_deletion']
+        ));
+    }
+
+    /**
+     * Test that a restore into a course marked for deletion is aborted.
+     *
+     * @covers \restore_plan::execute
+     */
+    public function test_restore_into_course_marked_for_deletion(): void {
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        require_once(__DIR__ . '/../../backup/util/includes/backup_includes.php');
+        require_once(__DIR__ . '/../../backup/util/includes/restore_includes.php');
+
+        $user = get_admin();
+        $dg = $this->getDataGenerator();
+        $course1 = $dg->create_course();
+        $course2 = $dg->create_course();
+
+        // Backup course2 to get a valid backup file.
+        $bc = new \backup_controller(
+            \backup::TYPE_1COURSE,
+            $course2->id,
+            \backup::FORMAT_MOODLE,
+            \backup::INTERACTIVE_NO,
+            \backup::MODE_GENERAL,
+            $user->id
+        );
+        $bc->execute_plan();
+        $results = $bc->get_results();
+        $file = $results['backup_destination'];
+        $backupid = 'test-restore-deletion-protection';
+        $tempdir = make_backup_temp_directory($backupid);
+        $fp = get_file_packer('application/vnd.moodle.backup');
+        $file->extract_to_pathname($fp, $tempdir);
+        $bc->destroy();
+
+        // Mark course1 for deletion.
+        \core_course\management\helper::action_course_mark_for_deletioninprogress($course1);
+
+        // Attempt to restore into course1, which is marked for deletion.
+        $rc = new \restore_controller(
+            $backupid,
+            $course1->id,
+            \backup::INTERACTIVE_NO,
+            \backup::MODE_GENERAL,
+            $user->id,
+            \backup::TARGET_EXISTING_ADDING
+        );
+        $rc->execute_precheck(true);
+
+        // The restore must be aborted because the target course is scheduled for deletion.
+        try {
+            $rc->execute_plan();
+            $this->fail('A restore_controller_exception should have been thrown.');
+        } catch (\restore_controller_exception $e) {
+            $this->assertSame('restore_not_executable_course_to_be_deleted', $e->errorcode);
+        }
+    }
+
+    /**
+     * Test additional cases for asynchronous course deletion:
+     * - Verify course cache is invalidated
+     * - Course access is blocked when marked for deletion
+     *
+     * @covers ::delete_course
+     */
+    public function test_delete_course_asynchronously_additional_cases(): void {
+        global $DB;
+
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        // Enable asynchronous course deletion.
+        set_config('enablecourseasyncdeletion', true, 'moodlecourse');
+
+        $dg = $this->getDataGenerator();
+        $c1 = $dg->create_course();
+
+        // Build the course modinfo cache before deletion.
+        $modinfobeforedelete = get_fast_modinfo($c1->id);
+        $cacherevbefore = $modinfobeforedelete->get_course()->cacherev;
+
+        // Now delete c1 (should schedule async deletion).
+        delete_course($c1->id, false);
+
+        // The attribute deletioninprogress is now 1.
+        $course1 = $DB->get_record('course', ['id' => $c1->id]);
+        $this->assertEquals(\core_course\management\helper::COURSE_DELETION_IN_PROGRESS, $course1->deletioninprogress);
+
+        // The course_async_deletion adhoc task is scheduled.
+        $this->assertTrue($DB->record_exists(
+            'task_adhoc',
+            ['classname' => '\core_course\task\course_async_deletion']
+        ));
+
+        // Verify that the cache was purged by checking that cacherev was incremented.
+        $modinfoafterdelete = get_fast_modinfo($c1->id);
+        $this->assertGreaterThan($cacherevbefore, $modinfoafterdelete->get_course()->cacherev);
+
+        // Verify that require_login($course) throws exception when course is marked for deletion.
+        $exceptionthrown = false;
+        try {
+            require_login($course1);
+        } catch (\moodle_exception $e) {
+            $exceptionthrown = true;
+        }
+        $this->assertTrue($exceptionthrown, 'Expected moodle_exception to be thrown for course marked for deletion');
+    }
+
+    /**
      * Test that triggering a course_content_deleted event works as expected.
      */
     public function test_course_content_deleted_event(): void {
@@ -2082,7 +2317,7 @@ final class courselib_test extends advanced_testcase {
         // Save the course context before we delete the course.
         $coursecontext = context_course::instance($course->id);
 
-        // Catch the update event.
+        // Catch the delete event.
         $sink = $this->redirectEvents();
 
         remove_course_contents($course->id, false);
@@ -2892,6 +3127,7 @@ final class courselib_test extends advanced_testcase {
         global $DB;
 
         $this->resetAfterTest(true);
+        $this->setAdminUser();
 
         $generator = $this->getDataGenerator();
         $category = $generator->create_category();
@@ -3729,6 +3965,61 @@ final class courselib_test extends advanced_testcase {
         $this->assertEmpty($usersroles);
     }
 
+    /**
+     * Test that the course reset throws an exception if it takes too long.
+     *
+     * @covers ::reset_course_userdata()
+     */
+    public function test_course_reset_timeout(): void {
+        global $DB, $CFG;
+        require_once($CFG->dirroot . '/notes/lib.php');
+
+        $this->resetAfterTest();
+
+        $generator = $this->getDataGenerator();
+
+        // Create test course and user, enrol one in the other.
+        $course = $generator->create_course();
+        $user = $generator->create_user();
+        $roleid = $DB->get_field('role', 'id', ['shortname' => 'student'], MUST_EXIST);
+        $generator->enrol_user($user->id, $course->id, $roleid);
+
+        // Define a reset job.
+        $resetdata = new stdClass();
+        $resetdata->id = $course->id;
+        $resetdata->reset_start_date_old = $course->startdate;
+        $resetdata->reset_start_date = $course->startdate;
+        $resetdata->reset_end_date = $course->enddate;
+        $resetdata->reset_end_date_old = $course->enddate;
+        $resetdata->reset_notes = true;
+
+        // Create a note that will be deleted by the reset.
+        $note = (object) ['content' => 'Note 1', 'courseid' => $course->id];
+        note_save($note);
+
+        $this->assertTrue($DB->record_exists('post', ['module' => 'notes', 'courseid' => $course->id]));
+
+        // Call the reset once with a long timeout that won't be exceeded.
+        $timeout = new reset_timeout($course->shortname, time() + 10);
+        reset_course_userdata($resetdata, $timeout);
+
+        // Verify the course has been reset.
+        $this->assertFalse($DB->record_exists('post', ['module' => 'notes', 'courseid' => $course->id]));
+
+        $note = (object) ['content' => 'Note 2', 'courseid' => $course->id];
+        note_save($note);
+
+        $this->assertTrue($DB->record_exists('post', ['module' => 'notes', 'courseid' => $course->id]));
+
+        // Call the reset with a timeout that will be exceeded. Confirm an exception is thrown.
+        $timeout = new reset_timeout($course->shortname, time() - 1);
+        $this->expectExceptionObject($timeout);
+        reset_course_userdata($resetdata, $timeout);
+
+        // Verify the course has not been reset.
+        $this->assertTrue($DB->record_exists('post', ['module' => 'notes', 'courseid' => $course->id]));
+    }
+
     public function test_course_check_module_updates_since(): void {
         global $CFG, $DB, $USER;
         require_once($CFG->dirroot . '/mod/glossary/lib.php');
@@ -3880,7 +4171,7 @@ final class courselib_test extends advanced_testcase {
 
         // Now, run the adhoc task to delete the modules from section 0.
         $sink = $this->redirectEvents(); // To capture the events.
-        phpunit_util::run_all_adhoc_tasks();
+        \core\test\phpunit\phpunit_util::run_all_adhoc_tasks();
 
         // Confirm the modules have been deleted.
         list($insql, $assignids) = $DB->get_in_or_equal([$assign0->cmid, $assign1->cmid, $assign2->cmid]);
@@ -7036,6 +7327,12 @@ final class courselib_test extends advanced_testcase {
 
         // Manager has permissions.
         $this->assertTrue(course_allowed_module($course, 'assign', $manager));
+
+        // Disable the assign module.
+        $DB->set_field('modules', 'visible', 0, ['name' => 'assign']);
+
+        // Verify that disabled modules are not allowed.
+        $this->assertFalse(course_allowed_module($course, 'assign', $manager));
     }
 
     /**
@@ -7230,6 +7527,37 @@ final class courselib_test extends advanced_testcase {
 
         // Check the event details are correct.
         $this->assertInstanceOf('\core\event\section_viewed', $event);
+        $this->assertEquals(context_course::instance($course->id), $event->get_context());
+        $this->assertEquals('course_sections', $event->objecttable);
+        $this->assertEquals($section->id, $event->objectid);
+    }
+
+    /**
+     * Test course_section_view() function for restricted sections.
+     *
+     * @covers ::course_section_view
+     */
+    public function test_course_restricted_section_view(): void {
+
+        $this->resetAfterTest();
+
+        // Course without sections.
+        $course = $this->getDataGenerator()->create_course(['numsections' => 5], ['createsections' => true]);
+        $coursecontext = context_course::instance($course->id);
+        $format = course_get_format($course->id);
+        $sections = $format->get_sections();
+        $section = reset($sections);
+
+        // Redirect events to the sink, so we can recover them later.
+        $sink = $this->redirectEvents();
+
+        course_section_view($coursecontext, $section->id, true);
+
+        $events = $sink->get_events();
+        $event = reset($events);
+
+        // Check the event details are correct.
+        $this->assertInstanceOf('\core\event\restricted_section_viewed', $event);
         $this->assertEquals(context_course::instance($course->id), $event->get_context());
         $this->assertEquals('course_sections', $event->objecttable);
         $this->assertEquals($section->id, $event->objectid);

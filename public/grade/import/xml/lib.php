@@ -86,7 +86,10 @@ function import_xml_grades($text, $course, &$error) {
                     $newgrade->finalgrade = $result['#']['score'][0]['#'];
                 } else {
                     $status = false;
-                    $error = get_string('badgrade', 'grades');
+                    $error = get_string('errbadgrade', 'gradeimport_xml', [
+                        'badgrade' => $result['#']['score'][0]['#'],
+                        'useridnumber' => $useridnumber,
+                    ]);
                     break;
                 }
             } else {

@@ -27,6 +27,7 @@
     * active boolean - Flag to indicate whether the user has an active enrolment.
     * suspended boolean - Flag to indicate whether the user is suspended.
     * notcurrent boolean - Flag to indicate whether the user's enrolment is active, but not current.
+    * statusinfo string - Optional. Additional information about the enrolment status.
     * timestart string - Optional. The enrolment time start.
     * timeend string - Optional. The enrolment time end.
     * timeenrolled string - Optional. The time when the user was enrolled.
@@ -42,6 +43,7 @@
         "enrolinstancename": "Manual enrolment",
         "status": "Active",
         "active": true,
+        "statusinfo": "Manual enrolments enrol plugin is disabled",
         "timestart": "1 January 2017",
         "timeend": "31 January 2018",
         "timeenrolled": "31 December 2016",
@@ -60,7 +62,8 @@
     }
 }}
 <div data-fullname="{{fullname}}" data-coursename="{{coursename}}" data-enrolinstancename="{{enrolinstancename}}"
-     data-status="{{status}}" data-timestart="{{timestart}}" data-timeend="{{timeend}}" data-timeenrolled="{{timeenrolled}}">
+    data-status="{{status}}" data-statusinfo="{{statusinfo}}" data-timestart="{{timestart}}" data-timeend="{{timeend}}"
+    data-timeenrolled="{{timeenrolled}}">
     <span class="badge {{#active}}bg-success text-white{{/active}}{{#suspended}}bg-warning text-dark{{/suspended}}{{#notcurrent}}bg-secondary text-dark{{/notcurrent}}">{{status}}</span>
     <a data-action="showdetails" href="#" role="button" tabindex="0">{{!
         }}{{#pix}}docs, core, {{enrolinstancename}}{{/pix}}{{!

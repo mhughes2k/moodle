@@ -1,10 +1,39 @@
 # core_user (subsystem) Upgrade notes
 
-## 5.2dev
+## 5.3dev
+
+### Changed
+
+- The `user_convert_text_to_menu_items()` method now returns a typed array of `\core_user\output\user_action_menu\base` items
+
+  For more information see [MDL-88938](https://tracker.moodle.org/browse/MDL-88938)
+
+### Deprecated
+
+- Consumers of the `\core_user\hook\extend_user_menu` hook class for extending the user menu should now call `add_menu_item()` on the hook instance, which accepts only a parameter of type `\core_user\output\user_action_menu\base`
+
+  The previous `add_navitem` method of the hook class has been deprecated in favour of the above
+
+  For more information see [MDL-88938](https://tracker.moodle.org/browse/MDL-88938)
+
+## 5.2
+
+### Added
+
+- Added new optional parameter `userid` to the `user_remove_user_device` function.
+
+  For more information see [MDL-87795](https://tracker.moodle.org/browse/MDL-87795)
+
+### Deprecated
+
+- The MoodleNet profile field has been migrated from a core user table field to a custom profile field. Any existing moodlenetprofile data will be automatically migrated to a custom profile field during upgrade. The core moodlenetprofile column will be removed from the user table.
+
+  For more information see [MDL-87361](https://tracker.moodle.org/browse/MDL-87361)
 
 ### Removed
 
-- - The `\profile_field_base::profile_field_base()` has been removed from `public/user/profile/lib.php`. - The `\core_user_renderer::unified_filter()` has been removed from `public/user/renderer.php`.
+- - The `\profile_field_base::profile_field_base()` has been removed from `public/user/profile/lib.php`.
+  - The `\core_user_renderer::unified_filter()` has been removed from `public/user/renderer.php`.
 
   For more information see [MDL-87426](https://tracker.moodle.org/browse/MDL-87426)
 

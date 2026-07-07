@@ -48,11 +48,11 @@ abstract class base {
     /** @var report $report Report persistent */
     private $report;
 
-    /** @var string $maintable */
-    private $maintable = '';
+    /** @var string $maintablesql */
+    private string $maintablesql = '';
 
     /** @var string $maintablealias */
-    private $maintablealias = '';
+    private string $maintablealias = '';
 
     /** @var array $sqljoins */
     private $sqljoins = [];
@@ -161,8 +161,8 @@ abstract class base {
      * @throws coding_exception
      */
     protected function validate(): void {
-        if (empty($this->maintable)) {
-            throw new coding_exception('Report must define main table by calling $this->set_main_table()');
+        if (empty($this->maintablesql)) {
+            throw new coding_exception('Report must define main table by calling $this->set_main_table[_sql](...)');
         }
 
         if (empty($this->columns)) {
@@ -171,13 +171,23 @@ abstract class base {
     }
 
     /**
-     * Set the main table and alias for the SQL query
+     * Set the main table and alias for report query
      *
      * @param string $tablename
      * @param string $tablealias
      */
-    final public function set_main_table(string $tablename, string $tablealias = ''): void {
-        $this->maintable = $tablename;
+    final public function set_main_table(string $tablename, string $tablealias): void {
+        $this->set_main_table_sql("{{$tablename}}", $tablealias);
+    }
+
+    /**
+     * Set the main table SQL and alias for report query
+     *
+     * @param string $tablesql
+     * @param string $tablealias
+     */
+    final public function set_main_table_sql(string $tablesql, string $tablealias): void {
+        $this->maintablesql = $tablesql;
         $this->maintablealias = $tablealias;
     }
 
@@ -185,9 +195,24 @@ abstract class base {
      * Get the main table name
      *
      * @return string
+     *
+     * @deprecated since Moodle 5.3 - please use {@see get_main_table_sql} instead
      */
+    #[\core\attribute\deprecated('->get_main_table_sql', mdl: 'MDL-88397', since: '5.3')]
     final public function get_main_table(): string {
-        return $this->maintable;
+        \core\deprecation::emit_deprecation([self::class, __FUNCTION__]);
+
+        // Ensure backwards-compatibility is preserved, remove the outer curly brackets.
+        return preg_replace('/^({)(.*)(})$/', '$2', $this->maintablesql);
+    }
+
+    /**
+     * Get the main table SQL
+     *
+     * @return string
+     */
+    final public function get_main_table_sql(): string {
+        return $this->maintablesql;
     }
 
     /**
@@ -306,6 +331,17 @@ abstract class base {
     }
 
     /**
+     * Helper to normalise entity instance based on type of passed parameter
+     *
+     * @param string|entity_base $entity
+     * @return entity_base
+     */
+    final protected function normalise_entity(string|entity_base $entity): entity_base {
+        $entityname = $entity instanceof entity_base ? $entity->get_entity_name() : $entity;
+        return $this->get_entity($entityname);
+    }
+
+    /**
      * Define a new entity for the report
      *
      * @param string $name
@@ -385,17 +421,21 @@ abstract class base {
      *
      * Wildcard matching is supported with '*' in both $include and $exclude, e.g. ['customfield*']
      *
-     * @param string $entityname
+     * @param string|entity_base $entityname
      * @param string[] $include Include only these columns, if omitted then include all
      * @param string[] $exclude Exclude these columns, if omitted then exclude none
      * @throws coding_exception If both $include and $exclude are non-empty
      */
-    final protected function add_columns_from_entity(string $entityname, array $include = [], array $exclude = []): void {
+    final protected function add_columns_from_entity(
+        string|entity_base $entityname,
+        array $include = [],
+        array $exclude = [],
+    ): void {
         if (!empty($include) && !empty($exclude)) {
             throw new coding_exception('Cannot specify columns to include and exclude simultaneously');
         }
 
-        $entity = $this->get_entity($entityname);
+        $entity = $this->normalise_entity($entityname);
 
         // Retrieve filtered columns from entity, respecting given $include/$exclude parameters.
         $columns = array_filter($entity->get_columns(), function(column $column) use ($include, $exclude): bool {
@@ -455,8 +495,10 @@ abstract class base {
      * @return column[]
      */
     public function get_active_columns(): array {
+        $columnindex = 0;
         $columns = $this->get_columns();
         foreach ($columns as $column) {
+            $column->set_index($columnindex++);
             if ($column->get_is_deprecated()) {
                 debugging("The column '{$column->get_unique_identifier()}' is deprecated, please do not use it any more." .
                     " {$column->get_is_deprecated_message()}", DEBUG_DEVELOPER);
@@ -683,17 +725,21 @@ abstract class base {
      *
      * Wildcard matching is supported with '*' in both $include and $exclude, e.g. ['customfield*']
      *
-     * @param string $entityname
+     * @param string|entity_base $entityname
      * @param string[] $include Include only these filters, if omitted then include all
      * @param string[] $exclude Exclude these filters, if omitted then exclude none
      * @throws coding_exception If both $include and $exclude are non-empty
      */
-    final protected function add_filters_from_entity(string $entityname, array $include = [], array $exclude = []): void {
+    final protected function add_filters_from_entity(
+        string|entity_base $entityname,
+        array $include = [],
+        array $exclude = [],
+    ): void {
         if (!empty($include) && !empty($exclude)) {
             throw new coding_exception('Cannot specify filters to include and exclude simultaneously');
         }
 
-        $entity = $this->get_entity($entityname);
+        $entity = $this->normalise_entity($entityname);
 
         // Retrieve filtered filters from entity, respecting given $include/$exclude parameters.
         $filters = array_filter($entity->get_filters(), function(filter $filter) use ($include, $exclude): bool {

@@ -45,65 +45,77 @@ class moodle_bootstrap_middleware implements MiddlewareInterface {
 
         $routeattribute = util::get_route_instance_for_request($request);
         if ($routeattribute && !$routeattribute->cookies) {
-            // @codeCoverageIgnoreStart
             // This request should not access Moodle cookies.
-            if (!defined('NO_MOODLE_COOKIES')) {
-                define('NO_MOODLE_COOKIES', true);
-            }
-            // @codeCoverageIgnoreEnd
+            // Note: This check must be before the full Moodle stack is loaded as the router endpoint
+            // sets NO_MOODLE_COOKIES.
+            \core\session\manager::set_cookies_supported(false);
         }
 
         if (!$routeattribute || !$routeattribute->abortafterconfig) {
-            // Do not load the full Moodle stack. This is a lightweight request.
+            // Load the full Moodle stack.
+            // Either abortafterconfig is not set, or we cannot find the route attribute and must load this in full.
             $this->load_full_moodle();
         }
 
-        // Set the URL for the page.
-        // Normally in Moodle this is a largely hard-coded value with only the query string changing dynamically in the page.
-        // However, in this instance, we are generating the URL dynamically because we are the request terminator
-        // for a large number of requests at different endpoints.
-
-        // In basic cases this will just work, but there are some edge cases to consider - specficially were the site
-        // is behind a reverse proxy and/or an SSL terminator.
-        // In these cases the URL we generate from the ServerRequestInterface may be the _terminated_ URL,
-        // and not the URL that was requested by the client.
-
-        // We need to generate the URL that the client requested, not the URL that the server received.
-        $url = $request->getUri();
-
-        if (!empty($CFG->reverseproxy)) {
-            // This site is behind a reverse proxy. The requested URI may have a different:
-            // - scheme
-            // - host
-            // - port
-            // to the URL that the client requested.
-
-            $url = $url
-                // Start by setting the scheme and host to the wwwroot.
-                ->withScheme(parse_url($CFG->wwwroot, PHP_URL_SCHEME))
-                ->withHost(parse_url($CFG->wwwroot, PHP_URL_HOST))
-
-                // Update the URL to match the port of the wwwroot.
-                // While it is highly unlikely that a wwwroot includes an explicit port, we should still handle it.
-                ->withPort(parse_url($CFG->wwwroot, PHP_URL_PORT));
-
+        if ($routeattribute && $routeattribute->cookies) {
+            // This request should access Moodle cookies.
+            // Note: This must be completed after the full Moodle stack is potentially loaded as the
+            // NO_MOODLE_COOKIES constant is set on the router.
+            \core\session\manager::set_cookies_supported(true);
         }
 
-        if (!empty($CFG->sslproxy)) {
-            // This site is behind an ssl terminating proxy. The requested URI may have a different:
-            // - scheme
-            // - port
-            // to the URL that the client requested.
-            $url = $url
-                // The wwwroot must use the https scheme, but the terminating request may have been received using http.
-                ->withScheme('https')
-
-                // Update the URL to match the port of the wwwroot.
-                // While it is highly unlikely that a wwwroot includes an explicit port, we should still handle it.
-                ->withPort(parse_url($CFG->wwwroot, PHP_URL_PORT));
+        if (\core\session\manager::supports_cookies() && !\core\session\manager::is_session_active()) {
+            \core\session\manager::start();
         }
 
-        $PAGE->set_url((string) $url);
+        if ($PAGE) {
+            // Set the URL for the page.
+            // Normally in Moodle this is a largely hard-coded value with only the query string changing dynamically in the page.
+            // However, in this instance, we are generating the URL dynamically because we are the request terminator
+            // for a large number of requests at different endpoints.
+
+            // In basic cases this will just work, but there are some edge cases to consider - specficially were the site
+            // is behind a reverse proxy and/or an SSL terminator.
+            // In these cases the URL we generate from the ServerRequestInterface may be the _terminated_ URL,
+            // and not the URL that was requested by the client.
+
+            // We need to generate the URL that the client requested, not the URL that the server received.
+            $url = $request->getUri();
+
+            if (!empty($CFG->reverseproxy)) {
+                // This site is behind a reverse proxy. The requested URI may have a different:
+                // - scheme
+                // - host
+                // - port
+                // to the URL that the client requested.
+
+                $url = $url
+                    // Start by setting the scheme and host to the wwwroot.
+                    ->withScheme(parse_url($CFG->wwwroot, PHP_URL_SCHEME))
+                    ->withHost(parse_url($CFG->wwwroot, PHP_URL_HOST))
+
+                    // Update the URL to match the port of the wwwroot.
+                    // While it is highly unlikely that a wwwroot includes an explicit port, we should still handle it.
+                    ->withPort(parse_url($CFG->wwwroot, PHP_URL_PORT));
+
+            }
+
+            if (!empty($CFG->sslproxy)) {
+                // This site is behind an ssl terminating proxy. The requested URI may have a different:
+                // - scheme
+                // - port
+                // to the URL that the client requested.
+                $url = $url
+                    // The wwwroot must use the https scheme, but the terminating request may have been received using http.
+                    ->withScheme('https')
+
+                    // Update the URL to match the port of the wwwroot.
+                    // While it is highly unlikely that a wwwroot includes an explicit port, we should still handle it.
+                    ->withPort(parse_url($CFG->wwwroot, PHP_URL_PORT));
+            }
+
+            $PAGE->set_url((string) $url);
+        }
 
         return $handler->handle($request);
     }
@@ -139,8 +151,8 @@ class moodle_bootstrap_middleware implements MiddlewareInterface {
         if (defined('ABORT_AFTER_CONFIG_CANCEL') && ABORT_AFTER_CONFIG_CANCEL) {
             return;
         }
-        define('ABORT_AFTER_CONFIG_CANCEL', true);
 
-        require("{$CFG->dirroot}/lib/setup.php");
+        // Load the full Moodle stack.
+        util::load_full_moodle();
     }
 }
